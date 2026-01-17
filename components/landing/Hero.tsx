@@ -2,24 +2,18 @@
 
 import Icon from "@/components/common/Icon";
 import { useLanguage } from "@/components/providers/LanguageContext";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Hero() {
   const { content } = useLanguage();
-  const {
-    greetingText,
-    name,
-    title,
-    avatar,
-    description,
-    skills,
-    buttons,
-    socialLinks,
-  } = content.hero;
+  const t = useTranslations("Hero");
+
+  const { name, title, avatar, skills, buttons, socialLinks } = content.hero;
 
   return (
-    <section className="py-16 animate-pixel-fade-in">
+    <section id="hero" className="py-16 animate-pixel-fade-in">
       <div className="flex items-center gap-4 mb-6">
         <div className="text-6xl pixel-border p-4 bg-card relative w-24 h-24 flex items-center justify-center">
           {/* If avatar is an image path */}
@@ -31,7 +25,7 @@ export default function Hero() {
         </div>
         <div>
           <h1 className="text-4xl font-bold mb-2">
-            {greetingText} <span className="text-primary">{name}</span>
+            {t("greeting")} <span className="text-primary">{name}</span>
           </h1>
           <p className="font-pixel text-xs uppercase tracking-widest text-muted-foreground">
             {title}
@@ -40,7 +34,7 @@ export default function Hero() {
       </div>
 
       <p className="text-lg text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-        {description}
+        {t("description")}
       </p>
 
       <div className="flex flex-wrap gap-2 mb-8">

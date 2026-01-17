@@ -4,9 +4,11 @@ import BlogCard from "@/components/blog/BlogCard";
 import Container from "@/components/common/Container";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
+import { useTranslations } from "next-intl";
 
 export default function BlogPage() {
   const { content } = useLanguage();
+  const t = useTranslations("Blog");
   const blogPosts = content.blog.items || [];
   const postCount = blogPosts.length;
 
@@ -27,10 +29,10 @@ export default function BlogPage() {
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-          {content.blog.title}
+          {t("title")}
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          {content.blog.description}
+          {t("description")}
         </p>
       </div>
 
@@ -40,7 +42,7 @@ export default function BlogPage() {
       {/* Popular Tags Section */}
       <div className="mb-12">
         <h2 className="text-xl sm:text-2xl font-bold mb-6">
-          {content.blog.popularTagsText}
+          {t("popularTags")}
         </h2>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
@@ -58,11 +60,9 @@ export default function BlogPage() {
       {/* Latest Posts Section */}
       <div>
         <div className="flex items-baseline gap-3 mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">
-            {content.blog.viewAllText}
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t("viewAll")}</h2>
           <span className="text-muted-foreground text-sm">
-            ({postCount} {content.blog.postCountText})
+            ({postCount} {t("postCount")})
           </span>
         </div>
 
@@ -75,7 +75,7 @@ export default function BlogPage() {
 
         {blogPosts.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            {content.blog.noResultsText}
+            {t("noResults")}
           </div>
         )}
       </div>

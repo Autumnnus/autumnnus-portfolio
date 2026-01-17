@@ -15,10 +15,9 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className="font-pixel text-primary hover:text-accent transition-colors flex items-center gap-2"
+            className="font-pixel text-primary hover:text-accent transition-colors flex items-center gap-2 uppercase tracking-widest"
           >
-            <span className="text-2xl">🍂</span>
-            <span className="hidden sm:inline">Autumnnus</span>
+            <span className="text-xl">Kadir.dev</span>
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-4">

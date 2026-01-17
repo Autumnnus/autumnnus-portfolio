@@ -3,12 +3,12 @@ export type Language = "tr" | "en";
 export interface SocialLink {
   name: string;
   href: string;
-  icon: string; // URL for SVG or Lucide icon name
+  icon: string;
 }
 
 export interface Technology {
   name: string;
-  icon: string; // URL for SVG
+  icon: string;
 }
 
 export interface Button {
@@ -39,14 +39,16 @@ export interface AboutSection {
   avatar: string;
 }
 
+export type ProjectStatus = "Working" | "Building" | "Completed" | "Archived";
+
 export interface Project {
   slug: string;
   title: string;
   shortDescription: string;
   fullDescription: string;
-  coverImage: string; // Path to image
+  coverImage: string;
   technologies: Technology[];
-  status: "Working" | "Building" | "Completed" | "Archived";
+  status: ProjectStatus;
   timeline: string;
   role: string;
   team: string;
@@ -72,7 +74,7 @@ export interface WorkExperience {
   role: string;
   period: string;
   description: string;
-  logo: string; // URL for SVG
+  logo: string;
 }
 
 export interface NavigationItem {
@@ -112,6 +114,13 @@ export interface ContentConfig {
     postCountText: string;
     noResultsText: string;
     backToBlogText: string;
+    commentsTitle: string;
+    signInToComment: string;
+    joinConversation: string;
+    signInButton: string;
+    signedInAs: string;
+    postComment: string;
+    noCommentsYet: string;
     items: BlogPost[];
   };
   work: {
@@ -130,4 +139,10 @@ export interface ContentConfig {
 export interface PortfolioConfig {
   tr: ContentConfig;
   en: ContentConfig;
+}
+
+// Helper types for refactored data management
+export interface DataWithTranslations<TCommon, TLocalized> {
+  common: TCommon;
+  translations: Record<Language, TLocalized>;
 }

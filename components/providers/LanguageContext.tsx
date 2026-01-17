@@ -1,14 +1,18 @@
 "use client";
 
 import { portfolioContent } from "@/config/contents";
+import en from "@/messages/en.json";
+import tr from "@/messages/tr.json";
 import { ContentConfig, Language } from "@/types/contents";
+import { NextIntlClientProvider } from "next-intl";
 import React, { createContext, useContext, useEffect, useState } from "react";
+
+const messages = { tr, en };
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   content: ContentConfig;
-  t: (key: string) => string; // Simple helper if needed, but mostly we use content directly
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -22,7 +26,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem("language") as Language;
     if (saved && (saved === "tr" || saved === "en")) {
-      setLanguage(saved);
+      setLanguage((prev) => (prev !== saved ? saved : prev));
     }
     setMounted(true);
   }, []);
@@ -36,16 +40,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     language,
     setLanguage: handleSetLanguage,
     content: portfolioContent[language],
-    t: (key: string) => key, // Placeholder, logically we use the structure
   };
 
   if (!mounted) {
-    return null; // or a loader, to prevent hydration mismatch
+    return null;
   }
 
   return (
     <LanguageContext.Provider value={value}>
-      {children}
+      <NextIntlClientProvider
+        locale={language}
+        messages={messages[language]}
+        timeZone="Europe/Istanbul"
+      >
+        {children}
+      </NextIntlClientProvider>
     </LanguageContext.Provider>
   );
 }

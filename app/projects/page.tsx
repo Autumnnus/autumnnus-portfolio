@@ -5,10 +5,12 @@ import ProjectCard from "@/components/projects/ProjectCard";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
 import { Project } from "@/types/contents";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 export default function ProjectsPage() {
   const { content } = useLanguage();
+  const t = useTranslations("Projects");
   const projects = content.projects.items || [];
 
   // Calculate statuses dynamically from the current projects list
@@ -40,10 +42,10 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-          {content.projects.title}
+          {t("title")}
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          {content.projects.description}
+          {t("description")}
         </p>
       </div>
 
@@ -53,7 +55,7 @@ export default function ProjectsPage() {
       {/* Filter by Status */}
       <div className="mb-12">
         <h2 className="text-xl sm:text-2xl font-bold mb-6">
-          {content.projects.filterByStatusText}
+          {t("filterByStatus")}
         </h2>
         <div className="flex flex-wrap gap-2">
           <Badge
@@ -80,12 +82,10 @@ export default function ProjectsPage() {
       <div>
         <div className="flex items-baseline gap-3 mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold">
-            {selectedStatus === "All"
-              ? content.projects.allProjectsText
-              : `${selectedStatus}`}
+            {selectedStatus === "All" ? t("allProjects") : `${selectedStatus}`}
           </h2>
           <span className="text-muted-foreground text-sm">
-            ({filteredProjects.length} {content.projects.projectCountText})
+            ({filteredProjects.length} {t("projectCount")})
           </span>
         </div>
 
@@ -98,7 +98,7 @@ export default function ProjectsPage() {
 
         {filteredProjects.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            {content.projects.noResultsText}
+            {t("noResults")}
           </div>
         )}
       </div>

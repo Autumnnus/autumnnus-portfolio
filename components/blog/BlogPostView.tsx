@@ -2,17 +2,19 @@
 
 import CommentSection from "@/components/blog/CommentSection";
 import Container from "@/components/common/Container";
+import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
-import { formatDate } from "@/lib/utils";
 import { BlogPost } from "@/types/contents";
 import { ArrowLeft, Calendar } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function BlogPostView({ slug }: { slug: string }) {
   const { content } = useLanguage();
+  const t = useTranslations("Blog");
   const blogPosts = content.blog.items || [];
 
   const [post, setPost] = useState<BlogPost | undefined>();
@@ -28,9 +30,6 @@ export default function BlogPostView({ slug }: { slug: string }) {
     return null;
   }
 
-  // Helper to safely format content paragraphs
-  const contentParagraphs = post.content ? post.content.split("\n") : [];
-
   return (
     <Container className="py-12 sm:py-20">
       {/* Back Button */}
@@ -40,7 +39,7 @@ export default function BlogPostView({ slug }: { slug: string }) {
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          {content.blog.backToBlogText}
+          {t("back")}
         </Link>
       </FadeIn>
 
@@ -85,7 +84,7 @@ export default function BlogPostView({ slug }: { slug: string }) {
           {/* Date */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
-            <time dateTime={post.date}>{formatDate(post.date)}</time>
+            <time dateTime={post.date}>{post.date}</time>
           </div>
 
           {/* Stats if available in type, or placeholders */}
@@ -98,27 +97,8 @@ export default function BlogPostView({ slug }: { slug: string }) {
 
       {/* Content */}
       <FadeIn delay={0.6}>
-        <article className="prose prose-lg dark:prose-invert max-w-none mb-12">
-          <div className="whitespace-pre-line leading-relaxed">
-            {contentParagraphs.map((paragraph, index) => {
-              if (paragraph.startsWith("## ")) {
-                return (
-                  <h2 key={index} className="text-2xl font-bold mt-8 mb-4">
-                    {paragraph.replace("## ", "")}
-                  </h2>
-                );
-              }
-              // ... other parsing logic ...
-              if (paragraph.trim()) {
-                return (
-                  <p key={index} className="mb-4">
-                    {paragraph}
-                  </p>
-                );
-              }
-              return null;
-            })}
-          </div>
+        <article className="max-w-none mb-12">
+          <ContentRenderer content={post.content} />
         </article>
       </FadeIn>
 

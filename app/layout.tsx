@@ -28,14 +28,13 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "Autumnnus Portfolio | Sonbahar & Kış Pixel Temalı Portfolyo",
+  title: "Kadir | Full Stack Developer Portfolio",
   description:
-    "Sonbahar ve Kış temalı, pixel art estetiği ile kişisel portfolyo. Projeler, iş deneyimleri ve blog yazıları.",
+    "Pixel art estetiği ile hazırlanmış kişisel portfolyo. Projeler, iş deneyimleri ve blog yazıları.",
   keywords: [
     "portfolio",
     "developer",
-    "autumn",
-    "winter",
+    "full stack",
     "pixel art",
     "web development",
   ],
@@ -49,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col`}
       >
         <ThemeProvider
           attribute="class"
@@ -62,7 +61,7 @@ export default function RootLayout({
             <SmoothScroll>
               <TooltipProvider delayDuration={0}>
                 <Navbar />
-                <main className="flex-1">
+                <main className="flex-1 flex flex-col">
                   <PageTransition>{children}</PageTransition>
                 </main>
                 <Footer />

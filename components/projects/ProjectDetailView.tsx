@@ -1,6 +1,7 @@
 "use client";
 
 import Container from "@/components/common/Container";
+import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
 import Icon from "@/components/common/Icon";
 import RelatedProjectCard from "@/components/projects/RelatedProjectCard";
@@ -192,8 +193,8 @@ export default function ProjectDetailView({ slug }: { slug: string }) {
 
       {/* Full Description */}
       <FadeIn delay={0.7}>
-        <div className="mb-12 text-lg text-muted-foreground leading-relaxed whitespace-pre-wrap">
-          {project.fullDescription}
+        <div className="mb-12">
+          <ContentRenderer content={project.fullDescription} />
         </div>
       </FadeIn>
 

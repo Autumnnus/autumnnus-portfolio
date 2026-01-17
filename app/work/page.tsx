@@ -4,9 +4,11 @@ import Container from "@/components/common/Container";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import WorkCard from "@/components/work/WorkCard";
 import * as Separator from "@radix-ui/react-separator";
+import { useTranslations } from "next-intl";
 
 export default function WorkPage() {
   const { content } = useLanguage();
+  const t = useTranslations("Work");
   const workExperiences = content.work.items || [];
 
   return (
@@ -14,21 +16,19 @@ export default function WorkPage() {
       {/* Page Header */}
       <div className="text-center mb-16 space-y-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-          {content.work.title}
+          {t("title")}
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          {content.work.description}
+          {t("description")}
         </p>
       </div>
 
       <div className="max-w-3xl mx-auto">
         {/* Section Header */}
         <div className="flex items-baseline gap-3 mb-8">
-          <h2 className="text-2xl font-bold">
-            {content.work.allExperiencesText}
-          </h2>
+          <h2 className="text-2xl font-bold">{t("allExperiences")}</h2>
           <span className="text-muted-foreground text-sm">
-            ({workExperiences.length} {content.work.experienceCountText})
+            ({workExperiences.length} {t("experienceCount")})
           </span>
         </div>
 

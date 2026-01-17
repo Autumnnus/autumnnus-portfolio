@@ -1,36 +1,35 @@
 "use client";
 
 import SectionHeading from "@/components/common/SectionHeading";
-import { useLanguage } from "@/components/providers/LanguageContext";
+import { useTranslations } from "next-intl";
 
 export default function About() {
-  const { content } = useLanguage();
-  const { about } = content;
+  const t = useTranslations("About");
 
   return (
     <section className="py-12" id="about">
-      <SectionHeading subHeading={about.title} heading={about.title} />
+      <SectionHeading subHeading={t("title")} heading={t("title")} />
 
       <div className="pixel-card max-w-3xl">
         <p className="text-muted-foreground leading-relaxed mb-4 whitespace-pre-wrap">
-          {about.description}
+          {t("description")}
         </p>
 
         <div className="flex gap-8 mt-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-primary">
-              {about.experienceCount}
+              {t("experienceCount")}
             </div>
             <div className="text-sm text-muted-foreground">
-              {about.experienceLabel}
+              {t("experienceLabel")}
             </div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-primary">
-              {about.projectCount}
+              {t("projectCount")}
             </div>
             <div className="text-sm text-muted-foreground">
-              {about.projectLabel}
+              {t("projectLabel")}
             </div>
           </div>
         </div>

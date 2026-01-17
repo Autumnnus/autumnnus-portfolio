@@ -1,0 +1,66 @@
+{
+  "Navbar": {
+    "Home": "Home",
+    "Projects": "Projects",
+    "Blog": "Blog",
+    "Work": "Work"
+  },
+  "Hero": {
+    "greeting": "Hello, I'm ",
+    "description": "I code like autumn leaves falling. Building web applications and designing user experiences.",
+    "buttons": {
+      "projects": "My Projects"
+    }
+  },
+  "About": {
+    "title": "About Me",
+    "description": "Hello! I'm Kadir. I develop modern and user-friendly web applications with my passion for technology. I love learning new things and solving complex problems.",
+    "experienceCount": "3+ Years",
+    "experienceLabel": "Experience",
+    "projectCount": "20+ Projects",
+    "projectLabel": "Projects",
+    "githubActivityTitle": "Coding Activity"
+  },
+  "Projects": {
+    "title": "Featured Projects",
+    "description": "My projects and work across different technologies and domains.",
+    "viewAll": "View All",
+    "filterByStatus": "Filter by Status",
+    "allProjects": "All Projects",
+    "projectCount": "projects",
+    "noResults": "No projects found with this status.",
+    "back": "Back to Projects",
+    "timeline": "Timeline",
+    "role": "Role",
+    "status": "Status",
+    "liveDemo": "Live Demo",
+    "sourceCode": "Source Code",
+    "next": "Next Project",
+    "related": "Related Projects"
+  },
+  "Blog": {
+    "title": "Latest Posts",
+    "description": "Thoughts, tutorials, and insights on engineering, and programming.",
+    "viewAll": "Read All",
+    "popularTags": "Popular Tags",
+    "postCount": "posts",
+    "noResults": "No posts found.",
+    "back": "Back to Blog",
+    "comments": "Comments",
+    "signInToComment": "Sign in to comment",
+    "joinConversation": "Join the conversation by signing in with your Google account",
+    "signInButton": "Sign in with Google",
+    "signedInAs": "Signed in as",
+    "postComment": "Post Comment",
+    "noCommentsYet": "No comments yet. Be the first to comment!"
+  },
+  "Work": {
+    "title": "Experience",
+    "description": "My work experiences across different companies and roles.",
+    "allExperiences": "All Experiences",
+    "experienceCount": "experiences"
+  },
+  "Footer": {
+    "rights": "© 2026 Kadir. All rights reserved."
+  }
+}

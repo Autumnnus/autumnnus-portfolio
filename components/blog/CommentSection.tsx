@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/components/providers/LanguageContext";
 import {
   addComment,
   getComments,
@@ -18,6 +19,7 @@ interface CommentsectionProps {
 }
 
 export default function CommentSection({ postSlug }: CommentsectionProps) {
+  const { content } = useLanguage();
   const [comments, setComments] = useState<Comment[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [newComment, setNewComment] = useState("");
@@ -53,7 +55,9 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
       {/* Header */}
       <div className="flex items-center gap-2 mb-8">
         <MessageSquare className="w-5 h-5" />
-        <h2 className="text-2xl font-bold">Comments ({comments.length})</h2>
+        <h2 className="text-2xl font-bold">
+          {content.blog.commentsTitle} ({comments.length})
+        </h2>
       </div>
 
       {/* Sign in to comment box */}
@@ -61,9 +65,11 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
         <div className="mb-8 p-8 border border-border rounded-lg bg-muted/30 text-center space-y-4">
           <UserIcon className="w-12 h-12 mx-auto text-muted-foreground" />
           <div>
-            <h3 className="text-lg font-semibold mb-2">Sign in to comment</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              {content.blog.signInToComment}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Join the conversation by signing in with your Google account
+              {content.blog.joinConversation}
             </p>
           </div>
           <button
@@ -71,7 +77,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
             className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity"
           >
             <UserIcon className="w-4 h-4" />
-            Sign in with Google
+            {content.blog.signInButton}
           </button>
         </div>
       ) : (
@@ -85,14 +91,15 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Signed in as <span className="font-medium">{user.name}</span>
+              {content.blog.signedInAs}{" "}
+              <span className="font-medium">{user.name}</span>
             </p>
             <button
               onClick={handleAddComment}
               disabled={!newComment.trim()}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Post Comment
+              {content.blog.postComment}
             </button>
           </div>
         </div>
@@ -102,7 +109,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
       <div className="space-y-1 divide-y divide-border/50">
         {comments.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">
-            No comments yet. Be the first to comment!
+            {content.blog.noCommentsYet}
           </p>
         ) : (
           comments.map((comment) => (
@@ -117,7 +124,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border border-border rounded-lg p-6 w-full max-w-md z-50 space-y-4">
             <Dialog.Title className="text-xl font-bold">
-              Sign in to comment
+              {content.blog.signInToComment}
             </Dialog.Title>
             <Dialog.Description className="text-sm text-muted-foreground">
               You need to sign in to post comments. This creates a unique

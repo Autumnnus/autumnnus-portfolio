@@ -72,7 +72,10 @@ export default function GitHubCalendar({
   }
 
   return (
-    <div className="w-full flex flex-col items-center justify-center p-4 sm:p-8">
+    <div
+      id="github"
+      className="w-full flex flex-col items-center justify-center p-4 sm:p-8"
+    >
       <FadeIn delay={0.2}>
         <div className="border border-border/50 p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center gap-2 mb-4">

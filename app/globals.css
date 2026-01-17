@@ -257,3 +257,28 @@
     var(--winter-ice) 100%
   );
 }
+.shiki {
+  @apply p-4 text-sm leading-relaxed overflow-x-auto;
+  background-color: transparent !important;
+}
+
+.shiki code {
+  @apply font-mono;
+}
+
+/* Custom scrollbar for code blocks */
+.shiki::-webkit-scrollbar {
+  height: 8px;
+}
+
+.shiki::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.shiki::-webkit-scrollbar-thumb {
+  @apply bg-border/20 border-2 border-transparent;
+}
+
+.shiki::-webkit-scrollbar-thumb:hover {
+  @apply bg-border/40;
+}

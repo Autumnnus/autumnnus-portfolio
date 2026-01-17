@@ -1,0 +1,66 @@
+{
+  "Navbar": {
+    "Home": "Ana Sayfa",
+    "Projects": "Projeler",
+    "Blog": "Blog",
+    "Work": "Deneyim"
+  },
+  "Hero": {
+    "greeting": "Merhaba, ben ",
+    "description": "Sonbahar yaprakları gibi kod yazıyorum. Web uygulamaları geliştiriyor, kullanıcı deneyimlerini tasarlıyorum.",
+    "buttons": {
+      "projects": "Projelerim"
+    }
+  },
+  "About": {
+    "title": "Hakkımda",
+    "description": "Merhaba! Ben Kadir. Teknolojiye olan tutkumla modern ve kullanıcı dostu web uygulamaları geliştiriyorum. Yeni şeyler öğrenmeyi ve karmaşık problemleri çözmeyi seviyorum.",
+    "experienceCount": "3+ Yıl",
+    "experienceLabel": "Deneyim",
+    "projectCount": "20+ Proje",
+    "projectLabel": "Proje",
+    "githubActivityTitle": "Kodlama Aktivitesi"
+  },
+  "Projects": {
+    "title": "Öne Çıkan Projeler",
+    "description": "Farklı teknolojiler ve alanlardaki projelerim ve çalışmalarım.",
+    "viewAll": "Tümünü Gör",
+    "filterByStatus": "Duruma Göre Filtrele",
+    "allProjects": "Tüm Projeler",
+    "projectCount": "proje",
+    "noResults": "Bu durumda proje bulunamadı.",
+    "back": "Projelere Dön",
+    "timeline": "Süreç",
+    "role": "Rol",
+    "status": "Durum",
+    "liveDemo": "Canlı Demo",
+    "sourceCode": "Kaynak Kod",
+    "next": "Sonraki Proje",
+    "related": "İlgili Projeler"
+  },
+  "Blog": {
+    "title": "Son Yazılar",
+    "description": "Mühendislik ve programlama üzerine düşünceler, rehberler ve içgörüler.",
+    "viewAll": "Tümünü Oku",
+    "popularTags": "Popüler Etiketler",
+    "postCount": "yazı",
+    "noResults": "Henüz yazı bulunmuyor.",
+    "back": "Bloga Dön",
+    "comments": "Yorumlar",
+    "signInToComment": "Yorum yapmak için giriş yapın",
+    "joinConversation": "Google hesabınızla giriş yaparak sohbete katılın",
+    "signInButton": "Google ile Giriş Yap",
+    "signedInAs": "Giriş yapıldı:",
+    "postComment": "Yorum Paylaş",
+    "noCommentsYet": "Henüz yorum yok. İlk yorumu siz yapın!"
+  },
+  "Work": {
+    "title": "Deneyimler",
+    "description": "Farklı şirketler ve rollerdeki iş deneyimlerim.",
+    "allExperiences": "Tüm Deneyimler",
+    "experienceCount": "deneyim"
+  },
+  "Footer": {
+    "rights": "© 2026 Kadir. Tüm hakları saklıdır."
+  }
+}
