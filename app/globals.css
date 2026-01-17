@@ -1,26 +1,259 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.5rem;
+
+  /* --- AUTUMN THEME (Light Mode) --- */
+  --autumn-orange: #d35400;
+  --autumn-brown: #8b4513;
+  --autumn-gold: #daa520;
+  --autumn-cream: #fff8dc;
+
+  /* --- WINTER THEME (Dark Mode) --- */
+  --winter-blue: #3498db;
+  --winter-dark-blue: #2c3e50;
+  --winter-ice: #e0f7fa;
+  --winter-white: #f8f9fa;
+  --winter-snow: #ecf0f1;
+  --winter-night: #1a1a2e;
+
+  /* Default to Autumn (Light) */
+  --background: #fff8dc; /* Cream */
+  --foreground: #3e2723; /* Dark Brown */
+  --card: #faebd7; /* Antique White */
+  --card-foreground: #3e2723;
+  --popover: #faebd7;
+  --popover-foreground: #3e2723;
+  --primary: #d35400; /* Pumpkin Orange */
+  --primary-foreground: #fff8dc;
+  --secondary: #f4a460; /* Sandy Brown */
+  --secondary-foreground: #3e2723;
+  --muted: #deb887; /* Burlywood */
+  --muted-foreground: #8b4513;
+  --accent: #daa520; /* Goldenrod */
+  --accent-foreground: #3e2723;
+  --destructive: #b22222;
+  --border: #cd853f; /* Peru */
+  --input: #deb887;
+  --ring: #d35400;
+
+  --shadow-color: #8b4513;
+}
+
+.dark {
+  /* Winter Theme (Dark) */
+  --background: #0f172a; /* Slate 900 */
+  --foreground: #e0f7fa; /* Ice Blue */
+  --card: #1e293b; /* Slate 800 */
+  --card-foreground: #e0f7fa;
+  --popover: #1e293b;
+  --popover-foreground: #e0f7fa;
+  --primary: #38bdf8; /* Sky Blue */
+  --primary-foreground: #0f172a;
+  --secondary: #334155; /* Slate 700 */
+  --secondary-foreground: #e0f7fa;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8; /* Slate 400 */
+  --accent: #7dd3fc; /* Light Sky Blue */
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --border: #475569; /* Slate 600 */
+  --input: #334155;
+  --ring: #38bdf8;
+
+  --shadow-color: #000000;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-pixel: var(--font-pixel);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.font-pixel {
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.pixel-border {
+  border: 4px solid var(--border);
+  box-shadow:
+    4px 4px 0 0 var(--shadow-color),
+    -2px -2px 0 0 rgba(255, 255, 255, 0.1) inset;
+}
+
+.pixel-border-sm {
+  border: 2px solid var(--border);
+  box-shadow: 2px 2px 0 0 var(--shadow-color);
+}
+
+.pixel-shadow {
+  box-shadow:
+    4px 4px 0 0 var(--shadow-color),
+    8px 8px 0 0 rgba(0, 0, 0, 0.1);
+}
+
+.pixel-btn {
+  @apply px-4 py-2 font-pixel text-xs uppercase tracking-wider;
+  border: 3px solid var(--foreground);
+  box-shadow: 3px 3px 0 0 var(--foreground);
+  transition: all 0.1s ease;
+}
+
+.pixel-btn:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--foreground);
+}
+
+.pixel-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.pixel-btn-primary {
+  @apply px-4 py-2 font-pixel text-xs uppercase tracking-wider bg-primary text-primary-foreground;
+  border: 3px solid var(--shadow-color);
+  box-shadow: 3px 3px 0 0 var(--shadow-color);
+  transition: all 0.1s ease;
+}
+
+.pixel-btn-primary:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--shadow-color);
+}
+
+.pixel-card {
+  @apply bg-card p-4;
+  border: 4px solid var(--border);
+  box-shadow:
+    6px 6px 0 0 var(--shadow-color),
+    -3px -3px 0 0 rgba(255, 255, 255, 0.1) inset;
+}
+
+.pixel-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow:
+    8px 8px 0 0 var(--shadow-color),
+    -3px -3px 0 0 rgba(255, 255, 255, 0.15) inset;
+}
+
+.text-secondary-autumn {
+  @apply text-muted-foreground;
+}
+
+@keyframes pixelBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes leafFall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pixelFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-pixel-bounce {
+  animation: pixelBounce 0.6s ease-in-out infinite;
+}
+
+.animate-leaf-fall {
+  animation: leafFall 8s linear infinite;
+}
+
+.animate-pixel-fade-in {
+  animation: pixelFadeIn 0.5s ease-out forwards;
+}
+
+.pixel-underline {
+  position: relative;
+}
+
+.pixel-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--primary) 0px,
+    var(--primary) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.autumn-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--autumn-orange) 0%,
+    var(--autumn-gold) 50%,
+    var(--autumn-cream) 100%
+  );
+}
+
+.dark .autumn-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--winter-dark-blue) 0%,
+    var(--winter-blue) 50%,
+    var(--winter-ice) 100%
+  );
 }
