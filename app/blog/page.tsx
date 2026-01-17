@@ -1,26 +1,36 @@
+"use client";
+
 import BlogCard from "@/components/blog/BlogCard";
 import Container from "@/components/common/Container";
+import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
-import { blogPosts, getAllTags } from "@/config/blog";
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Blogs | Autumnnus Portfolio",
-  description:
-    "Thoughts, tutorials, and insights on engineering, and programming.",
-};
 
 export default function BlogPage() {
-  const tags = getAllTags();
+  const { content } = useLanguage();
+  const blogPosts = content.blog.items || [];
   const postCount = blogPosts.length;
+
+  // Calculate tags dynamically
+  const tagCounts = new Map<string, number>();
+  blogPosts.forEach((post) => {
+    post.tags.forEach((tag) => {
+      tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+    });
+  });
+  const tags = Array.from(tagCounts.entries()).map(([name, count]) => ({
+    name,
+    count,
+  }));
 
   return (
     <Container className="py-12 sm:py-20">
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">Blogs</h1>
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+          {content.blog.title}
+        </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Thoughts, tutorials, and insights on engineering, and programming.
+          {content.blog.description}
         </p>
       </div>
 
@@ -29,7 +39,9 @@ export default function BlogPage() {
 
       {/* Popular Tags Section */}
       <div className="mb-12">
-        <h2 className="text-xl sm:text-2xl font-bold mb-6">Popular Tags</h2>
+        <h2 className="text-xl sm:text-2xl font-bold mb-6">
+          {content.blog.popularTagsText}
+        </h2>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
             <Badge
@@ -46,18 +58,26 @@ export default function BlogPage() {
       {/* Latest Posts Section */}
       <div>
         <div className="flex items-baseline gap-3 mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">Latest Posts</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">
+            {content.blog.viewAllText}
+          </h2>
           <span className="text-muted-foreground text-sm">
-            ({postCount} posts)
+            ({postCount} {content.blog.postCountText})
           </span>
         </div>
 
         {/* Blog Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {blogPosts.map((post) => (
-            <BlogCard key={post.slug} post={post} />
+          {blogPosts.map((post, index) => (
+            <BlogCard key={post.slug} post={post} index={index} />
           ))}
         </div>
+
+        {blogPosts.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            {content.blog.noResultsText}
+          </div>
+        )}
       </div>
     </Container>
   );

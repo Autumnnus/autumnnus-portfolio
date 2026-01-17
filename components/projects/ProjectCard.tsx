@@ -1,14 +1,18 @@
 "use client";
 
-import { Project } from "@/config/projects";
+import Icon from "@/components/common/Icon";
+import { Project } from "@/types/contents";
+import { motion } from "framer-motion";
 import { ExternalLink, Github } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 interface ProjectCardProps {
   project: Project;
+  index?: number;
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   const getStatusColor = (status: Project["status"]) => {
     switch (status) {
       case "Completed":
@@ -26,21 +30,37 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const remainingCount = project.technologies.length - 7;
 
   return (
-    <div className="group bg-card border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+    <motion.div
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      viewport={{ once: true }}
+      className="group bg-card border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+    >
       {/* Cover Image with Gradient */}
-      <div className="relative w-full h-48 sm:h-56 bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center p-8">
-          {/* Mockup Screen */}
-          <div className="relative w-full max-w-md aspect-video bg-gray-900 rounded-lg shadow-2xl transform -rotate-2 group-hover:rotate-0 transition-transform duration-300">
-            <div className="absolute top-2 left-2 flex gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <div className="w-2 h-2 rounded-full bg-yellow-500" />
-              <div className="w-2 h-2 rounded-full bg-green-500" />
+      <div className="relative w-full h-48 sm:h-56 bg-linear-to-br from-pink-400 via-purple-500 to-indigo-600 overflow-hidden">
+        {project.coverImage && (
+          <Image
+            src={project.coverImage}
+            alt={project.title}
+            fill
+            className="object-cover opacity-80 group-hover:scale-110 transition-transform duration-500"
+          />
+        )}
+        <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none">
+          {/* Mockup Screen or Icon overlay */}
+          {!project.coverImage && (
+            <div className="relative w-full max-w-md aspect-video bg-gray-900 rounded-lg shadow-2xl transform -rotate-2 group-hover:rotate-0 transition-transform duration-300 flex items-center justify-center">
+              <div className="text-4xl opacity-50">
+                {project.technologies[0]?.icon && (
+                  <Icon
+                    src={project.technologies[0].icon}
+                    alt="Tech"
+                    size={48}
+                  />
+                )}
+              </div>
             </div>
-            <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-50">
-              {project.technologies[0]?.icon || "💻"}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -93,7 +113,9 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                 key={tech.name}
                 className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs"
               >
-                {tech.icon && <span>{tech.icon}</span>}
+                {tech.icon && (
+                  <Icon src={tech.icon} alt={tech.name} size={14} />
+                )}
                 <span>{tech.name}</span>
               </div>
             ))}
@@ -124,11 +146,11 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             href={`/projects/${project.slug}`}
             className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
           >
-            View Details
+            Details
             <span>→</span>
           </Link>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

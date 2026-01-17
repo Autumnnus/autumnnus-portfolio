@@ -1,6 +1,10 @@
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
+import SeasonalEffects from "@/components/decorations/SeasonalEffects";
+import { LanguageProvider } from "@/components/providers/LanguageContext";
+import PageTransition from "@/components/providers/PageTransition";
+import SmoothScroll from "@/components/providers/SmoothScroll";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google"; // Import pixel font
@@ -53,11 +57,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider delayDuration={0}>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </TooltipProvider>
+          <LanguageProvider>
+            <SeasonalEffects />
+            <SmoothScroll>
+              <TooltipProvider delayDuration={0}>
+                <Navbar />
+                <main className="flex-1">
+                  <PageTransition>{children}</PageTransition>
+                </main>
+                <Footer />
+              </TooltipProvider>
+            </SmoothScroll>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

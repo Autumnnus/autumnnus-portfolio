@@ -1,17 +1,37 @@
-import { heroConfig } from "@/config/hero";
+"use client";
+
+import Icon from "@/components/common/Icon";
+import { useLanguage } from "@/components/providers/LanguageContext";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Hero() {
-  const { name, title, avatar, description, skills, buttons, socialLinks } =
-    heroConfig;
+  const { content } = useLanguage();
+  const {
+    greetingText,
+    name,
+    title,
+    avatar,
+    description,
+    skills,
+    buttons,
+    socialLinks,
+  } = content.hero;
 
   return (
     <section className="py-16 animate-pixel-fade-in">
       <div className="flex items-center gap-4 mb-6">
-        <div className="text-6xl pixel-border p-4 bg-card">{avatar}</div>
+        <div className="text-6xl pixel-border p-4 bg-card relative w-24 h-24 flex items-center justify-center">
+          {/* If avatar is an image path */}
+          {avatar.startsWith("/") || avatar.startsWith("http") ? (
+            <Image src={avatar} alt={name} fill className="object-cover p-2" />
+          ) : (
+            <span>{avatar}</span>
+          )}
+        </div>
         <div>
           <h1 className="text-4xl font-bold mb-2">
-            Merhaba, ben <span className="text-primary">{name}</span>
+            {greetingText} <span className="text-primary">{name}</span>
           </h1>
           <p className="font-pixel text-xs uppercase tracking-widest text-muted-foreground">
             {title}
@@ -29,7 +49,7 @@ export default function Hero() {
             key={skill.name}
             className="pixel-border-sm px-3 py-1 bg-secondary/30 text-sm flex items-center gap-2"
           >
-            <span>{skill.emoji}</span>
+            <Icon src={skill.icon} alt={skill.name} size={16} />
             <span>{skill.name}</span>
           </span>
         ))}
@@ -56,10 +76,10 @@ export default function Hero() {
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-2xl hover:scale-110 transition-transform pixel-border-sm p-2 bg-card hover:bg-secondary/20"
+            className="text-2xl hover:scale-110 transition-transform pixel-border-sm p-2 bg-card hover:bg-secondary/20 block"
             title={link.name}
           >
-            {link.icon}
+            <Icon src={link.icon} alt={link.name} size={24} />
           </a>
         ))}
       </div>

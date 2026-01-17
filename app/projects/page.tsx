@@ -2,12 +2,30 @@
 
 import Container from "@/components/common/Container";
 import ProjectCard from "@/components/projects/ProjectCard";
+import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
-import { getAllStatuses, Project, projects } from "@/config/projects";
+import { Project } from "@/types/contents";
 import { useState } from "react";
 
 export default function ProjectsPage() {
-  const statuses = getAllStatuses();
+  const { content } = useLanguage();
+  const projects = content.projects.items || [];
+
+  // Calculate statuses dynamically from the current projects list
+  const statusCounts = new Map<Project["status"], number>();
+  projects.forEach((project) => {
+    statusCounts.set(
+      project.status,
+      (statusCounts.get(project.status) || 0) + 1,
+    );
+  });
+  const statuses = Array.from(statusCounts.entries()).map(
+    ([status, count]) => ({
+      status,
+      count,
+    }),
+  );
+
   const [selectedStatus, setSelectedStatus] = useState<
     Project["status"] | "All"
   >("All");
@@ -22,10 +40,10 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-          Projects
+          {content.projects.title}
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          My projects and work across different technologies and domains.
+          {content.projects.description}
         </p>
       </div>
 
@@ -34,7 +52,9 @@ export default function ProjectsPage() {
 
       {/* Filter by Status */}
       <div className="mb-12">
-        <h2 className="text-xl sm:text-2xl font-bold mb-6">Filter by Status</h2>
+        <h2 className="text-xl sm:text-2xl font-bold mb-6">
+          {content.projects.filterByStatusText}
+        </h2>
         <div className="flex flex-wrap gap-2">
           <Badge
             variant={selectedStatus === "All" ? "default" : "outline"}
@@ -61,25 +81,24 @@ export default function ProjectsPage() {
         <div className="flex items-baseline gap-3 mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold">
             {selectedStatus === "All"
-              ? "All Projects"
-              : `${selectedStatus} Projects`}
+              ? content.projects.allProjectsText
+              : `${selectedStatus}`}
           </h2>
           <span className="text-muted-foreground text-sm">
-            ({filteredProjects.length} project
-            {filteredProjects.length !== 1 ? "s" : ""})
+            ({filteredProjects.length} {content.projects.projectCountText})
           </span>
         </div>
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredProjects.map((project) => (
-            <ProjectCard key={project.slug} project={project} />
+          {filteredProjects.map((project, index) => (
+            <ProjectCard key={project.slug} project={project} index={index} />
           ))}
         </div>
 
         {filteredProjects.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            No projects found with this status.
+            {content.projects.noResultsText}
           </div>
         )}
       </div>

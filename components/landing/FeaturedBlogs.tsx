@@ -1,24 +1,32 @@
+"use client";
+
 import BlogCard from "@/components/blog/BlogCard";
 import SectionHeading from "@/components/common/SectionHeading";
-import { blogPosts } from "@/config/blog";
+import { useLanguage } from "@/components/providers/LanguageContext";
 import Link from "next/link";
 
 export default function FeaturedBlogs() {
-  const featuredPosts = blogPosts.filter((p) => p.featured).slice(0, 2);
+  const { content } = useLanguage();
+  const featuredPosts = (content.blog.items || [])
+    .filter((p) => p.featured)
+    .slice(0, 2);
 
   return (
-    <section className="py-12">
-      <SectionHeading subHeading="Yazılarım" heading="Blog" />
+    <section className="py-12" id="blog">
+      <SectionHeading
+        subHeading={content.blog.viewAllText}
+        heading={content.blog.title}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {featuredPosts.map((post) => (
-          <BlogCard key={post.slug} post={post} />
+        {featuredPosts.map((post, index) => (
+          <BlogCard key={post.slug} post={post} index={index} />
         ))}
       </div>
 
       <div className="flex justify-center">
         <Link href="/blog" className="pixel-btn">
-          Tüm Yazıları Gör →
+          {content.blog.viewAllText} →
         </Link>
       </div>
     </section>

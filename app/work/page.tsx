@@ -1,33 +1,34 @@
-import Container from "@/components/common/Container";
-import WorkCard from "@/components/work/WorkCard";
-import { workExperiences } from "@/config/work";
-import * as Separator from "@radix-ui/react-separator";
-import { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "İş Deneyimi | Autumnnus Portfolio",
-  description: "Kariyer yolculuğum ve profesyonel deneyimlerim.",
-};
+import Container from "@/components/common/Container";
+import { useLanguage } from "@/components/providers/LanguageContext";
+import WorkCard from "@/components/work/WorkCard";
+import * as Separator from "@radix-ui/react-separator";
 
 export default function WorkPage() {
+  const { content } = useLanguage();
+  const workExperiences = content.work.items || [];
+
   return (
     <Container className="py-12 sm:py-20">
       {/* Page Header */}
       <div className="text-center mb-16 space-y-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-          Work Experience
+          {content.work.title}
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          My work experiences across different companies and roles.
+          {content.work.description}
         </p>
       </div>
 
       <div className="max-w-3xl mx-auto">
         {/* Section Header */}
         <div className="flex items-baseline gap-3 mb-8">
-          <h2 className="text-2xl font-bold">All Experiences</h2>
+          <h2 className="text-2xl font-bold">
+            {content.work.allExperiencesText}
+          </h2>
           <span className="text-muted-foreground text-sm">
-            ({workExperiences.length} experiences)
+            ({workExperiences.length} {content.work.experienceCountText})
           </span>
         </div>
 

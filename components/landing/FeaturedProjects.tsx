@@ -1,24 +1,33 @@
+"use client";
+
 import SectionHeading from "@/components/common/SectionHeading";
 import ProjectCard from "@/components/projects/ProjectCard";
-import { projects } from "@/config/projects";
+import { useLanguage } from "@/components/providers/LanguageContext";
 import Link from "next/link";
 
 export default function FeaturedProjects() {
-  const featuredProjects = projects.filter((p) => p.featured).slice(0, 4);
+  const { content } = useLanguage();
+  // Ensure we have items array before filtering to avoid crashes if data is missing
+  const featuredProjects = (content.projects.items || [])
+    .filter((p) => p.featured)
+    .slice(0, 4);
 
   return (
-    <section className="py-12">
-      <SectionHeading subHeading="Öne Çıkanlar" heading="Projelerim" />
+    <section className="py-12" id="projects">
+      <SectionHeading
+        subHeading={content.projects.viewAllText}
+        heading={content.projects.title}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {featuredProjects.map((project) => (
-          <ProjectCard key={project.title} project={project} />
+        {featuredProjects.map((project, index) => (
+          <ProjectCard key={project.slug} project={project} index={index} />
         ))}
       </div>
 
       <div className="flex justify-center">
         <Link href="/projects" className="pixel-btn">
-          Tüm Projeleri Gör →
+          {content.projects.viewAllText} →
         </Link>
       </div>
     </section>
