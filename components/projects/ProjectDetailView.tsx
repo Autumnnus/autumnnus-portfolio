@@ -7,42 +7,43 @@ import Icon from "@/components/common/Icon";
 import RelatedProjectCard from "@/components/projects/RelatedProjectCard";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
-import { Project } from "@/types/contents";
+import { GithubRepoStats, Project } from "@/types/contents";
 import { ArrowLeft, ArrowRight, ExternalLink, Github } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
-export default function ProjectDetailView({ slug }: { slug: string }) {
+export default function ProjectDetailView({
+  slug,
+  githubStats,
+}: {
+  slug: string;
+  githubStats?: GithubRepoStats | null;
+}) {
   const { content } = useLanguage();
-  const projects = content.projects.items || [];
+  const projects = useMemo(() => content.projects.items || [], [content]);
 
-  const [project, setProject] = useState<Project | undefined>();
-  const [nextProject, setNextProject] = useState<Project | null>(null);
-  const [relatedProjects, setRelatedProjects] = useState<Project[]>([]);
+  const project = projects.find((p) => p.slug === slug);
 
-  useEffect(() => {
-    const foundProject = projects.find((p) => p.slug === slug);
-    if (foundProject) {
-      setProject(foundProject);
+  const { nextProject, relatedProjects } = useMemo(() => {
+    if (!project) return { nextProject: null, relatedProjects: [] };
 
-      const currentIndex = projects.findIndex((p) => p.slug === slug);
-      setNextProject(
-        currentIndex < projects.length - 1 ? projects[currentIndex + 1] : null,
-      );
+    const currentIndex = projects.findIndex((p) => p.slug === slug);
+    const next =
+      currentIndex < projects.length - 1 ? projects[currentIndex + 1] : null;
 
-      // Simple related projects logic
-      const related = projects
-        .filter(
-          (p) =>
-            p.slug !== slug &&
-            p.technologies.some((t) =>
-              foundProject.technologies.some((ft) => ft.name === t.name),
-            ),
-        )
-        .slice(0, 2);
-      setRelatedProjects(related);
-    }
-  }, [slug, projects]);
+    const related = projects
+      .filter(
+        (p) =>
+          p.slug !== slug &&
+          p.technologies.some((t) =>
+            project.technologies.some((ft) => ft.name === t.name),
+          ),
+      )
+      .slice(0, 2);
+
+    return { nextProject: next, relatedProjects: related };
+  }, [slug, projects, project]);
 
   if (!project) {
     return null;
@@ -81,19 +82,28 @@ export default function ProjectDetailView({ slug }: { slug: string }) {
 
       {/* Cover Image */}
       <FadeIn delay={0.2}>
-        {/* Use coverImage if available, else fallback */}
         <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-linear-to-br from-pink-400 via-purple-500 to-indigo-600 rounded-lg overflow-hidden mb-8">
-          <div className="absolute inset-0 flex items-center justify-center p-12">
-            <div className="relative w-full max-w-3xl aspect-video bg-gray-900 rounded-lg shadow-2xl flex items-center justify-center">
-              <div className="text-6xl sm:text-8xl opacity-50">
-                <Icon
-                  src={project.technologies[0]?.icon}
-                  alt="icon"
-                  size={80}
-                />
+          {project.coverImage ? (
+            <Image
+              src={project.coverImage}
+              alt={project.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center p-12">
+              <div className="relative w-full max-w-3xl aspect-video bg-gray-900 rounded-lg shadow-2xl flex items-center justify-center">
+                <div className="text-6xl sm:text-8xl opacity-50">
+                  <Icon
+                    src={project.technologies[0]?.icon}
+                    alt="icon"
+                    size={80}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </FadeIn>
 
@@ -135,15 +145,9 @@ export default function ProjectDetailView({ slug }: { slug: string }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <div className="p-4 bg-muted/30 rounded-lg">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {content.projects.timelineLabel}
+              {content.projects.categoryLabel}
             </p>
-            <p className="text-base font-medium">{project.timeline}</p>
-          </div>
-          <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {content.projects.roleLabel}
-            </p>
-            <p className="text-base font-medium">{project.role}</p>
+            <p className="text-base font-medium">{project.category}</p>
           </div>
 
           <div className="p-4 bg-muted/30 rounded-lg">
@@ -160,6 +164,44 @@ export default function ProjectDetailView({ slug }: { slug: string }) {
               </span>
             </p>
           </div>
+
+          {githubStats && (
+            <>
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  GitHub Stats
+                </p>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="flex items-center gap-1" title="Stars">
+                    <span className="text-yellow-500">★</span>
+                    {githubStats.stars}
+                  </span>
+                  <span className="flex items-center gap-1" title="Forks">
+                    <span className="text-blue-500">⑂</span>
+                    {githubStats.forks}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Created
+                </p>
+                <p className="text-sm font-medium">
+                  {new Date(githubStats.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div className="p-4 bg-muted/30 rounded-lg col-span-2 sm:col-span-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Last Updated
+                </p>
+                <p className="text-sm font-medium">
+                  {new Date(githubStats.pushedAt).toLocaleDateString()}
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </FadeIn>
 

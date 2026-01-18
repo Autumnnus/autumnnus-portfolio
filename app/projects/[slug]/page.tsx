@@ -37,8 +37,12 @@ export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
   const { slug } = await params;
+  const project = projects.find((p) => p.slug === slug);
+  const { getRepoStats } = await import("@/lib/github");
+
+  const githubStats = project ? await getRepoStats(project.github) : null;
 
   // We delegate the rendering to the Client Component which will use the context
   // to pick the correct language.
-  return <ProjectDetailView slug={slug} />;
+  return <ProjectDetailView slug={slug} githubStats={githubStats} />;
 }

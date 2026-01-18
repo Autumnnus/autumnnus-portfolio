@@ -16,12 +16,7 @@ export default function Hero() {
     <section id="hero" className="py-16 animate-pixel-fade-in">
       <div className="flex items-center gap-4 mb-6">
         <div className="text-6xl pixel-border p-4 bg-card relative w-24 h-24 flex items-center justify-center">
-          {/* If avatar is an image path */}
-          {avatar.startsWith("/") || avatar.startsWith("http") ? (
-            <Image src={avatar} alt={name} fill className="object-cover p-2" />
-          ) : (
-            <span>{avatar}</span>
-          )}
+          {<Image src={avatar} alt={name} fill className="object-cover p-2" />}
         </div>
         <div>
           <h1 className="text-4xl font-bold mb-2">

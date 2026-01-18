@@ -1,4 +1,18 @@
+import { StaticImageData } from "next/image";
+
 export type Language = "tr" | "en";
+
+export interface GithubRepoStats {
+  stars: number;
+  forks: number;
+  openIssues: number;
+  watchers: number;
+  createdAt: string;
+  updatedAt: string;
+  pushedAt: string;
+  language: string;
+  defaultBranch: string;
+}
 
 export interface SocialLink {
   name: string;
@@ -21,7 +35,7 @@ export interface HeroSection {
   greetingText: string;
   name: string;
   title: string;
-  avatar: string;
+  avatar: string | StaticImageData;
   description: string;
   skills: Technology[];
   buttons: Button[];
@@ -36,7 +50,7 @@ export interface AboutSection {
   projectCount: string;
   projectLabel: string;
   githubActivityTitle: string;
-  avatar: string;
+  avatar: string | StaticImageData;
 }
 
 export type ProjectStatus = "Working" | "Building" | "Completed" | "Archived";
@@ -46,12 +60,10 @@ export interface Project {
   title: string;
   shortDescription: string;
   fullDescription: string;
-  coverImage: string;
+  coverImage: string | StaticImageData;
   technologies: Technology[];
   status: ProjectStatus;
-  timeline: string;
-  role: string;
-  team: string;
+  category: string;
   github?: string;
   liveDemo?: string;
   featured?: boolean;
@@ -63,7 +75,7 @@ export interface BlogPost {
   description: string;
   date: string;
   readTime: string;
-  coverImage: string;
+  coverImage: string | StaticImageData;
   tags: string[];
   featured?: boolean;
   content: string;
@@ -74,7 +86,7 @@ export interface WorkExperience {
   role: string;
   period: string;
   description: string;
-  logo: string;
+  logo: string | StaticImageData;
 }
 
 export interface NavigationItem {
@@ -97,8 +109,7 @@ export interface ContentConfig {
     projectCountText: string;
     noResultsText: string;
     backToProjectsText: string;
-    timelineLabel: string;
-    roleLabel: string;
+    categoryLabel: string;
     statusLabel: string;
     liveDemoText: string;
     sourceCodeText: string;

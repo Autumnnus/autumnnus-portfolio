@@ -6,25 +6,17 @@ import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
-import { BlogPost } from "@/types/contents";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export default function BlogPostView({ slug }: { slug: string }) {
   const { content } = useLanguage();
   const t = useTranslations("Blog");
   const blogPosts = content.blog.items || [];
 
-  const [post, setPost] = useState<BlogPost | undefined>();
-
-  useEffect(() => {
-    const foundPost = blogPosts.find((p) => p.slug === slug);
-    if (foundPost) {
-      setPost(foundPost);
-    }
-  }, [slug, blogPosts]);
+  const post = blogPosts.find((p) => p.slug === slug);
 
   if (!post) {
     return null;
@@ -46,12 +38,22 @@ export default function BlogPostView({ slug }: { slug: string }) {
       {/* Cover Image */}
       <FadeIn delay={0.2}>
         <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-linear-to-br from-primary/20 via-accent/20 to-secondary/20 rounded-lg overflow-hidden mb-8">
-          <div className="absolute inset-0 flex items-center justify-center text-9xl opacity-30">
-            {/* Fallback icons based on tags logic or just a default */}
-            {post.tags[0] === "Frontend" && "🎨"}
-            {/* ... other mappings ... */}
-            {!post.tags[0] && "📝"}
-          </div>
+          {post.coverImage ? (
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-9xl opacity-30">
+              {/* Fallback icons based on tags logic or just a default */}
+              {post.tags[0] === "Frontend" && "🎨"}
+              {/* ... other mappings ... */}
+              {!post.tags[0] && "📝"}
+            </div>
+          )}
         </div>
       </FadeIn>
 

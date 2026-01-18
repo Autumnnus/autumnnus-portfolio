@@ -13,14 +13,21 @@ export default function ProjectsPage() {
   const t = useTranslations("Projects");
   const projects = content.projects.items || [];
 
-  // Calculate statuses dynamically from the current projects list
+  // Calculate counts dynamically from the current projects list
   const statusCounts = new Map<Project["status"], number>();
+  const categoryCounts = new Map<string, number>();
+
   projects.forEach((project) => {
     statusCounts.set(
       project.status,
       (statusCounts.get(project.status) || 0) + 1,
     );
+    categoryCounts.set(
+      project.category,
+      (categoryCounts.get(project.category) || 0) + 1,
+    );
   });
+
   const statuses = Array.from(statusCounts.entries()).map(
     ([status, count]) => ({
       status,
@@ -28,14 +35,26 @@ export default function ProjectsPage() {
     }),
   );
 
+  const categories = Array.from(categoryCounts.entries()).map(
+    ([category, count]) => ({
+      category,
+      count,
+    }),
+  );
+
   const [selectedStatus, setSelectedStatus] = useState<
     Project["status"] | "All"
   >("All");
+  const [selectedCategory, setSelectedCategory] = useState<string | "All">(
+    "All",
+  );
 
-  const filteredProjects =
-    selectedStatus === "All"
-      ? projects
-      : projects.filter((p) => p.status === selectedStatus);
+  const filteredProjects = projects.filter((p) => {
+    const statusMatch = selectedStatus === "All" || p.status === selectedStatus;
+    const categoryMatch =
+      selectedCategory === "All" || p.category === selectedCategory;
+    return statusMatch && categoryMatch;
+  });
 
   return (
     <Container className="py-12 sm:py-20">
@@ -52,29 +71,58 @@ export default function ProjectsPage() {
       {/* Separator */}
       <div className="h-px bg-border/50 mb-12" />
 
-      {/* Filter by Status */}
-      <div className="mb-12">
-        <h2 className="text-xl sm:text-2xl font-bold mb-6">
-          {t("filterByStatus")}
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            variant={selectedStatus === "All" ? "default" : "outline"}
-            className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-            onClick={() => setSelectedStatus("All")}
-          >
-            All ({projects.length})
-          </Badge>
-          {statuses.map(({ status, count }) => (
+      {/* Filters */}
+      <div className="flex flex-col gap-10 mb-12">
+        {/* Filter by Status */}
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-6">
+            {t("filterByStatus")}
+          </h2>
+          <div className="flex flex-wrap gap-2">
             <Badge
-              key={status}
-              variant={selectedStatus === status ? "default" : "outline"}
+              variant={selectedStatus === "All" ? "default" : "outline"}
               className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-              onClick={() => setSelectedStatus(status)}
+              onClick={() => setSelectedStatus("All")}
             >
-              {status} ({count})
+              {t("allProjects")} ({projects.length})
             </Badge>
-          ))}
+            {statuses.map(({ status, count }) => (
+              <Badge
+                key={status}
+                variant={selectedStatus === status ? "default" : "outline"}
+                className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+                onClick={() => setSelectedStatus(status)}
+              >
+                {status} ({count})
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        {/* Filter by Category */}
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-6">
+            {t("filterByCategory")}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant={selectedCategory === "All" ? "default" : "outline"}
+              className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+              onClick={() => setSelectedCategory("All")}
+            >
+              {t("allCategories")} ({projects.length})
+            </Badge>
+            {categories.map(({ category, count }) => (
+              <Badge
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category} ({count})
+              </Badge>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -82,7 +130,13 @@ export default function ProjectsPage() {
       <div>
         <div className="flex items-baseline gap-3 mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold">
-            {selectedStatus === "All" ? t("allProjects") : `${selectedStatus}`}
+            {selectedStatus === "All" && selectedCategory === "All"
+              ? t("allProjects")
+              : `${selectedStatus !== "All" ? selectedStatus : ""} ${
+                  selectedStatus !== "All" && selectedCategory !== "All"
+                    ? "&"
+                    : ""
+                } ${selectedCategory !== "All" ? selectedCategory : ""}`}
           </h2>
           <span className="text-muted-foreground text-sm">
             ({filteredProjects.length} {t("projectCount")})
