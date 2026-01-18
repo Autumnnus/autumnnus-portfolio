@@ -108,17 +108,49 @@ export default function ProjectDetailView({
               />
             </div>
           ) : (
+            /* Premium Detail Fallback UI */
             <div
-              className={`relative w-full h-64 sm:h-80 lg:h-96 ${seasonalGradient} rounded-lg overflow-hidden`}
+              className={`relative w-full h-[300px] sm:h-[400px] lg:h-[500px] ${seasonalGradient} rounded-xl overflow-hidden shadow-2xl flex items-center justify-center`}
             >
-              <div className="absolute inset-0 flex items-center justify-center p-12">
-                <div className="relative w-full max-w-3xl aspect-video bg-gray-900 rounded-lg shadow-2xl flex items-center justify-center">
-                  <div className="text-6xl sm:text-8xl opacity-50">
-                    <Icon
-                      src={project.technologies[0]?.icon}
-                      alt="icon"
-                      size={80}
-                    />
+              {/* Animated Background Blobs */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
+                <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px] animate-pulse delay-1000" />
+              </div>
+
+              {/* Glassmorphism Mockup */}
+              <div className="relative z-10 w-full max-w-2xl aspect-video mx-auto px-6">
+                <div className="w-full h-full bg-white/10 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col items-center justify-center p-8 border-b-0">
+                  {/* Browser-like Header */}
+                  <div className="absolute top-0 left-0 right-0 h-10 border-b border-white/10 flex items-center px-4 gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500/40" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/40" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/40" />
+                  </div>
+
+                  {/* Icon and Main Content */}
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-linear-to-br from-white/10 to-transparent flex items-center justify-center shadow-xl border border-white/10">
+                      {project.technologies[0]?.icon ? (
+                        <Icon
+                          src={project.technologies[0].icon}
+                          alt="Project Tech"
+                          size={64}
+                          className="drop-shadow-2xl"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded bg-primary/20 animate-pulse" />
+                      )}
+                    </div>
+
+                    <div className="space-y-3 w-full max-w-sm">
+                      <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full w-3/4 bg-primary/40 rounded-full" />
+                      </div>
+                      <div className="h-2 w-1/2 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full w-1/2 bg-primary/20 rounded-full" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

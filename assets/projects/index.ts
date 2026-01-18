@@ -30,13 +30,11 @@ import quizApp3 from "./quiz-website/quiz-app-3.png";
 import quizApp from "./quiz-website/quiz-app.png";
 import starWarsApollo1 from "./star-wars-apollo/index-1.png";
 import starWarsApollo2 from "./star-wars-apollo/index-2.png";
-import test from "./test.png";
 import weatherApp from "./weather-app/index.png";
 import whatsappClone2 from "./whatsapp-clone/index-2.png";
 import whatsappClone from "./whatsapp-clone/index.png";
 
 export const projectAssets = {
-  test: [test],
   quizApp: [quizApp, quizApp2, quizApp3],
   colorFlipper: [colorFlipper],
   weatherApp: [weatherApp],

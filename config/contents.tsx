@@ -93,8 +93,6 @@ export const PROJECTS_DATA = [
   // Backend Projects
   {
     slug: "e-commerce-api",
-    coverImage: assets.projects.test[0],
-    images: assets.projects.test,
     technologies: [SKILLS.JAVA, SKILLS.SPRING_BOOT, SKILLS.POSTGRES],
     status: "Completed" as const,
     category: "Backend",
@@ -119,7 +117,6 @@ export const PROJECTS_DATA = [
   },
   {
     slug: "gallerist",
-    images: assets.projects.test,
     technologies: [SKILLS.JAVA, SKILLS.SPRING_BOOT, SKILLS.POSTGRES],
     status: "Completed" as const,
     category: "Backend",
@@ -142,7 +139,6 @@ export const PROJECTS_DATA = [
   },
   {
     slug: "spring-boot-tutorials",
-    images: assets.projects.test,
     technologies: [SKILLS.JAVA, SKILLS.SPRING_BOOT, SKILLS.POSTGRES],
     status: "Completed" as const,
     category: "Backend",
@@ -165,7 +161,6 @@ export const PROJECTS_DATA = [
   },
   {
     slug: "my-games-backend",
-    images: assets.projects.test,
     technologies: [
       SKILLS.TYPESCRIPT,
       SKILLS.EXPRESS,
@@ -175,7 +170,7 @@ export const PROJECTS_DATA = [
     status: "Completed" as const,
     category: "Backend",
     github: "https://github.com/Autumnnus/my-games-backend",
-    featured: false,
+    featured: true,
     translations: {
       tr: {
         title: "My Games Backend",
@@ -193,7 +188,6 @@ export const PROJECTS_DATA = [
   },
   {
     slug: "qa-rest-api",
-    images: assets.projects.test,
     technologies: [SKILLS.JAVASCRIPT, SKILLS.EXPRESS, SKILLS.MONGODB],
     status: "Completed" as const,
     category: "Backend",
@@ -253,7 +247,7 @@ export const PROJECTS_DATA = [
     category: "Frontend",
     github: "https://github.com/Autumnnus/starwars-apollo-graphql",
     liveDemo: "https://starwars-apollo-graphql.netlify.app/",
-    featured: true,
+    featured: false,
     translations: {
       tr: {
         title: "Star Wars Apollo",
@@ -277,7 +271,7 @@ export const PROJECTS_DATA = [
     category: "Frontend",
     github: "https://github.com/Autumnnus/Javascript-Methods",
     liveDemo: "https://javascriptmethods.netlify.app",
-    featured: false,
+    featured: true,
     translations: {
       tr: {
         title: "JS Methods",
@@ -438,7 +432,7 @@ export const PROJECTS_DATA = [
     category: "Frontend",
     github: "https://github.com/Autumnnus/E-Commerce-React-Redux-",
     liveDemo: "https://e-commerce-vector-shop.netlify.app/",
-    featured: true,
+    featured: false,
     translations: {
       tr: {
         title: "E-Commerce Frontend",
@@ -482,7 +476,6 @@ export const PROJECTS_DATA = [
   },
   {
     slug: "fast-localization",
-    images: assets.projects.test,
     technologies: [SKILLS.NODEJS],
     status: "Completed" as const,
     category: "Tool",
@@ -505,7 +498,6 @@ export const PROJECTS_DATA = [
   },
   {
     slug: "pdx-modifier",
-    images: assets.projects.test,
     technologies: [SKILLS.NODEJS],
     status: "Completed" as const,
     category: "Tool",
@@ -793,7 +785,7 @@ const WORK_DATA = [
 
 function getProjects(lang: Language): Project[] {
   return PROJECTS_DATA.map((p) => {
-    const images = p.images || assets.projects.test;
+    const images = p.images || [];
     const coverImage = p.coverImage || images[0];
 
     return {

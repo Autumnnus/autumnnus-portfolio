@@ -45,32 +45,45 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
     >
       {/* Cover Image with Gradient */}
       <div
-        className={`relative w-full h-48 sm:h-56 ${seasonalGradient} overflow-hidden`}
+        className={`relative w-full h-48 sm:h-56 ${seasonalGradient} overflow-hidden flex items-center justify-center`}
       >
-        {project.coverImage && (
-          <Image
-            src={project.coverImage}
-            alt={project.title}
-            fill
-            className="object-cover opacity-80 group-hover:scale-110 transition-transform duration-500"
-          />
-        )}
-        <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none">
-          {/* Mockup Screen or Icon overlay */}
-          {!project.coverImage && (
-            <div className="relative w-full max-w-md aspect-video bg-gray-900 rounded-lg shadow-2xl transform -rotate-2 group-hover:rotate-0 transition-transform duration-300 flex items-center justify-center">
-              <div className="text-4xl opacity-50">
-                {project.technologies[0]?.icon && (
+        {project.coverImage ? (
+          <>
+            <Image
+              src={project.coverImage}
+              alt={project.title}
+              fill
+              className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          </>
+        ) : (
+          /* Premium Fallback UI */
+          <div className="relative w-full h-full flex items-center justify-center p-6">
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-0 -left-4 w-24 h-24 bg-primary rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-0 -right-4 w-24 h-24 bg-orange-500 rounded-full blur-3xl animate-pulse delay-700" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-[240px] aspect-video bg-white/5 dark:bg-black/20 backdrop-blur-md border border-white/10 dark:border-white/5 rounded-xl shadow-2xl flex flex-col items-center justify-center group-hover:scale-105 group-hover:-rotate-1 transition-all duration-500">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white/10 dark:bg-white/5 mb-3 shadow-inner">
+                {project.technologies[0]?.icon ? (
                   <Icon
                     src={project.technologies[0].icon}
-                    alt="Tech"
-                    size={48}
+                    alt="Main Tech"
+                    size={32}
+                    className="opacity-80 group-hover:opacity-100 transition-opacity"
                   />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-primary/20 animate-pulse" />
                 )}
               </div>
+              <div className="w-24 h-1.5 bg-white/10 dark:bg-white/5 rounded-full overflow-hidden">
+                <div className="w-2/3 h-full bg-primary/40 rounded-full animate-progress" />
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Content */}
