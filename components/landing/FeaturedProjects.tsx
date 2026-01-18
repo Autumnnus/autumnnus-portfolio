@@ -3,9 +3,11 @@
 import SectionHeading from "@/components/common/SectionHeading";
 import ProjectCard from "@/components/projects/ProjectCard";
 import { useLanguage } from "@/components/providers/LanguageContext";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export default function FeaturedProjects() {
+  const t = useTranslations("Projects");
   const { content } = useLanguage();
   const featuredProjects = (content.projects.items || [])
     .filter((p) => p.featured)
@@ -13,10 +15,7 @@ export default function FeaturedProjects() {
 
   return (
     <section className="py-12" id="projects">
-      <SectionHeading
-        subHeading={content.projects.viewAllText}
-        heading={content.projects.title}
-      />
+      <SectionHeading subHeading={t("subTitle")} heading={t("title")} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {featuredProjects.map((project, index) => (

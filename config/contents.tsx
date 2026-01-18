@@ -74,25 +74,26 @@ const SKILLS = {
 const SOCIAL_LINKS = {
   GITHUB: {
     name: "GitHub",
-    href: "https://github.com",
+    href: "https://github.com/Autumnnus",
     icon: "https://cdn.simpleicons.org/github/181717",
   },
   LINKEDIN: {
     name: "LinkedIn",
-    href: "https://linkedin.com",
+    href: "https://www.linkedin.com/in/kadir-topcu/",
     icon: "https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/linkedin.svg",
   },
   EMAIL: {
     name: "Email",
-    href: "mailto:hello@example.com",
+    href: "mailto:akadir.38@gmail.com",
     icon: "https://cdn.simpleicons.org/gmail/EA4335",
   },
 };
 
-const PROJECTS_DATA = [
+export const PROJECTS_DATA = [
   // Backend Projects
   {
     slug: "e-commerce-api",
+    coverImage: assets.projects.test[0],
     images: assets.projects.test,
     technologies: [SKILLS.JAVA, SKILLS.SPRING_BOOT, SKILLS.POSTGRES],
     status: "Completed" as const,
@@ -303,6 +304,7 @@ const PROJECTS_DATA = [
     ],
     status: "Archived" as const,
     category: "Frontend",
+    coverImage: assets.projects.myGamesLegacy[1],
     github: "https://github.com/Autumnnus/my-games-old",
     liveDemo: "https://my-games-OLD.netlify.app/",
     featured: false,
@@ -324,13 +326,14 @@ const PROJECTS_DATA = [
   {
     slug: "whatsapp-clone",
     images: assets.projects.whatsappClone,
+    coverImage: assets.projects.whatsappClone[1],
     technologies: [
       SKILLS.REACT,
       SKILLS.TYPESCRIPT,
       SKILLS.REDUX,
       SKILLS.FIREBASE,
     ],
-    status: "Building" as const,
+    status: "Completed" as const,
     category: "Frontend",
     github: "https://github.com/Autumnnus/Whatsapp-Clone---React",
     liveDemo: "https://wpclone-by-vector.netlify.app/",
@@ -347,35 +350,6 @@ const PROJECTS_DATA = [
         shortDescription: "Firebase-based messaging application",
         fullDescription:
           "WhatsApp clone with real-time messaging features developed using Firebase services (Beta).",
-      },
-    },
-  },
-  {
-    slug: "dersigo",
-    images: assets.projects.test,
-    technologies: [
-      SKILLS.NEXTJS,
-      SKILLS.REACT,
-      SKILLS.JAVASCRIPT,
-      SKILLS.REDUX,
-    ],
-    status: "Completed" as const,
-    category: "Frontend",
-    github: "https://github.com/Autumnnus/DersiGo",
-    liveDemo: "https://dersigo.vercel.app/",
-    featured: false,
-    translations: {
-      tr: {
-        title: "DersiGo",
-        shortDescription: "Kullanıcı ve gönderi temalı sosyal platform",
-        fullDescription:
-          "Dummy API istekleriyle çalışan, kullanıcı profilleri ve gönderi akışı sunan Next.js projesi.",
-      },
-      en: {
-        title: "DersiGo",
-        shortDescription: "User and post themed social platform",
-        fullDescription:
-          "Next.js project offering user profiles and post feed, working with Dummy API requests.",
       },
     },
   },
@@ -788,19 +762,30 @@ On this journey, I didn't just learn syntax; I also learned the art of problem-s
 
 const WORK_DATA = [
   {
-    company: "Tech Solutions",
-    logo: "https://cdn.simpleicons.org/vercel/000000",
-    period: { tr: "2024 - Günümüz", en: "2024 - Present" },
+    company: "Qpien",
+    logo: "https://framerusercontent.com/images/Fsa1ndV2XvTCGEdC1yz0u87Qg.png",
+    period: { tr: "Şub 2024 - Günümüz", en: "Feb 2024 - Present" },
+    locationType: { tr: "Hibrit", en: "Hybrid" },
     translations: {
       tr: {
-        role: "Frontend Developer",
-        description:
-          "Modern web uygulamaları geliştirme ve kullanıcı arayüzü optimizasyonu.",
+        role: "Full Stack Developer",
+        description: `
+- React, Zustand ve React Hook Form kullanarak kullanıcı dostu arayüzler geliştirdim.
+- Node.js ve MongoDB ile ölçeklenebilir backend API’leri oluşturdum.
+- OpenAI, Embeddings ve Pinecone kullanarak RAG kontrollü bir AI modülünün temelini ve geliştirilmesini destekledim.
+- Clean Code, SOLID ve katmanlı mimari prensiplerini (Onion Architecture, CQRS) uyguladım.
+- Ekip içi iş birliği için Jira, Bitbucket ve GraphQL gibi araçları etkin şekilde kullandım.
+        `,
       },
       en: {
-        role: "Frontend Developer",
-        description:
-          "Developing modern web applications and optimizing user interfaces.",
+        role: "Full Stack Developer",
+        description: `
+- Built user-friendly frontend interfaces using React, Zustand, and React Hook Form.
+- Developed scalable backend APIs with Node.js and MongoDB.
+- Contributed to the foundation and development of an AI module powered by RAG using OpenAI, Embeddings, and Pinecone.
+- Applied Clean Code, SOLID, and layered architecture principles (Onion Architecture, CQRS).
+- Effectively collaborated using tools such as Jira, Bitbucket, and GraphQL.
+        `,
       },
     },
   },
@@ -809,11 +794,13 @@ const WORK_DATA = [
 function getProjects(lang: Language): Project[] {
   return PROJECTS_DATA.map((p) => {
     const images = p.images || assets.projects.test;
+    const coverImage = p.coverImage || images[0];
+
     return {
       ...p.translations[lang],
       slug: p.slug,
       images: images,
-      coverImage: images[0],
+      coverImage: coverImage,
       technologies: p.technologies,
       status: p.status,
       category: p.category,
@@ -842,6 +829,7 @@ function getWorkExperiences(lang: Language): WorkExperience[] {
     company: w.company,
     logo: w.logo,
     period: w.period[lang],
+    locationType: w.locationType[lang],
   }));
 }
 
@@ -851,7 +839,7 @@ export const portfolioContent: PortfolioConfig = {
       items: [
         { name: "Ana Sayfa", href: "/" },
         { name: "Projeler", href: "/projects" },
-        { name: "Blog", href: "/blog" },
+        // { name: "Blog", href: "/blog" },
         { name: "Deneyim", href: "/work" },
       ],
     },
@@ -869,8 +857,7 @@ export const portfolioContent: PortfolioConfig = {
     about: {
       title: "Hakkımda",
       description:
-        "Merhaba! Ben Kadir. Teknolojiye olan tutkumla modern ve kullanıcı dostu web uygulamaları geliştiriyorum. Yeni şeyler öğrenmeyi ve karmaşık problemleri çözmeyi seviyorum.",
-      experienceCount: "3+ Yıl",
+        "Ölçeklenebilir, kullanıcı odaklı uygulamalar geliştirmeye tutkulu bir Full-Stack Geliştiriciyim. Uzmanlığım, React, Zustand ve TypeScript ile frontend geliştirmenin yanı sıra Node.js, MongoDB ve Spring Boot ile backend sistemlerini kapsamaktadır.\n Mevcut rolümde, sezgisel kullanıcı arayüzü bileşenlerinden sağlam API servislerine kadar uçtan uca özellikler tasarlıyor ve uyguluyorum. Ayrıca OpenAI embedding'leri ve Pinecone'u entegre ederek daha akıllı arama ve bilgi yönetimi çözümleri sunan yapay zeka destekli modüllere katkıda bulundum.\n Temiz mimari prensipleriyle (SOLID, CQRS, Onion Architecture) çalışmaktan keyif alıyor ve sürekli olarak sürdürülebilir, yüksek kaliteli kod yazmayı hedefliyorum. Teknik becerilerin ötesinde, çevik (agile) ekipler içinde iş birliğine ve etkili problem çözmeye değer veriyorum.\n Şu anda, gelişen teknolojilere dair merakımı korurken, yapay zeka entegrasyonları ve ölçeklenebilir backend sistemleri konusundaki uzmanlığımı geliştiriyorum.",
       experienceLabel: "Deneyim",
       projectCount: "20+ Proje",
       projectLabel: "Proje",
@@ -930,7 +917,7 @@ export const portfolioContent: PortfolioConfig = {
       items: [
         { name: "Home", href: "/" },
         { name: "Projects", href: "/projects" },
-        { name: "Blog", href: "/blog" },
+        // { name: "Blog", href: "/blog" },
         { name: "Work", href: "/work" },
       ],
     },
@@ -948,8 +935,7 @@ export const portfolioContent: PortfolioConfig = {
     about: {
       title: "About Me",
       description:
-        "Hello! I'm Kadir. I develop modern and user-friendly web applications with my passion for technology. I love learning new things and solving complex problems.",
-      experienceCount: "3+ Years",
+        "I’m a Full-Stack Developer passionate about building scalable, user-centric applications. My expertise spans frontend development with React, Zustand, and TypeScript, as well as backend systems with Node.js, MongoDB, and Spring Boot.\n At my current role, I design and implement end-to-end features — from intuitive UI components to robust API services. I’ve also contributed to AI-powered modules by integrating OpenAI embeddings and Pinecone, enabling smarter search and knowledge management solutions.\n I enjoy working with clean architecture principles (SOLID, CQRS, Onion Architecture) and continuously seek to write maintainable, high-quality code. Beyond technical skills, I value collaboration and effective problem-solving within agile teams.\n Currently, I’m expanding my expertise in AI integrations and scalable backend systems while staying curious about emerging technologies.",
       experienceLabel: "Experience",
       projectCount: "20+ Projects",
       projectLabel: "Projects",

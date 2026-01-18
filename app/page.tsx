@@ -1,6 +1,5 @@
 import Container from "@/components/common/Container";
 import About from "@/components/landing/About";
-import FeaturedBlogs from "@/components/landing/FeaturedBlogs";
 import FeaturedProjects from "@/components/landing/FeaturedProjects";
 import GitHubCalendar from "@/components/landing/GitHubCalendar";
 import Hero from "@/components/landing/Hero";
@@ -16,9 +15,9 @@ export default function Home() {
         <Hero />
         <About />
         <WorkExperience />
-        <FeaturedProjects />
         <GitHubCalendar />
-        <FeaturedBlogs />
+        <FeaturedProjects />
+        {/* <FeaturedBlogs /> */}
       </Container>
     </>
   );

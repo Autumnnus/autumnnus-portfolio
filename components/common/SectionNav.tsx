@@ -1,20 +1,19 @@
 "use client";
 
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 const sections = [
-  { id: "hero", key: "home" },
-  { id: "about", key: "about" },
-  { id: "work", key: "work" },
-  { id: "projects", key: "projects" },
-  { id: "github", key: "github" },
-  { id: "blog", key: "blog" },
+  { id: "hero", key: "Navbar.Home" },
+  { id: "about", key: "About.title" },
+  { id: "work", key: "Work.title" },
+  { id: "github", key: "GitHub.title" },
+  { id: "projects", key: "Projects.title" },
 ];
 
 export default function SectionNav() {
-  const { content, language } = useLanguage();
+  const t = useTranslations();
   const [activeSection, setActiveSection] = useState("hero");
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
@@ -47,22 +46,7 @@ export default function SectionNav() {
   }, []);
 
   const getTitle = (key: string) => {
-    switch (key) {
-      case "home":
-        return language === "tr" ? "Ana Sayfa" : "Home";
-      case "about":
-        return content.about.title;
-      case "work":
-        return content.work.title;
-      case "projects":
-        return content.projects.title;
-      case "github":
-        return content.about.githubActivityTitle;
-      case "blog":
-        return content.blog.title;
-      default:
-        return "";
-    }
+    return t(key);
   };
 
   const scrollToSection = (id: string) => {

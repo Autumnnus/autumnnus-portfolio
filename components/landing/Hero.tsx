@@ -3,21 +3,20 @@
 import Icon from "@/components/common/Icon";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function Hero() {
   const { content } = useLanguage();
   const t = useTranslations("Hero");
 
-  const { name, title, avatar, skills, buttons, socialLinks } = content.hero;
+  const { name, title, skills, buttons, socialLinks } = content.hero;
 
   return (
     <section id="hero" className="py-16 animate-pixel-fade-in">
       <div className="flex items-center gap-4 mb-6">
-        <div className="text-6xl pixel-border p-4 bg-card relative w-24 h-24 flex items-center justify-center">
+        {/* <div className="text-6xl pixel-border p-4 bg-card relative w-24 h-24 flex items-center justify-center">
           {<Image src={avatar} alt={name} fill className="object-center p-2" />}
-        </div>
+        </div> */}
         <div>
           <h1 className="text-4xl font-bold mb-2">
             {t("greeting")} <span className="text-primary">{name}</span>

@@ -9,14 +9,15 @@ interface GitHubCalendarProps {
   username?: string;
 }
 
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { Leaf, Snowflake } from "lucide-react";
+import { useTranslations } from "next-intl";
+import SectionHeading from "../common/SectionHeading";
 
 export default function GitHubCalendar({
   username = "Autumnnus",
 }: GitHubCalendarProps) {
+  const t = useTranslations("GitHub");
   const { resolvedTheme } = useTheme();
-  const { content } = useLanguage();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,55 +54,51 @@ export default function GitHubCalendar({
 
   const colorScheme = resolvedTheme === "dark" ? "dark" : "light";
 
-  if (loading) {
-    return (
-      <div className="flex justify-center p-4">
-        <div className="animate-pulse flex gap-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="w-3 h-3 bg-muted rounded-sm"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (data.length === 0) {
-    return null;
-  }
-
   return (
-    <div
-      id="github"
-      className="w-full flex flex-col items-center justify-center p-4 sm:p-8"
-    >
-      <FadeIn delay={0.2}>
-        <div className="border border-border/50 p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">
-              {resolvedTheme === "dark" ? (
-                <Snowflake className="w-6 h-6 text-primary" />
-              ) : (
-                <Leaf className="w-6 h-6 text-primary" />
-              )}
-            </span>
-            <h3 className="text-lg font-bold">
-              {content.about.githubActivityTitle}
-            </h3>
-          </div>
-
-          <div className="overflow-x-auto pb-2">
-            <ActivityCalendar
-              data={data}
-              theme={theme}
-              colorScheme={colorScheme}
-              blockSize={12}
-              blockMargin={4}
-              fontSize={12}
-              showWeekdayLabels
-            />
+    <section id="github" className="py-12">
+      {loading ? (
+        <div className="flex justify-center p-4">
+          <div className="animate-pulse flex gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="w-3 h-3 bg-muted rounded-sm"></div>
+            ))}
           </div>
         </div>
-      </FadeIn>
-    </div>
+      ) : data.length === 0 ? (
+        <div className="text-center text-muted-foreground">
+          No activity data found
+        </div>
+      ) : (
+        <>
+          <SectionHeading subHeading={t("subTitle")} heading={t("title")} />
+          <FadeIn delay={0.2}>
+            <div className="border border-border/50 p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">
+                  {resolvedTheme === "dark" ? (
+                    <Snowflake className="w-6 h-6 text-primary" />
+                  ) : (
+                    <Leaf className="w-6 h-6 text-primary" />
+                  )}
+                </span>
+                <h3 className="text-lg font-bold">{t("activityTitle")}</h3>
+              </div>
+
+              <div className="overflow-x-auto pb-2">
+                <ActivityCalendar
+                  data={data}
+                  theme={theme}
+                  colorScheme={colorScheme}
+                  blockSize={12}
+                  blockMargin={4}
+                  fontSize={12}
+                  showWeekdayLabels
+                />
+              </div>
+            </div>
+          </FadeIn>
+        </>
+      )}
+    </section>
   );
 }

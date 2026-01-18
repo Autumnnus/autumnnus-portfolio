@@ -32,6 +32,7 @@ import starWarsApollo1 from "./star-wars-apollo/index-1.png";
 import starWarsApollo2 from "./star-wars-apollo/index-2.png";
 import test from "./test.png";
 import weatherApp from "./weather-app/index.png";
+import whatsappClone2 from "./whatsapp-clone/index-2.png";
 import whatsappClone from "./whatsapp-clone/index.png";
 
 export const projectAssets = {
@@ -55,7 +56,7 @@ export const projectAssets = {
   movieApp: [movieApp],
   flightApp: [flightApp, flightApp2],
   productApp: [productApp],
-  whatsappClone: [whatsappClone],
+  whatsappClone: [whatsappClone, whatsappClone2],
   myGamesLegacy: [myGamesLegacy1, myGamesLegacy2, myGamesLegacy3],
   myGames: [myGames1, myGames2, myGames3],
   javascriptMethods: [

@@ -45,7 +45,6 @@ export interface HeroSection {
 export interface AboutSection {
   title: string;
   description: string;
-  experienceCount: string;
   experienceLabel: string;
   projectCount: string;
   projectLabel: string;
@@ -86,6 +85,7 @@ export interface WorkExperience {
   company: string;
   role: string;
   period: string;
+  locationType: string;
   description: string;
   logo: string | StaticImageData;
 }

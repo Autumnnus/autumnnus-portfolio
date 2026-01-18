@@ -4,14 +4,16 @@ import Icon from "@/components/common/Icon";
 import SectionHeading from "@/components/common/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export default function WorkExperience() {
+  const t = useTranslations("Work");
   const { content } = useLanguage();
   const { work } = content;
 
   return (
     <section className="py-12" id="work">
-      <SectionHeading subHeading={work.title} heading={work.title} />
+      <SectionHeading subHeading={t("subTitle")} heading={t("title")} />
 
       <div className="relative max-w-3xl mx-auto">
         {/* Vertical Line */}
@@ -46,9 +48,13 @@ export default function WorkExperience() {
                   </span>
                 </div>
 
-                <h4 className="text-lg font-semibold text-muted-foreground mb-4">
-                  {item.company}
-                </h4>
+                <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                  <h4 className="text-lg font-semibold">{item.company}</h4>
+                  <span className="text-sm">•</span>
+                  <span className="text-sm font-medium italic">
+                    {item.locationType}
+                  </span>
+                </div>
 
                 <p className="text-muted-foreground leading-relaxed">
                   {item.description}

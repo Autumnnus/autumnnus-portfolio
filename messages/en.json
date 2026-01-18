@@ -14,15 +14,22 @@
   },
   "About": {
     "title": "About Me",
-    "description": "Hello! I'm Kadir. I develop modern and user-friendly web applications with my passion for technology. I love learning new things and solving complex problems.",
-    "experienceCount": "3+ Years",
+    "subTitle": "Get to Know Me",
+    "description": "I'm a Full-Stack Developer passionate about building scalable, user-centric applications. My expertise spans frontend development with React, Zustand, and TypeScript, as well as backend systems with Node.js, MongoDB, and Spring Boot.\n At my current role, I design and implement end-to-end features — from intuitive UI components to robust API services. I’ve also contributed to AI-powered modules by integrating OpenAI embeddings and Pinecone, enabling smarter search and knowledge management solutions.\n I enjoy working with clean architecture principles (SOLID, CQRS, Onion Architecture) and continuously seek to write maintainable, high-quality code. Beyond technical skills, I value collaboration and effective problem-solving within agile teams.\n Currently, I’m expanding my expertise in AI integrations and scalable backend systems while staying curious about emerging technologies.",
+    "experienceCount": "{count}+ Experience",
     "experienceLabel": "Experience",
-    "projectCount": "20+ Projects",
+    "projectCount": "{count}+ Projects",
     "projectLabel": "Projects",
     "githubActivityTitle": "Coding Activity"
   },
+  "GitHub": {
+    "title": "Code Contributions",
+    "subTitle": "Activity",
+    "activityTitle": "GitHub Activity"
+  },
   "Projects": {
     "title": "Featured Projects",
+    "subTitle": "Selected Works",
     "description": "My projects and work across different technologies and domains.",
     "viewAll": "View All",
     "filterByStatus": "Filter by Status",
@@ -59,6 +66,7 @@
   },
   "Work": {
     "title": "Experience",
+    "subTitle": "Professional Journey",
     "description": "My work experiences across different companies and roles.",
     "allExperiences": "All Experiences",
     "experienceCount": "experiences"

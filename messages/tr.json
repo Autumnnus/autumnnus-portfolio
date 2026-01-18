@@ -14,15 +14,22 @@
   },
   "About": {
     "title": "Hakkımda",
-    "description": "Merhaba! Ben Kadir. Teknolojiye olan tutkumla modern ve kullanıcı dostu web uygulamaları geliştiriyorum. Yeni şeyler öğrenmeyi ve karmaşık problemleri çözmeyi seviyorum.",
-    "experienceCount": "3+ Yıl",
+    "subTitle": "Beni Tanıyın",
+    "description": "Ölçeklenebilir, kullanıcı odaklı uygulamalar geliştirmeye tutkulu bir Full-Stack Geliştiriciyim. Uzmanlığım, React, Zustand ve TypeScript ile frontend geliştirmenin yanı sıra Node.js, MongoDB ve Spring Boot ile backend sistemlerini kapsamaktadır.\n Mevcut rolümde, sezgisel kullanıcı arayüzü bileşenlerinden sağlam API servislerine kadar uçtan uca özellikler tasarlıyor ve uyguluyorum. Ayrıca OpenAI embedding'leri ve Pinecone'u entegre ederek daha akıllı arama ve bilgi yönetimi çözümleri sunan yapay zeka destekli modüllere katkıda bulundum.\n Temiz mimari prensipleriyle (SOLID, CQRS, Onion Architecture) çalışmaktan keyif alıyor ve sürekli olarak sürdürülebilir, yüksek kaliteli kod yazmayı hedefliyorum. Teknik becerilerin ötesinde, çevik (agile) ekipler içinde iş birliğine ve etkili problem çözmeye değer veriyorum.\n Şu anda, gelişen teknolojilere dair merakımı korurken, yapay zeka entegrasyonları ve ölçeklenebilir backend sistemleri konusundaki uzmanlığımı geliştiriyorum.",
+    "experienceCount": "{count}+ Yıl Deneyim",
     "experienceLabel": "Deneyim",
-    "projectCount": "20+ Proje",
+    "projectCount": "{count}+ Proje",
     "projectLabel": "Proje",
     "githubActivityTitle": "Kodlama Aktivitesi"
   },
+  "GitHub": {
+    "title": "Kod Katkıları",
+    "subTitle": "Aktivite",
+    "activityTitle": "GitHub Aktivitesi"
+  },
   "Projects": {
     "title": "Öne Çıkan Projeler",
+    "subTitle": "Seçilmiş Çalışmalar",
     "description": "Farklı teknolojiler ve alanlardaki projelerim ve çalışmalarım.",
     "viewAll": "Tümünü Gör",
     "filterByStatus": "Duruma Göre Filtrele",
@@ -59,6 +66,7 @@
   },
   "Work": {
     "title": "Deneyimler",
+    "subTitle": "Profesyonel Yolculuk",
     "description": "Farklı şirketler ve rollerdeki iş deneyimlerim.",
     "allExperiences": "Tüm Deneyimler",
     "experienceCount": "deneyim"

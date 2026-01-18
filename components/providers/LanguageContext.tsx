@@ -20,21 +20,34 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 );
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>("tr");
-  const [mounted, setMounted] = useState(false);
+  const [state, setState] = useState<{
+    language: Language;
+    mounted: boolean;
+  }>({
+    language: "tr",
+    mounted: false,
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem("language") as Language;
-    if (saved && (saved === "tr" || saved === "en")) {
-      setLanguage((prev) => (prev !== saved ? saved : prev));
-    }
-    setMounted(true);
+    const initialLang = saved === "tr" || saved === "en" ? saved : "tr";
+
+    const timer = setTimeout(() => {
+      setState({
+        language: initialLang,
+        mounted: true,
+      });
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang);
+    setState((prev) => ({ ...prev, language: lang }));
     localStorage.setItem("language", lang);
   };
+
+  const { language, mounted } = state;
 
   const value = {
     language,

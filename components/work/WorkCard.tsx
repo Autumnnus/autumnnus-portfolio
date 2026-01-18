@@ -8,7 +8,7 @@ interface WorkCardProps {
 }
 
 export default function WorkCard({ experience }: WorkCardProps) {
-  const { company, role, period, description, logo } = experience;
+  const { company, role, period, description, logo, locationType } = experience;
 
   return (
     <article className="group relative flex flex-col sm:flex-row gap-4 sm:gap-6 p-1 transition-all">
@@ -31,6 +31,9 @@ export default function WorkCard({ experience }: WorkCardProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h3 className="font-bold text-lg leading-none">{company}</h3>
+            <span className="text-sm border-l-2 border-border/50 pl-2 sm:pl-3 text-muted-foreground font-medium">
+              {locationType}
+            </span>
           </div>
 
           <span className="text-sm font-pixel text-muted-foreground whitespace-nowrap">
@@ -42,10 +45,13 @@ export default function WorkCard({ experience }: WorkCardProps) {
         <div className="text-base font-medium text-foreground/90">{role}</div>
 
         {/* Description */}
-        <div className="text-sm text-muted-foreground leading-relaxed">
-          <p className="before:content-['•'] before:mr-2 before:text-primary">
-            {description}
-          </p>
+        <div className="text-sm text-muted-foreground leading-relaxed space-y-1">
+          {description
+            .split("\n")
+            .filter((line) => line.trim() !== "")
+            .map((line, index) => (
+              <p key={index}>{line.trim()}</p>
+            ))}
         </div>
       </div>
     </article>
