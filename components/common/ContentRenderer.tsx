@@ -9,14 +9,11 @@ interface ContentRendererProps {
 export default function ContentRenderer({ content }: ContentRendererProps) {
   if (!content) return null;
 
-  // Simple regex to find markdown-style code blocks: ```lang\ncode\n```
-  // It also matches optional headers like "## Title"
   const parts = content.split(/(```[\s\S]*?```|## .*?\n)/g);
 
   return (
     <div className="space-y-4">
       {parts.map((part, index) => {
-        // Handle Code Blocks
         if (part.startsWith("```")) {
           const match = part.match(/```(\w*)\n([\s\S]*?)```/);
           if (match) {
@@ -31,7 +28,6 @@ export default function ContentRenderer({ content }: ContentRendererProps) {
           }
         }
 
-        // Handle Headers
         if (part.startsWith("## ")) {
           return (
             <h2
@@ -43,7 +39,6 @@ export default function ContentRenderer({ content }: ContentRendererProps) {
           );
         }
 
-        // Handle Normal Text
         if (part.trim()) {
           return (
             <p

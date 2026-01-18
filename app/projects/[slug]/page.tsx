@@ -2,7 +2,6 @@ import ProjectDetailView from "@/components/projects/ProjectDetailView";
 import { portfolioContent } from "@/config/contents";
 import { Metadata } from "next";
 
-// We use the English content for static generation and metadata as a default
 const projects = portfolioContent.en.projects.items || [];
 
 interface ProjectDetailPageProps {
@@ -42,7 +41,5 @@ export default async function ProjectDetailPage({
 
   const githubStats = project ? await getRepoStats(project.github) : null;
 
-  // We delegate the rendering to the Client Component which will use the context
-  // to pick the correct language.
   return <ProjectDetailView slug={slug} githubStats={githubStats} />;
 }

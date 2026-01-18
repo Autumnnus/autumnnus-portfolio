@@ -22,6 +22,7 @@ export default function ProjectsPage() {
     "All",
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const filteredProjects = projects.filter((p) => {
     const statusMatch = selectedStatus === "All" || p.status === selectedStatus;
@@ -40,9 +41,12 @@ export default function ProjectsPage() {
     return statusMatch && categoryMatch && searchMatch;
   });
 
-  // Calculate counts dynamically from the filtered results or original list?
-  // Usually, filter counters show potential results. Let's base them on current filters minus themselves for better UX
-  // But for simplicity and consistency with existing code, let's use the full list for category/status items
+  const visibleProjects = filteredProjects.slice(0, visibleCount);
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 6);
+  };
+
   const statusCounts = new Map<Project["status"], number>();
   const categoryCounts = new Map<string, number>();
 
@@ -176,10 +180,21 @@ export default function ProjectsPage() {
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredProjects.map((project, index) => (
+          {visibleProjects.map((project, index) => (
             <ProjectCard key={project.slug} project={project} index={index} />
           ))}
         </div>
+
+        {visibleProjects.length < filteredProjects.length && (
+          <div className="flex justify-center mt-12">
+            <button
+              onClick={handleLoadMore}
+              className="px-8 py-3 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors font-medium"
+            >
+              {t("loadMore") || "Load More"}
+            </button>
+          </div>
+        )}
 
         {filteredProjects.length === 0 && (
           <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-border flex flex-col items-center gap-4">

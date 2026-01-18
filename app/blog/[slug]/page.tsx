@@ -2,7 +2,6 @@ import BlogPostView from "@/components/blog/BlogPostView";
 import { portfolioContent } from "@/config/contents";
 import { Metadata } from "next";
 
-// We use the English content for static generation and metadata
 const blogPosts = portfolioContent.en.blog.items || [];
 
 interface BlogPostPageProps {

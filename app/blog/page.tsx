@@ -12,7 +12,6 @@ export default function BlogPage() {
   const blogPosts = content.blog.items || [];
   const postCount = blogPosts.length;
 
-  // Calculate tags dynamically
   const tagCounts = new Map<string, number>();
   blogPosts.forEach((post) => {
     post.tags.forEach((tag) => {

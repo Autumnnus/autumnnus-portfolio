@@ -13,7 +13,6 @@ interface CommentProps {
   onReply?: (commentId: string) => void;
 }
 
-// Sample user data for demo
 const sampleUsers: Record<string, { name: string; username: string }> = {
   "sample-user-1": { name: "Akshit Sachdeva", username: "@akshit.akdanger" },
   "sample-user-2": { name: "Shubh Ujala", username: "@shubhujala.code" },
@@ -38,7 +37,6 @@ export default function CommentComponent({
     toggleCommentAction(comment.id, type);
 
     if (userAction === type) {
-      // Remove action
       setUserAction(null);
       if (type === "like") {
         setLikes(likes - 1);
@@ -46,7 +44,6 @@ export default function CommentComponent({
         setDislikes(dislikes - 1);
       }
     } else if (userAction) {
-      // Switch action
       if (type === "like") {
         setLikes(likes + 1);
         setDislikes(dislikes - 1);
@@ -56,7 +53,6 @@ export default function CommentComponent({
       }
       setUserAction(type);
     } else {
-      // New action
       if (type === "like") {
         setLikes(likes + 1);
       } else {

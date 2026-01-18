@@ -153,7 +153,6 @@ export interface PortfolioConfig {
   en: ContentConfig;
 }
 
-// Helper types for refactored data management
 export interface DataWithTranslations<TCommon, TLocalized> {
   common: TCommon;
   translations: Record<Language, TLocalized>;

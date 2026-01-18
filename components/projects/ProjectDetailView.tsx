@@ -9,6 +9,7 @@ import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
 import { GithubRepoStats, Project } from "@/types/contents";
 import { ArrowLeft, ArrowRight, ExternalLink, Github } from "lucide-react";
+import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -23,7 +24,13 @@ export default function ProjectDetailView({
   githubStats?: GithubRepoStats | null;
 }) {
   const { content } = useLanguage();
+  const { resolvedTheme } = useTheme();
   const projects = useMemo(() => content.projects.items || [], [content]);
+
+  const isWinter = resolvedTheme === "dark";
+  const seasonalGradient = isWinter
+    ? "bg-linear-to-br from-slate-900 via-blue-950 to-slate-900"
+    : "bg-linear-to-br from-orange-50 via-amber-100 to-orange-50";
 
   const project = projects.find((p) => p.slug === slug);
 
@@ -101,7 +108,9 @@ export default function ProjectDetailView({
               />
             </div>
           ) : (
-            <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-linear-to-br from-pink-400 via-purple-500 to-indigo-600 rounded-lg overflow-hidden">
+            <div
+              className={`relative w-full h-64 sm:h-80 lg:h-96 ${seasonalGradient} rounded-lg overflow-hidden`}
+            >
               <div className="absolute inset-0 flex items-center justify-center p-12">
                 <div className="relative w-full max-w-3xl aspect-video bg-gray-900 rounded-lg shadow-2xl flex items-center justify-center">
                   <div className="text-6xl sm:text-8xl opacity-50">

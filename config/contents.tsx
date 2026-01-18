@@ -806,8 +806,6 @@ const WORK_DATA = [
   },
 ];
 
-// --- Helper functions to assemble content ---
-
 function getProjects(lang: Language): Project[] {
   return PROJECTS_DATA.map((p) => {
     const images = p.images || assets.projects.test;

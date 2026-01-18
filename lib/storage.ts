@@ -6,7 +6,6 @@ const USER_KEY = "autumnnus_user";
 const COMMENTS_KEY = "autumnnus_comments";
 const COMMENT_ACTIONS_KEY = "autumnnus_comment_actions";
 
-// Kullanıcı Yönetimi
 export const getOrCreateUser = (): User => {
   if (typeof window === "undefined") {
     throw new Error("This function can only be called on the client side");
@@ -41,7 +40,6 @@ export const getCurrentUser = (): User | null => {
   return stored ? JSON.parse(stored) : null;
 };
 
-// Yorum Yönetimi
 export const getComments = (postSlug?: string): Comment[] => {
   if (typeof window === "undefined") return [];
 
@@ -101,14 +99,12 @@ export const toggleCommentAction = (
   if (existingActionIndex !== -1) {
     const existingAction = actions[existingActionIndex];
     if (existingAction.type === type) {
-      // Aynı aksiyonu tekrar yapıyorsa, kaldır
       actions.splice(existingActionIndex, 1);
       const comment = comments.find((c) => c.id === commentId);
       if (comment) {
         comment[type === "like" ? "likes" : "dislikes"]--;
       }
     } else {
-      // Farklı aksiyona geçiş yapıyorsa
       const comment = comments.find((c) => c.id === commentId);
       if (comment) {
         comment[existingAction.type === "like" ? "likes" : "dislikes"]--;
@@ -117,7 +113,6 @@ export const toggleCommentAction = (
       actions[existingActionIndex].type = type;
     }
   } else {
-    // Yeni aksiyon
     actions.push({ commentId, userId: user.id, type });
     const comment = comments.find((c) => c.id === commentId);
     if (comment) {
@@ -140,12 +135,10 @@ export const getUserAction = (commentId: string): "like" | "dislike" | null => {
   return action ? action.type : null;
 };
 
-// Yorum sayısını al (istatistikler için)
 export const getCommentCount = (postSlug: string): number => {
   return getComments(postSlug).length;
 };
 
-// Seed data - ilk yüklemede örnek yorumlar ekle
 export const seedComments = () => {
   if (typeof window === "undefined") return;
 

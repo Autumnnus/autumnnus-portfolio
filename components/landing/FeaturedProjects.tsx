@@ -7,7 +7,6 @@ import Link from "next/link";
 
 export default function FeaturedProjects() {
   const { content } = useLanguage();
-  // Ensure we have items array before filtering to avoid crashes if data is missing
   const featuredProjects = (content.projects.items || [])
     .filter((p) => p.featured)
     .slice(0, 4);

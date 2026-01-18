@@ -1,7 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/components/providers/LanguageContext";
-import { Button } from "@/components/ui/button"; // Assuming shadcn button generic
+import { Button } from "@/components/ui/button";
 
 export default function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();

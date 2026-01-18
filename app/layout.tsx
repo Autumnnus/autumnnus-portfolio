@@ -7,7 +7,7 @@ import PageTransition from "@/components/providers/PageTransition";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google"; // Import pixel font
+import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,10 +20,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Configure pixel font
 const pressStart2P = Press_Start_2P({
   weight: "400",
-  variable: "--font-pixel", // Use the same variable name we expected
+  variable: "--font-pixel",
   subsets: ["latin"],
 });
 

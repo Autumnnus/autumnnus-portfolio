@@ -15,9 +15,11 @@ export default function ProjectImageCarousel({
   title,
 }: ProjectImageCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
-  const [prevBtnEnabled, setPrevBtnEnabled] = useState(false);
-  const [nextBtnEnabled, setNextBtnEnabled] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [carouselState, setCarouselState] = useState({
+    selectedIndex: 0,
+    prevBtnEnabled: false,
+    nextBtnEnabled: false,
+  });
 
   const scrollPrev = useCallback(
     () => emblaApi && emblaApi.scrollPrev(),
@@ -30,9 +32,11 @@ export default function ProjectImageCarousel({
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-    setPrevBtnEnabled(emblaApi.canScrollPrev());
-    setNextBtnEnabled(emblaApi.canScrollNext());
+    setCarouselState({
+      selectedIndex: emblaApi.selectedScrollSnap(),
+      prevBtnEnabled: emblaApi.canScrollPrev(),
+      nextBtnEnabled: emblaApi.canScrollNext(),
+    });
   }, [emblaApi]);
 
   useEffect(() => {
@@ -41,11 +45,16 @@ export default function ProjectImageCarousel({
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
 
+    const timer = setTimeout(onSelect, 0);
+
     return () => {
+      clearTimeout(timer);
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
     };
   }, [emblaApi, onSelect]);
+
+  const { selectedIndex, prevBtnEnabled, nextBtnEnabled } = carouselState;
 
   return (
     <div className="relative group">

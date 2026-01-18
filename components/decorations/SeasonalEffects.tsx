@@ -23,18 +23,27 @@ const createEmojiImage = (emoji: string) => {
 
 export default function SeasonalEffects() {
   const { resolvedTheme } = useTheme();
-  const [leafImages, setLeafImages] = useState<HTMLImageElement[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [state, setState] = useState({
+    mounted: false,
+    leafImages: [] as HTMLImageElement[],
+  });
 
   useEffect(() => {
-    setMounted(true);
     const images = leafEmojis
       .map(createEmojiImage)
       .filter((img): img is HTMLImageElement => img !== null);
-    setLeafImages(images);
+
+    const timer = setTimeout(() => {
+      setState({
+        mounted: true,
+        leafImages: images,
+      });
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!mounted) return null;
+  if (!state.mounted) return null;
 
   const isWinter = resolvedTheme === "dark";
 
@@ -72,18 +81,18 @@ export default function SeasonalEffects() {
             transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            {leafImages.length > 0 && (
+            {state.leafImages.length > 0 && (
               <Snowfall
                 snowflakeCount={40}
-                images={leafImages}
+                images={state.leafImages}
                 style={{
                   position: "fixed",
                   width: "100vw",
                   height: "100vh",
                 }}
-                radius={[10, 20]} // Larger for leaves
+                radius={[10, 20]}
                 wind={[-1, 3]}
-                speed={[1.5, 4]} // Leaves fall slightly differently
+                speed={[1.5, 4]}
                 rotationSpeed={[-1, 1]}
               />
             )}

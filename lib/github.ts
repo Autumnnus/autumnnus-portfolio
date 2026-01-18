@@ -6,8 +6,6 @@ export async function getRepoStats(
   if (!repoUrl) return null;
 
   try {
-    // Extract owner and repo from URL
-    // Format: https://github.com/owner/repo
     const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
     if (!match) return null;
 
@@ -18,14 +16,13 @@ export async function getRepoStats(
       Accept: "application/vnd.github.v3+json",
     };
 
-    // Use token if available to increase rate limits
     if (process.env.GITHUB_TOKEN) {
       headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
     }
 
     const res = await fetch(apiUrl, {
       headers,
-      next: { revalidate: 3600 }, // Cache for 1 hour
+      next: { revalidate: 3600 },
     });
 
     if (!res.ok) {

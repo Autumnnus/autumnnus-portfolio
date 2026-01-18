@@ -4,6 +4,7 @@ import Icon from "@/components/common/Icon";
 import { Project } from "@/types/contents";
 import { motion } from "framer-motion";
 import { ExternalLink, Github } from "lucide-react";
+import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -28,6 +29,12 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
 
   const visibleTechs = project.technologies.slice(0, 7);
   const remainingCount = project.technologies.length - 7;
+  const { resolvedTheme } = useTheme();
+
+  const isWinter = resolvedTheme === "dark";
+  const seasonalGradient = isWinter
+    ? "bg-linear-to-br from-slate-900 via-blue-950 to-slate-900"
+    : "bg-linear-to-br from-orange-50 via-amber-100 to-orange-50";
 
   return (
     <motion.div
@@ -37,7 +44,9 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
       className="group bg-card border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
     >
       {/* Cover Image with Gradient */}
-      <div className="relative w-full h-48 sm:h-56 bg-linear-to-br from-pink-400 via-purple-500 to-indigo-600 overflow-hidden">
+      <div
+        className={`relative w-full h-48 sm:h-56 ${seasonalGradient} overflow-hidden`}
+      >
         {project.coverImage && (
           <Image
             src={project.coverImage}

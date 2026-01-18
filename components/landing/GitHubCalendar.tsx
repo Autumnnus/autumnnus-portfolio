@@ -20,8 +20,6 @@ export default function GitHubCalendar({
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ... (keeping useEffect the same)
-
   useEffect(() => {
     if (!username) {
       setLoading(false);

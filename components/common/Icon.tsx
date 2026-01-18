@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 
 interface IconProps {
-  src: string; // Creates flexibility: can be a URL or a simple string
+  src: string | StaticImageData;
   alt: string;
   className?: string;
   size?: number;
@@ -15,8 +15,8 @@ export default function Icon({
   className = "",
   size = 24,
 }: IconProps) {
-  // Check if it's an HTTP URL (Online SVG/Image)
-  const isUrl = src.startsWith("http") || src.startsWith("/");
+  const isUrl =
+    typeof src !== "string" || src.startsWith("http") || src.startsWith("/");
 
   if (isUrl) {
     return (
@@ -29,14 +29,12 @@ export default function Icon({
           alt={alt}
           fill
           className="object-contain"
-          unoptimized // Valid for simple usages like this where we might use external CDNs
+          unoptimized
         />
       </div>
     );
   }
 
-  // Fallback for emojis if they still sneak in, wrapping them in a span to treat as icon
-  // Or if we decide to pass simple strings later.
   return (
     <span
       className={`text-2xl leading-none ${className}`}
