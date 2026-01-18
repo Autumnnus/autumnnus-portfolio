@@ -33,6 +33,7 @@
     "category": "Kategori",
     "allCategories": "Tüm Kategoriler",
     "filterByCategory": "Kategoriye Göre Filtrele",
+    "searchPlaceholder": "Projelerde ara...",
     "status": "Durum",
     "liveDemo": "Canlı Demo",
     "sourceCode": "Kaynak Kod",

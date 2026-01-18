@@ -1,13 +1,10 @@
 import avatarImage from "./avatar.png";
-import test from "./projects/test.png";
+import { blogAssets } from "./blog";
+import { projectAssets } from "./projects";
 
 export const assets = {
-  projects: {
-    test: test,
-  },
-  blog: {
-    test: test,
-  },
+  projects: projectAssets,
+  blog: blogAssets,
   common: {
     avatar: avatarImage,
   },

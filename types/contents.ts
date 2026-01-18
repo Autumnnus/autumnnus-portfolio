@@ -61,6 +61,7 @@ export interface Project {
   shortDescription: string;
   fullDescription: string;
   coverImage: string | StaticImageData;
+  images: (string | StaticImageData)[];
   technologies: Technology[];
   status: ProjectStatus;
   category: string;

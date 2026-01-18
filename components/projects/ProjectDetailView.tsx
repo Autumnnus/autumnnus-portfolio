@@ -13,6 +13,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 
+import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
+
 export default function ProjectDetailView({
   slug,
   githubStats,
@@ -80,33 +82,41 @@ export default function ProjectDetailView({
         </Link>
       </FadeIn>
 
-      {/* Cover Image */}
+      {/* Cover Image / Carousel */}
       <FadeIn delay={0.2}>
-        <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-linear-to-br from-pink-400 via-purple-500 to-indigo-600 rounded-lg overflow-hidden mb-8">
-          {project.coverImage ? (
-            <Image
-              src={project.coverImage}
-              alt={project.title}
-              fill
-              className="object-cover"
-              priority
+        <div className="mb-8">
+          {project.images && project.images.length > 0 ? (
+            <ProjectImageCarousel
+              images={project.images}
+              title={project.title}
             />
+          ) : project.coverImage ? (
+            <div className="relative w-full aspect-video lg:aspect-21/9 bg-muted rounded-lg overflow-hidden shadow-xl">
+              <Image
+                src={project.coverImage}
+                alt={project.title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center p-12">
-              <div className="relative w-full max-w-3xl aspect-video bg-gray-900 rounded-lg shadow-2xl flex items-center justify-center">
-                <div className="text-6xl sm:text-8xl opacity-50">
-                  <Icon
-                    src={project.technologies[0]?.icon}
-                    alt="icon"
-                    size={80}
-                  />
+            <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-linear-to-br from-pink-400 via-purple-500 to-indigo-600 rounded-lg overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center p-12">
+                <div className="relative w-full max-w-3xl aspect-video bg-gray-900 rounded-lg shadow-2xl flex items-center justify-center">
+                  <div className="text-6xl sm:text-8xl opacity-50">
+                    <Icon
+                      src={project.technologies[0]?.icon}
+                      alt="icon"
+                      size={80}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </div>
       </FadeIn>
-
       {/* Tags and Status */}
       <FadeIn delay={0.3}>
         <div className="flex flex-wrap gap-2 mb-6">
@@ -127,7 +137,6 @@ export default function ProjectDetailView({
           )}
         </div>
       </FadeIn>
-
       {/* Title and Short Description */}
       <FadeIn delay={0.4}>
         <div className="space-y-4 mb-8">
@@ -139,7 +148,6 @@ export default function ProjectDetailView({
           </p>
         </div>
       </FadeIn>
-
       {/* Project Info Grid */}
       <FadeIn delay={0.5}>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
@@ -204,7 +212,6 @@ export default function ProjectDetailView({
           )}
         </div>
       </FadeIn>
-
       {/* Action Buttons */}
       <FadeIn delay={0.6}>
         <div className="flex flex-wrap gap-3 mb-12">
@@ -232,14 +239,12 @@ export default function ProjectDetailView({
           )}
         </div>
       </FadeIn>
-
       {/* Full Description */}
       <FadeIn delay={0.7}>
         <div className="mb-12">
           <ContentRenderer content={project.fullDescription} />
         </div>
       </FadeIn>
-
       {/* Next Project */}
       {nextProject && (
         <FadeIn delay={0.8}>
@@ -261,10 +266,8 @@ export default function ProjectDetailView({
           </Link>
         </FadeIn>
       )}
-
       {/* Separator */}
       <div className="h-px bg-border/50 mb-12" />
-
       {/* Related Projects */}
       {relatedProjects.length > 0 && (
         <FadeIn delay={0.9}>
@@ -284,7 +287,6 @@ export default function ProjectDetailView({
           </div>
         </FadeIn>
       )}
-
       {/* View All Projects Button */}
       <FadeIn delay={1.0}>
         <div className="text-center pt-8">

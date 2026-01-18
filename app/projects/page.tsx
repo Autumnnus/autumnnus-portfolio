@@ -4,7 +4,9 @@ import Container from "@/components/common/Container";
 import ProjectCard from "@/components/projects/ProjectCard";
 import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
 import { Project } from "@/types/contents";
+import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -13,7 +15,34 @@ export default function ProjectsPage() {
   const t = useTranslations("Projects");
   const projects = content.projects.items || [];
 
-  // Calculate counts dynamically from the current projects list
+  const [selectedStatus, setSelectedStatus] = useState<
+    Project["status"] | "All"
+  >("All");
+  const [selectedCategory, setSelectedCategory] = useState<string | "All">(
+    "All",
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredProjects = projects.filter((p) => {
+    const statusMatch = selectedStatus === "All" || p.status === selectedStatus;
+    const categoryMatch =
+      selectedCategory === "All" || p.category === selectedCategory;
+
+    const searchLower = searchQuery.toLowerCase();
+    const searchMatch =
+      searchQuery === "" ||
+      p.title.toLowerCase().includes(searchLower) ||
+      p.shortDescription.toLowerCase().includes(searchLower) ||
+      p.technologies.some((tech) =>
+        tech.name.toLowerCase().includes(searchLower),
+      );
+
+    return statusMatch && categoryMatch && searchMatch;
+  });
+
+  // Calculate counts dynamically from the filtered results or original list?
+  // Usually, filter counters show potential results. Let's base them on current filters minus themselves for better UX
+  // But for simplicity and consistency with existing code, let's use the full list for category/status items
   const statusCounts = new Map<Project["status"], number>();
   const categoryCounts = new Map<string, number>();
 
@@ -42,20 +71,6 @@ export default function ProjectsPage() {
     }),
   );
 
-  const [selectedStatus, setSelectedStatus] = useState<
-    Project["status"] | "All"
-  >("All");
-  const [selectedCategory, setSelectedCategory] = useState<string | "All">(
-    "All",
-  );
-
-  const filteredProjects = projects.filter((p) => {
-    const statusMatch = selectedStatus === "All" || p.status === selectedStatus;
-    const categoryMatch =
-      selectedCategory === "All" || p.category === selectedCategory;
-    return statusMatch && categoryMatch;
-  });
-
   return (
     <Container className="py-12 sm:py-20">
       {/* Header */}
@@ -68,60 +83,76 @@ export default function ProjectsPage() {
         </p>
       </div>
 
-      {/* Separator */}
-      <div className="h-px bg-border/50 mb-12" />
-
-      {/* Filters */}
-      <div className="flex flex-col gap-10 mb-12">
-        {/* Filter by Status */}
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold mb-6">
-            {t("filterByStatus")}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={selectedStatus === "All" ? "default" : "outline"}
-              className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-              onClick={() => setSelectedStatus("All")}
-            >
-              {t("allProjects")} ({projects.length})
-            </Badge>
-            {statuses.map(({ status, count }) => (
-              <Badge
-                key={status}
-                variant={selectedStatus === status ? "default" : "outline"}
-                className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                onClick={() => setSelectedStatus(status)}
-              >
-                {status} ({count})
-              </Badge>
-            ))}
-          </div>
+      {/* Search and Filters */}
+      <div className="space-y-8 mb-12">
+        {/* Search Input */}
+        <div className="relative max-w-2xl mx-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            placeholder={t("searchPlaceholder")}
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearchQuery(e.target.value)
+            }
+            className="pl-10 h-12 text-lg rounded-full border-primary/20 focus-visible:ring-primary"
+          />
         </div>
 
-        {/* Filter by Category */}
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold mb-6">
-            {t("filterByCategory")}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={selectedCategory === "All" ? "default" : "outline"}
-              className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-              onClick={() => setSelectedCategory("All")}
-            >
-              {t("allCategories")} ({projects.length})
-            </Badge>
-            {categories.map(({ category, count }) => (
+        <div className="h-px bg-border/50" />
+
+        <div className="flex flex-col gap-10">
+          {/* Filter by Status */}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold mb-6">
+              {t("filterByStatus")}
+            </h2>
+            <div className="flex flex-wrap gap-2">
               <Badge
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
+                variant={selectedStatus === "All" ? "default" : "outline"}
                 className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => setSelectedStatus("All")}
               >
-                {category} ({count})
+                {t("allProjects")} ({projects.length})
               </Badge>
-            ))}
+              {statuses.map(({ status, count }) => (
+                <Badge
+                  key={status}
+                  variant={selectedStatus === status ? "default" : "outline"}
+                  className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+                  onClick={() => setSelectedStatus(status)}
+                >
+                  {status} ({count})
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Filter by Category */}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold mb-6">
+              {t("filterByCategory")}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={selectedCategory === "All" ? "default" : "outline"}
+                className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+                onClick={() => setSelectedCategory("All")}
+              >
+                {t("allCategories")} ({projects.length})
+              </Badge>
+              {categories.map(({ category, count }) => (
+                <Badge
+                  key={category}
+                  variant={
+                    selectedCategory === category ? "default" : "outline"
+                  }
+                  className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category} ({count})
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -129,7 +160,7 @@ export default function ProjectsPage() {
       {/* Projects Section */}
       <div>
         <div className="flex items-baseline gap-3 mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">
+          <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-wider text-primary/80">
             {selectedStatus === "All" && selectedCategory === "All"
               ? t("allProjects")
               : `${selectedStatus !== "All" ? selectedStatus : ""} ${
@@ -151,8 +182,11 @@ export default function ProjectsPage() {
         </div>
 
         {filteredProjects.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            {t("noResults")}
+          <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-border flex flex-col items-center gap-4">
+            <Search className="w-12 h-12 text-muted-foreground opacity-20" />
+            <p className="text-xl font-medium text-muted-foreground">
+              {t("noResults")}
+            </p>
           </div>
         )}
       </div>

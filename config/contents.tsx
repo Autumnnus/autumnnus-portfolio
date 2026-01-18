@@ -93,7 +93,7 @@ const PROJECTS_DATA = [
   // Backend Projects
   {
     slug: "e-commerce-api",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [SKILLS.JAVA, SKILLS.SPRING_BOOT, SKILLS.POSTGRES],
     status: "Completed" as const,
     category: "Backend",
@@ -118,7 +118,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "gallerist",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [SKILLS.JAVA, SKILLS.SPRING_BOOT, SKILLS.POSTGRES],
     status: "Completed" as const,
     category: "Backend",
@@ -141,7 +141,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "spring-boot-tutorials",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [SKILLS.JAVA, SKILLS.SPRING_BOOT, SKILLS.POSTGRES],
     status: "Completed" as const,
     category: "Backend",
@@ -164,7 +164,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "my-games-backend",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [
       SKILLS.TYPESCRIPT,
       SKILLS.EXPRESS,
@@ -192,7 +192,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "qa-rest-api",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [SKILLS.JAVASCRIPT, SKILLS.EXPRESS, SKILLS.MONGODB],
     status: "Completed" as const,
     category: "Backend",
@@ -217,7 +217,7 @@ const PROJECTS_DATA = [
   // Frontend Projects
   {
     slug: "my-games",
-    coverImage: assets.projects.test,
+    images: assets.projects.myGames,
     technologies: [SKILLS.REACT, SKILLS.TYPESCRIPT, SKILLS.MATERIAL_UI],
     status: "Completed" as const,
     category: "Frontend",
@@ -241,7 +241,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "star-wars-apollo",
-    coverImage: assets.projects.test,
+    images: assets.projects.starWarsApollo,
     technologies: [
       SKILLS.REACT,
       SKILLS.TYPESCRIPT,
@@ -270,7 +270,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "js-methods",
-    coverImage: assets.projects.test,
+    images: assets.projects.javascriptMethods,
     technologies: [SKILLS.REACT, SKILLS.TYPESCRIPT, SKILLS.REDUX],
     status: "Completed" as const,
     category: "Frontend",
@@ -294,7 +294,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "my-games-old",
-    coverImage: assets.projects.test,
+    images: assets.projects.myGamesLegacy,
     technologies: [
       SKILLS.REACT,
       SKILLS.JAVASCRIPT,
@@ -323,7 +323,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "whatsapp-clone",
-    coverImage: assets.projects.test,
+    images: assets.projects.whatsappClone,
     technologies: [
       SKILLS.REACT,
       SKILLS.TYPESCRIPT,
@@ -333,7 +333,7 @@ const PROJECTS_DATA = [
     status: "Building" as const,
     category: "Frontend",
     github: "https://github.com/Autumnnus/Whatsapp-Clone---React",
-    liveDemo: "https://whatsapp-clone-vector.netlify.app/",
+    liveDemo: "https://wpclone-by-vector.netlify.app/",
     featured: true,
     translations: {
       tr: {
@@ -352,7 +352,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "dersigo",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [
       SKILLS.NEXTJS,
       SKILLS.REACT,
@@ -381,7 +381,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "flight-app",
-    coverImage: assets.projects.test,
+    images: assets.projects.flightApp,
     technologies: [
       SKILLS.REACT,
       SKILLS.TYPESCRIPT,
@@ -391,6 +391,7 @@ const PROJECTS_DATA = [
     status: "Completed" as const,
     category: "Frontend",
     github: "https://github.com/Autumnnus/Flight-app",
+    liveDemo: "https://flight-app-vector.netlify.app/",
     featured: false,
     translations: {
       tr: {
@@ -409,11 +410,12 @@ const PROJECTS_DATA = [
   },
   {
     slug: "movie-app",
-    coverImage: assets.projects.test,
+    images: assets.projects.movieApp,
     technologies: [SKILLS.REACT, SKILLS.JAVASCRIPT, SKILLS.REDUX],
     status: "Completed" as const,
     category: "Frontend",
     github: "https://github.com/Autumnnus/Movie-App-React-Redux",
+    liveDemo: "https://movie-app-vector.netlify.app/",
     featured: false,
     translations: {
       tr: {
@@ -432,7 +434,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "product-app",
-    coverImage: assets.projects.test,
+    images: assets.projects.productApp,
     technologies: [SKILLS.REACT, SKILLS.JAVASCRIPT, SKILLS.REDUX],
     status: "Completed" as const,
     category: "Frontend",
@@ -456,7 +458,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "e-commerce-frontend",
-    coverImage: assets.projects.test,
+    images: assets.projects.ecommerce,
     technologies: [SKILLS.REACT, SKILLS.JAVASCRIPT, SKILLS.REDUX],
     status: "Completed" as const,
     category: "Frontend",
@@ -482,7 +484,7 @@ const PROJECTS_DATA = [
   // JavaScript Projects
   {
     slug: "calculator",
-    coverImage: assets.projects.test,
+    images: assets.projects.calculator,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -506,7 +508,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "fast-localization",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [SKILLS.NODEJS],
     status: "Completed" as const,
     category: "Tool",
@@ -529,7 +531,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "pdx-modifier",
-    coverImage: assets.projects.test,
+    images: assets.projects.test,
     technologies: [SKILLS.NODEJS],
     status: "Completed" as const,
     category: "Tool",
@@ -552,7 +554,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "github-user-info",
-    coverImage: assets.projects.test,
+    images: assets.projects.githubUserInfo,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -576,7 +578,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "currency-converter",
-    coverImage: assets.projects.test,
+    images: assets.projects.currencyConverter,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -600,7 +602,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "music-player",
-    coverImage: assets.projects.test,
+    images: assets.projects.musicPlayer,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -624,7 +626,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "country-info",
-    coverImage: assets.projects.test,
+    images: assets.projects.countryInfo,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -648,7 +650,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "weather-app",
-    coverImage: assets.projects.test,
+    images: assets.projects.weatherApp,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -672,7 +674,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "color-flipper",
-    coverImage: assets.projects.test,
+    images: assets.projects.colorFlipper,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -696,7 +698,7 @@ const PROJECTS_DATA = [
   },
   {
     slug: "quiz-website",
-    coverImage: assets.projects.test,
+    images: assets.projects.quizApp,
     technologies: [SKILLS.JAVASCRIPT],
     status: "Completed" as const,
     category: "JavaScript",
@@ -807,17 +809,21 @@ const WORK_DATA = [
 // --- Helper functions to assemble content ---
 
 function getProjects(lang: Language): Project[] {
-  return PROJECTS_DATA.map((p) => ({
-    ...p.translations[lang],
-    slug: p.slug,
-    coverImage: p.coverImage,
-    technologies: p.technologies,
-    status: p.status,
-    category: p.category,
-    github: p.github,
-    liveDemo: p.liveDemo,
-    featured: p.featured,
-  }));
+  return PROJECTS_DATA.map((p) => {
+    const images = p.images || assets.projects.test;
+    return {
+      ...p.translations[lang],
+      slug: p.slug,
+      images: images,
+      coverImage: images[0],
+      technologies: p.technologies,
+      status: p.status,
+      category: p.category,
+      github: p.github,
+      liveDemo: p.liveDemo,
+      featured: p.featured,
+    } as Project;
+  });
 }
 
 function getBlogPosts(lang: Language): BlogPost[] {
