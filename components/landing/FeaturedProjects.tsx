@@ -3,15 +3,20 @@
 import SectionHeading from "@/components/common/SectionHeading";
 import ProjectCard from "@/components/projects/ProjectCard";
 import { useLanguage } from "@/components/providers/LanguageContext";
+import { Project } from "@/types/contents";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
-export default function FeaturedProjects() {
+interface FeaturedProjectsProps {
+  projects: Project[];
+}
+
+export default function FeaturedProjects({ projects }: FeaturedProjectsProps) {
   const t = useTranslations("Projects");
   const { content } = useLanguage();
-  const featuredProjects = (content.projects.items || [])
-    .filter((p) => p.featured)
-    .slice(0, 4);
+
+  // Use passed projects
+  const featuredProjects = projects.slice(0, 4);
 
   return (
     <section className="py-12" id="projects">

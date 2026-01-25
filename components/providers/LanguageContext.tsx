@@ -32,6 +32,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem("language") as Language;
     const initialLang = saved === "tr" || saved === "en" ? saved : "tr";
 
+    document.cookie = `NEXT_LOCALE=${initialLang}; path=/; max-age=31536000`;
+
     const timer = setTimeout(() => {
       setState({
         language: initialLang,
@@ -45,6 +47,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const handleSetLanguage = (lang: Language) => {
     setState((prev) => ({ ...prev, language: lang }));
     localStorage.setItem("language", lang);
+    document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000`;
   };
 
   const { language, mounted } = state;
