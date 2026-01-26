@@ -4,19 +4,16 @@ import CommentSection from "@/components/blog/CommentSection";
 import Container from "@/components/common/Container";
 import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
+import { BlogPost } from "@/types/contents";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function BlogPostView({ slug }: { slug: string }) {
-  const { content } = useLanguage();
+export default function BlogPostView({ post }: { post: BlogPost }) {
   const t = useTranslations("Blog");
-  const blogPosts = content.blog.items || [];
-
-  const post = blogPosts.find((p) => p.slug === slug);
+  const slug = post.slug;
 
   if (!post) {
     return null;
@@ -31,7 +28,7 @@ export default function BlogPostView({ slug }: { slug: string }) {
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t("back")}
+          {t("back") || "Back"}
         </Link>
       </FadeIn>
 
@@ -43,14 +40,13 @@ export default function BlogPostView({ slug }: { slug: string }) {
               src={post.coverImage}
               alt={post.title}
               fill
+              unoptimized
               className="object-cover"
               priority
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-9xl opacity-30">
-              {/* Fallback icons based on tags logic or just a default */}
               {post.tags[0] === "Frontend" && "🎨"}
-              {/* ... other mappings ... */}
               {!post.tags[0] && "📝"}
             </div>
           )}
@@ -89,10 +85,8 @@ export default function BlogPostView({ slug }: { slug: string }) {
             <time dateTime={post.date}>{post.date}</time>
           </div>
 
-          {/* Stats if available in type, or placeholders */}
-          <div className="flex items-center gap-4 ml-auto">
-            {/* Assuming stats are not in the localized type yet or not migrated, we can hide or use generic */}
-            {/* If stats are needed, they should be added to BlogPost interface. For now, hiding or static. */}
+          <div className="text-sm text-muted-foreground ml-auto">
+            {post.readTime}
           </div>
         </div>
       </FadeIn>

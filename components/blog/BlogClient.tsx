@@ -1,41 +1,39 @@
 "use client";
 
+import BlogCard from "@/components/blog/BlogCard";
 import Container from "@/components/common/Container";
-import ProjectCard from "@/components/projects/ProjectCard";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
-import { Project } from "@/types/contents";
+import { BlogPost } from "@/types/contents";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-interface ProjectsClientProps {
+interface BlogClientProps {
   initialData: {
-    items: Project[];
+    items: BlogPost[];
     total: number;
     page: number;
     limit: number;
     totalPages: number;
   };
   filters: {
-    statuses: { status: string; count: number }[];
-    categories: { category: string; count: number }[];
+    tags: { name: string; count: number }[];
   };
   searchParams: {
     query: string;
-    status: string;
-    category: string;
+    tag: string;
     page: number;
   };
 }
 
-export default function ProjectsClient({
+export default function BlogClient({
   initialData,
   filters,
   searchParams,
-}: ProjectsClientProps) {
-  const t = useTranslations("Projects");
+}: BlogClientProps) {
+  const t = useTranslations("Blog");
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
@@ -53,10 +51,8 @@ export default function ProjectsClient({
     const newParams = { ...searchParams, ...updates, page: updates.page || 1 };
 
     if (newParams.query) params.set("query", newParams.query);
-    if (newParams.status && newParams.status !== "All")
-      params.set("status", newParams.status);
-    if (newParams.category && newParams.category !== "All")
-      params.set("category", newParams.category);
+    if (newParams.tag && newParams.tag !== "All")
+      params.set("tag", newParams.tag);
     if (newParams.page > 1) params.set("page", newParams.page.toString());
 
     startTransition(() => {
@@ -87,7 +83,7 @@ export default function ProjectsClient({
         <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            placeholder={t("searchPlaceholder")}
+            placeholder={t("searchPlaceholder") || "Search posts..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-12 text-lg rounded-full border-primary/20 focus-visible:ring-primary"
@@ -96,91 +92,46 @@ export default function ProjectsClient({
 
         <div className="h-px bg-border/50" />
 
-        <div className="flex flex-col gap-10">
-          {/* Filter by Status */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-6">
-              {t("filterByStatus")}
-            </h2>
-            <div className="flex flex-wrap gap-2">
+        {/* Popular Tags */}
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-6">
+            {t("popularTags")}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant={searchParams.tag === "All" ? "default" : "outline"}
+              className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
+              onClick={() => updateFilters({ tag: "All" })}
+            >
+              {t("allTags") || "All Tags"}
+            </Badge>
+            {filters.tags.map((tag) => (
               <Badge
-                variant={searchParams.status === "All" ? "default" : "outline"}
+                key={tag.name}
+                variant={searchParams.tag === tag.name ? "default" : "outline"}
                 className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                onClick={() => updateFilters({ status: "All" })}
+                onClick={() => updateFilters({ tag: tag.name })}
               >
-                {t("allProjects")}
+                {tag.name} ({tag.count})
               </Badge>
-              {filters.statuses.map(({ status, count }) => (
-                <Badge
-                  key={status}
-                  variant={
-                    searchParams.status === status ? "default" : "outline"
-                  }
-                  className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                  onClick={() => updateFilters({ status })}
-                >
-                  {status} ({count})
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Filter by Category */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-6">
-              {t("filterByCategory")}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={
-                  searchParams.category === "All" ? "default" : "outline"
-                }
-                className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                onClick={() => updateFilters({ category: "All" })}
-              >
-                {t("allCategories")}
-              </Badge>
-              {filters.categories.map(({ category, count }) => (
-                <Badge
-                  key={category}
-                  variant={
-                    searchParams.category === category ? "default" : "outline"
-                  }
-                  className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                  onClick={() => updateFilters({ category })}
-                >
-                  {category} ({count})
-                </Badge>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Projects Section */}
+      {/* Blog Section */}
       <div>
         <div className="flex items-baseline gap-3 mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-wider text-primary/80">
-            {searchParams.status === "All" && searchParams.category === "All"
-              ? t("allProjects")
-              : `${searchParams.status !== "All" ? searchParams.status : ""} ${
-                  searchParams.status !== "All" &&
-                  searchParams.category !== "All"
-                    ? "&"
-                    : ""
-                } ${
-                  searchParams.category !== "All" ? searchParams.category : ""
-                }`}
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t("viewAll")}</h2>
           <span className="text-muted-foreground text-sm">
-            ({initialData.total} {t("projectCount")})
+            ({initialData.total} {t("postCount")})
           </span>
         </div>
 
-        {/* Projects Grid */}
+        {/* Blog Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {initialData.items.map((project, index) => (
-            <ProjectCard key={project.slug} project={project} index={index} />
+          {initialData.items.map((post, index) => (
+            <BlogCard key={post.slug} post={post} index={index} />
           ))}
         </div>
 

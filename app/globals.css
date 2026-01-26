@@ -282,3 +282,31 @@
 .shiki::-webkit-scrollbar-thumb:hover {
   @apply bg-border/40;
 }
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-progress {
+  animation: progress 2s infinite linear;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s infinite linear;
+}

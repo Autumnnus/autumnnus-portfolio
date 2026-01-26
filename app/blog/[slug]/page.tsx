@@ -1,15 +1,18 @@
+import { getBlogPostBySlug, getBlogPosts } from "@/app/actions";
 import BlogPostView from "@/components/blog/BlogPostView";
-import { portfolioContent } from "@/config/contents";
+import { BlogPost } from "@/types/contents";
+import { Language } from "@prisma/client";
 import { Metadata } from "next";
-
-const blogPosts = portfolioContent.en.blog.items || [];
+import { getLocale } from "next-intl/server";
+import { notFound } from "next/navigation";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return blogPosts.map((post) => ({
+  const result = await getBlogPosts({ lang: Language.en, limit: 100 });
+  return result.items.map((post) => ({
     slug: post.slug,
   }));
 }
@@ -18,7 +21,8 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const locale = await getLocale();
+  const post = await getBlogPostBySlug(slug, locale as Language);
 
   if (!post) {
     return {
@@ -34,6 +38,12 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
+  const locale = await getLocale();
+  const post = await getBlogPostBySlug(slug, locale as Language);
 
-  return <BlogPostView slug={slug} />;
+  if (!post) {
+    notFound();
+  }
+
+  return <BlogPostView post={post as unknown as BlogPost} />;
 }

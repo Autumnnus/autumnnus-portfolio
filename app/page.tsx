@@ -13,10 +13,12 @@ import { getLocale } from "next-intl/server";
 
 export default async function Home() {
   const locale = await getLocale();
-  const allProjects = await getProjects(locale as Language);
-  const featuredProjects = allProjects.filter(
-    (p) => p.featured,
-  ) as unknown as Project[];
+  const result = await getProjects({
+    lang: locale as Language,
+    featured: true,
+    limit: 4,
+  });
+  const featuredProjects = result.items as unknown as Project[];
 
   return (
     <>

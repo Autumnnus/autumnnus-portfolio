@@ -12,47 +12,28 @@ import { ArrowLeft, ArrowRight, ExternalLink, Github } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
 
 import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
 
 export default function ProjectDetailView({
-  slug,
+  project,
   githubStats,
 }: {
-  slug: string;
+  project: Project;
   githubStats?: GithubRepoStats | null;
 }) {
   const { content } = useLanguage();
   const { resolvedTheme } = useTheme();
-  const projects = useMemo(() => content.projects.items || [], [content]);
 
   const isWinter = resolvedTheme === "dark";
   const seasonalGradient = isWinter
     ? "bg-linear-to-br from-slate-900 via-blue-950 to-slate-900"
     : "bg-linear-to-br from-orange-50 via-amber-100 to-orange-50";
 
-  const project = projects.find((p) => p.slug === slug);
-
-  const { nextProject, relatedProjects } = useMemo(() => {
-    if (!project) return { nextProject: null, relatedProjects: [] };
-
-    const currentIndex = projects.findIndex((p) => p.slug === slug);
-    const next =
-      currentIndex < projects.length - 1 ? projects[currentIndex + 1] : null;
-
-    const related = projects
-      .filter(
-        (p) =>
-          p.slug !== slug &&
-          p.technologies.some((t) =>
-            project.technologies.some((ft) => ft.name === t.name),
-          ),
-      )
-      .slice(0, 2);
-
-    return { nextProject: next, relatedProjects: related };
-  }, [slug, projects, project]);
+  // Note: For now, nextProject and relatedProjects will be empty or handled via simplified logic
+  // since we shifted to backend-only fetching for the main project.
+  const nextProject = null as Project | null;
+  const relatedProjects = [] as Project[];
 
   if (!project) {
     return null;
@@ -103,6 +84,7 @@ export default function ProjectDetailView({
                 src={project.coverImage}
                 alt={project.title}
                 fill
+                unoptimized
                 className="object-cover"
                 priority
               />

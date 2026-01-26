@@ -59,13 +59,13 @@ export interface Project {
   title: string;
   shortDescription: string;
   fullDescription: string;
-  coverImage: string | StaticImageData;
+  coverImage?: string | StaticImageData | null;
   images: (string | StaticImageData)[];
   technologies: Technology[];
   status: ProjectStatus;
   category: string;
-  github?: string;
-  liveDemo?: string;
+  github?: string | null;
+  liveDemo?: string | null;
   featured?: boolean;
 }
 
@@ -75,7 +75,7 @@ export interface BlogPost {
   description: string;
   date: string;
   readTime: string;
-  coverImage: string | StaticImageData;
+  coverImage?: string | StaticImageData | null;
   tags: string[];
   featured?: boolean;
   content: string;

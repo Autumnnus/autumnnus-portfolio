@@ -72,6 +72,7 @@ export default function ProjectImageCarousel({
                 src={image}
                 alt={`${title} - Image ${index + 1}`}
                 fill
+                unoptimized
                 className="object-cover"
                 priority={index === 0}
               />
