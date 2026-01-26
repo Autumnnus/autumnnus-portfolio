@@ -3,33 +3,39 @@ import About from "@/components/landing/About";
 import FeaturedProjects from "@/components/landing/FeaturedProjects";
 import GitHubCalendar from "@/components/landing/GitHubCalendar";
 import Hero from "@/components/landing/Hero";
-import WorkExperience from "@/components/landing/WorkExperience";
+import WorkExperienceComponent from "@/components/landing/WorkExperience";
 
-import { getProjects } from "@/app/actions";
+import { getProfile, getProjects, getWorkExperiences } from "@/app/actions";
 import SectionNav from "@/components/common/SectionNav";
-import { Project } from "@/types/contents";
+import { Project, WorkExperience } from "@/types/contents";
 import { Language } from "@prisma/client";
 import { getLocale } from "next-intl/server";
 
 export default async function Home() {
   const locale = await getLocale();
-  const result = await getProjects({
-    lang: locale as Language,
-    featured: true,
-    limit: 4,
-  });
-  const featuredProjects = result.items as unknown as Project[];
+  const lang = locale as Language;
+
+  const [projectsResult, profileData, experiencesData] = await Promise.all([
+    getProjects({
+      lang,
+      featured: true,
+      limit: 4,
+    }),
+    getProfile(lang),
+    getWorkExperiences(lang),
+  ]);
+
+  const featuredProjects = (projectsResult.items as unknown as Project[]) || [];
 
   return (
     <>
       <SectionNav />
       <Container className="min-h-screen py-8">
-        <Hero />
-        <About />
-        <WorkExperience />
+        <Hero data={profileData} />
+        <About data={profileData} />
+        <WorkExperienceComponent data={experiencesData as WorkExperience[]} />
         <GitHubCalendar />
         <FeaturedProjects projects={featuredProjects} />
-        {/* <FeaturedBlogs /> */}
       </Container>
     </>
   );

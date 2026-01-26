@@ -1,14 +1,7 @@
 "use server";
 
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Language, Prisma, PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+import { prisma } from "@/lib/prisma";
+import { Language, Prisma } from "@prisma/client";
 
 export interface GetProjectsOptions {
   lang: Language;
@@ -118,6 +111,22 @@ export async function getProjects({
       limit,
       totalPages: 0,
     };
+  }
+}
+
+export async function getProjectById(id: string) {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        translations: true,
+        technologies: true,
+      },
+    });
+    return project;
+  } catch (error) {
+    console.error(`Failed to fetch project by id ${id}:`, error);
+    return null;
   }
 }
 
@@ -277,6 +286,21 @@ export async function getBlogPosts({
   }
 }
 
+export async function getBlogPostById(id: string) {
+  try {
+    const post = await prisma.blogPost.findUnique({
+      where: { id },
+      include: {
+        translations: true,
+      },
+    });
+    return post;
+  } catch (error) {
+    console.error(`Failed to fetch blog post by id ${id}:`, error);
+    return null;
+  }
+}
+
 export async function getBlogPostBySlug(slug: string, lang: Language) {
   try {
     const post = await prisma.blogPost.findUnique({
@@ -327,5 +351,51 @@ export async function getBlogFilters() {
   } catch (error) {
     console.error("Failed to fetch blog filters:", error);
     return { tags: [] };
+  }
+}
+export async function getProfile(lang: Language) {
+  try {
+    const profile = await prisma.profile.findFirst({
+      include: {
+        translations: {
+          where: { language: lang },
+        },
+      },
+    });
+
+    if (!profile) return null;
+
+    const translation = profile.translations[0] || {};
+    return {
+      ...profile,
+      ...translation,
+    };
+  } catch (error) {
+    console.error("Failed to fetch profile:", error);
+    return null;
+  }
+}
+
+export async function getWorkExperiences(lang: Language) {
+  try {
+    const experiences = await prisma.workExperience.findMany({
+      include: {
+        translations: {
+          where: { language: lang },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return experiences.map((exp) => {
+      const translation = exp.translations[0] || {};
+      return {
+        ...exp,
+        ...translation,
+      };
+    });
+  } catch (error) {
+    console.error("Failed to fetch work experiences:", error);
+    return [];
   }
 }

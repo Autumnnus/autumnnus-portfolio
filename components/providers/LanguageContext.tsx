@@ -48,6 +48,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, language: lang }));
     localStorage.setItem("language", lang);
     document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000`;
+    window.location.reload();
   };
 
   const { language, mounted } = state;

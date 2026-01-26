@@ -87,6 +87,9 @@ model WorkExperience {
   logo    String
 
   translations WorkExperienceTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model WorkExperienceTranslation {
@@ -109,4 +112,30 @@ model SocialLink {
   name String
   href String
   icon String
+}
+
+model Profile {
+  id     String @id @default(uuid())
+  avatar String // URL from MinIO
+  email  String
+  github String
+  linkedin String
+  
+  translations ProfileTranslation[]
+}
+
+model ProfileTranslation {
+  id           String   @id @default(uuid())
+  language     Language
+  name         String
+  title        String
+  greetingText String
+  description  String // Hero description
+  aboutTitle   String
+  aboutDescription String // About description
+  
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, language])
 }

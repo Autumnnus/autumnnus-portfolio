@@ -5,11 +5,22 @@ import { useLanguage } from "@/components/providers/LanguageContext";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
-export default function Hero() {
+interface HeroData {
+  greetingText?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+}
+
+export default function Hero({ data }: { data?: HeroData | null }) {
   const { content } = useLanguage();
   const t = useTranslations("Hero");
 
   const { name, title, skills, buttons, socialLinks } = content.hero;
+  const description = data?.description || t("description");
+  const greeting = data?.greetingText || t("greeting");
+  const displayName = data?.name || name;
+  const displayTitle = data?.title || title;
 
   return (
     <section id="hero" className="py-16 animate-pixel-fade-in">
@@ -19,16 +30,16 @@ export default function Hero() {
         </div> */}
         <div>
           <h1 className="text-4xl font-bold mb-2">
-            {t("greeting")} <span className="text-primary">{name}</span>
+            {greeting} <span className="text-primary">{displayName}</span>
           </h1>
           <p className="font-pixel text-xs uppercase tracking-widest text-muted-foreground">
-            {title}
+            {displayTitle}
           </p>
         </div>
       </div>
 
       <p className="text-lg text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-        {t("description")}
+        {description}
       </p>
 
       <div className="flex flex-wrap gap-2 mb-8">

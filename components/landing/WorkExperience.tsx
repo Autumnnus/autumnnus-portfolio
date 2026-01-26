@@ -3,13 +3,18 @@
 import Icon from "@/components/common/Icon";
 import SectionHeading from "@/components/common/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageContext";
+import { WorkExperience as WorkExperienceType } from "@/types/contents";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
-export default function WorkExperience() {
+export default function WorkExperience({
+  data,
+}: {
+  data?: WorkExperienceType[];
+}) {
   const t = useTranslations("Work");
   const { content } = useLanguage();
-  const { work } = content;
+  const workItems = data && data.length > 0 ? data : content.work.items;
 
   return (
     <section className="py-12" id="work">
@@ -20,7 +25,7 @@ export default function WorkExperience() {
         <div className="absolute left-[20px] top-0 bottom-0 w-0.5 bg-border" />
 
         <div className="space-y-12">
-          {work.items.map((item, index) => (
+          {workItems.map((item, index) => (
             <motion.div
               key={index}
               whileInView={{ opacity: 1, x: 0 }}

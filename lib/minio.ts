@@ -61,4 +61,22 @@ export async function uploadFile(
   return `${protocol}://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}/${BUCKET_NAME}/${filename}`;
 }
 
+export async function deleteFolder(prefix: string) {
+  const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+  if (!bucketExists) return;
+
+  const objectsList: string[] = [];
+  const objectsStream = minioClient.listObjectsV2(BUCKET_NAME, prefix, true);
+
+  for await (const obj of objectsStream) {
+    if (obj.name) {
+      objectsList.push(obj.name);
+    }
+  }
+
+  if (objectsList.length > 0) {
+    await minioClient.removeObjects(BUCKET_NAME, objectsList);
+  }
+}
+
 export { minioClient };
