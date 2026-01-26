@@ -12,6 +12,7 @@ export default async function ProjectsPage() {
   // The 'Project' type from '@/types/contents' expects status to be ProjectStatus enum
   // but Prisma returns string. We'll cast it for now as we know the strings match.
   const projects = dbProjects as unknown as Project[];
+  console.log("projects", projects);
 
   return <ProjectsClient initialProjects={projects} />;
 }
