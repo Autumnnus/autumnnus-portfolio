@@ -84,7 +84,8 @@ export interface BlogPost {
 export interface WorkExperience {
   company: string;
   role: string;
-  period: string;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   locationType: string;
   description: string;
   logo: string | StaticImageData;

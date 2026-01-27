@@ -3,13 +3,38 @@
 import { WorkExperience } from "@/types/contents";
 import Image from "next/image";
 
+import { useLocale, useTranslations } from "next-intl";
+
 interface WorkCardProps {
   experience: WorkExperience;
 }
 
 export default function WorkCard({ experience }: WorkCardProps) {
-  const { company, role, period, description, logo, locationType } = experience;
+  const { company, role, startDate, endDate, description, logo, locationType } =
+    experience;
+  const locale = useLocale();
+  const t = useTranslations("Work"); // Assuming "Work" namespace has 'present' or similar, or I'll use simple check
 
+  const formatDate = (date: string | Date | null | undefined) => {
+    if (!date) return "";
+    return new Date(date).toLocaleDateString(
+      locale === "tr" ? "tr-TR" : "en-US",
+      {
+        month: "short",
+        year: "numeric",
+      },
+    );
+  };
+
+  const startStr = formatDate(startDate);
+  const endStr = endDate
+    ? formatDate(endDate)
+    : locale === "tr"
+      ? "Günümüz"
+      : "Present";
+  const period = `${startStr} - ${endStr}`;
+
+  console.log("experience", experience);
   return (
     <article className="group relative flex flex-col sm:flex-row gap-4 sm:gap-6 p-1 transition-all">
       {/* Left Column: Logo */}

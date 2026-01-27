@@ -61,13 +61,14 @@ interface ExperienceTranslationInput {
   language: "tr" | "en";
   role: string;
   description: string;
-  period: string;
   locationType: string;
 }
 
 interface ExperienceData {
   company: string;
   logo: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
   translations: ExperienceTranslationInput[];
 }
 

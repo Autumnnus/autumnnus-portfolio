@@ -5,6 +5,7 @@ import {
   updateExperienceAction,
   uploadImageAction,
 } from "@/app/admin/actions";
+import { Input } from "@/components/ui/Input";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -14,7 +15,6 @@ export interface ExperienceTranslation {
   language: "tr" | "en";
   role: string;
   description: string;
-  period: string;
   locationType: string;
 }
 
@@ -22,6 +22,8 @@ export interface Experience {
   id?: string;
   company: string;
   logo: string;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   translations: ExperienceTranslation[];
 }
 
@@ -33,6 +35,11 @@ interface ImageData {
   url: string;
   file?: File;
 }
+
+const formatDateForInput = (date?: string | Date | null) => {
+  if (!date) return "";
+  return new Date(date).toISOString().split("T")[0];
+};
 
 export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   const router = useRouter();
@@ -75,22 +82,25 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
       }
 
       const formData = new FormData(e.currentTarget);
+      const startDateStr = formData.get("startDate") as string;
+      const endDateStr = formData.get("endDate") as string;
+
       const data = {
         company: formData.get("company") as string,
         logo: finalLogo,
+        startDate: startDateStr ? new Date(startDateStr) : null,
+        endDate: endDateStr ? new Date(endDateStr) : null,
         translations: [
           {
             language: "tr" as const,
             role: formData.get("role_tr") as string,
             description: formData.get("description_tr") as string,
-            period: formData.get("period_tr") as string,
             locationType: formData.get("locationType_tr") as string,
           },
           {
             language: "en" as const,
             role: formData.get("role_en") as string,
             description: formData.get("description_en") as string,
-            period: formData.get("period_en") as string,
             locationType: formData.get("locationType_en") as string,
           },
         ],
@@ -115,54 +125,75 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Şirket Logosu</label>
-            <div className="relative w-24 h-24 bg-muted rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors">
-              {logo ? (
-                <>
-                  <Image
-                    src={logo.url}
-                    alt="Logo"
-                    fill
-                    className="object-contain p-2"
-                    unoptimized
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setLogo(null)}
-                    className="absolute top-0 right-0 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
-                  >
-                    <X size={10} />
-                  </button>
-                </>
-              ) : (
-                <label className="cursor-pointer flex flex-col items-center gap-1 w-full h-full justify-center">
-                  <ImagePlus size={20} className="text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground font-medium">
-                    Logo Yükle
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                  />
-                </label>
-              )}
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Şirket Logosu</label>
+          <div className="relative w-full aspect-square md:w-full bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors group">
+            {logo ? (
+              <>
+                <Image
+                  src={logo.url}
+                  alt="Logo"
+                  fill
+                  className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                  unoptimized
+                />
+                <button
+                  type="button"
+                  onClick={() => setLogo(null)}
+                  className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity transform hover:scale-110"
+                >
+                  <X size={16} />
+                </button>
+              </>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center gap-3 w-full h-full justify-center text-muted-foreground hover:text-primary transition-colors">
+                <ImagePlus size={32} />
+                <span className="text-sm font-medium">Logo Seç</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                />
+              </label>
+            )}
           </div>
+        </div>
 
+        <div className="md:col-span-2 space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Şirket Adı</label>
-            <input
+            <Input
               name="company"
               defaultValue={initialData?.company}
               required
-              className="w-full p-2 bg-muted rounded border border-border"
-              placeholder="Qpien"
+              placeholder="Örn: Google, Amazon"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Başlangıç Tarihi</label>
+              <Input
+                type="date"
+                name="startDate"
+                defaultValue={formatDateForInput(initialData?.startDate)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Bitiş Tarihi</label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  name="endDate"
+                  defaultValue={formatDateForInput(initialData?.endDate)}
+                />
+                <span className="text-[10px] text-muted-foreground absolute -bottom-5 left-0">
+                  Devam ediyorsa boş bırakın
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -171,42 +202,24 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Türkçe */}
-        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-          <h3 className="font-bold border-b border-border pb-2 text-primary">
-            Türkçe Bilgiler
+        <div className="space-y-4 p-6 bg-muted/30 rounded-xl border border-border/50">
+          <h3 className="font-bold border-b border-border pb-2 text-primary flex items-center gap-2">
+            <span className="text-lg">🇹🇷</span> Türkçe Bilgiler
           </h3>
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
               Pozisyon
             </label>
-            <input
-              name="role_tr"
-              defaultValue={trTranslation?.role}
-              required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Dönem
-            </label>
-            <input
-              name="period_tr"
-              defaultValue={trTranslation?.period}
-              required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none"
-              placeholder="Şub 2024 - Günümüz"
-            />
+            <Input name="role_tr" defaultValue={trTranslation?.role} required />
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
               Çalışma Şekli
             </label>
-            <input
+            <Input
               name="locationType_tr"
               defaultValue={trTranslation?.locationType}
               required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none"
               placeholder="Hibrit, Uzaktan"
             />
           </div>
@@ -218,48 +231,30 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
               name="description_tr"
               defaultValue={trTranslation?.description}
               required
-              className="w-full p-2 bg-muted rounded border border-border h-48 focus:border-primary outline-none"
+              className="w-full p-3 bg-background rounded-md border border-input min-h-[200px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm resize-y"
             />
           </div>
         </div>
 
         {/* English */}
-        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-          <h3 className="font-bold border-b border-border pb-2 text-primary">
-            English Info
+        <div className="space-y-4 p-6 bg-muted/30 rounded-xl border border-border/50">
+          <h3 className="font-bold border-b border-border pb-2 text-primary flex items-center gap-2">
+            <span className="text-lg">🇺🇸</span> English Info
           </h3>
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
               Role
             </label>
-            <input
-              name="role_en"
-              defaultValue={enTranslation?.role}
-              required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Period
-            </label>
-            <input
-              name="period_en"
-              defaultValue={enTranslation?.period}
-              required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none"
-              placeholder="Feb 2024 - Present"
-            />
+            <Input name="role_en" defaultValue={enTranslation?.role} required />
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
               Location Type
             </label>
-            <input
+            <Input
               name="locationType_en"
               defaultValue={enTranslation?.locationType}
               required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none"
               placeholder="Hybrid, Remote"
             />
           </div>
@@ -271,7 +266,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
               name="description_en"
               defaultValue={enTranslation?.description}
               required
-              className="w-full p-2 bg-muted rounded border border-border h-48 focus:border-primary outline-none"
+              className="w-full p-3 bg-background rounded-md border border-input min-h-[200px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm resize-y"
             />
           </div>
         </div>

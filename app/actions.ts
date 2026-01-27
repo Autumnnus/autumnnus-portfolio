@@ -384,7 +384,7 @@ export async function getWorkExperiences(lang: Language) {
           where: { language: lang },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { startDate: "desc" },
     });
 
     return experiences.map((exp) => {
@@ -397,5 +397,42 @@ export async function getWorkExperiences(lang: Language) {
   } catch (error) {
     console.error("Failed to fetch work experiences:", error);
     return [];
+  }
+}
+
+export async function getAboutStats() {
+  try {
+    const projectCount = await prisma.project.count();
+
+    // Find the earliest work experience start date
+    // Note: startDate was recently added to schema
+    const firstExperience = await prisma.workExperience.findFirst({
+      where: {
+        startDate: { not: null },
+      },
+      orderBy: { startDate: "asc" },
+      select: { startDate: true },
+    });
+
+    let experienceYears = 0;
+    if (firstExperience?.startDate) {
+      experienceYears =
+        new Date().getFullYear() - firstExperience.startDate.getFullYear();
+    } else {
+      // Fallback to 2022 if no start date found (legacy behavior)
+      experienceYears = new Date().getFullYear() - 2022;
+    }
+
+    return {
+      projectCount,
+      experienceYears,
+    };
+  } catch (error) {
+    console.error("Failed to fetch about stats:", error);
+    // Return safe defaults
+    return {
+      projectCount: 0,
+      experienceYears: new Date().getFullYear() - 2022,
+    };
   }
 }

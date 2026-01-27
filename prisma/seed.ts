@@ -1,7 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
 import { Pool } from "pg";
+import { PROJECTS_BASE_DATA, SKILLS } from "../config/data";
+import { uploadFile } from "../lib/minio";
 
 dotenv.config();
 
@@ -25,7 +29,6 @@ const WORK_DATA = [
 - Clean Code, SOLID ve katmanlı mimari prensiplerini (Onion Architecture, CQRS) uyguladım.
 - Ekip içi iş birliği için Jira, Bitbucket ve GraphQL gibi araçları etkin şekilde kullandım.
         `.trim(),
-        period: "Şub 2024 - Günümüz",
         locationType: "Hibrit",
       },
       {
@@ -38,10 +41,11 @@ const WORK_DATA = [
 - Applied Clean Code, SOLID, and layered architecture principles (Onion Architecture, CQRS).
 - Effectively collaborated using tools such as Jira, Bitbucket, and GraphQL.
         `.trim(),
-        period: "Feb 2024 - Present",
         locationType: "Hybrid",
       },
     ],
+    startDate: new Date("2024-02-01"),
+    endDate: null,
   },
 ];
 
@@ -76,6 +80,25 @@ const PROFILE_DATA = {
   ],
 };
 
+function getContentType(filename: string) {
+  const ext = path.extname(filename).toLowerCase();
+  switch (ext) {
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".gif":
+      return "image/gif";
+    case ".svg":
+      return "image/svg+xml";
+    case ".webp":
+      return "image/webp";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 async function main() {
   console.log("Start seeding...");
 
@@ -84,6 +107,10 @@ async function main() {
   await prisma.workExperience.deleteMany();
   await prisma.profileTranslation.deleteMany();
   await prisma.profile.deleteMany();
+  // Clear projects and skills
+  await prisma.projectTranslation.deleteMany();
+  await prisma.project.deleteMany();
+  await prisma.skill.deleteMany();
 
   console.log("Deleted old data.");
 
@@ -115,12 +142,13 @@ async function main() {
       data: {
         company: work.company,
         logo: work.logo,
+        startDate: work.startDate,
+        endDate: work.endDate,
         translations: {
           create: work.translations.map((t) => ({
             language: t.language as any,
             role: t.role,
             description: t.description,
-            period: t.period,
             locationType: t.locationType,
           })),
         },
@@ -128,6 +156,103 @@ async function main() {
     });
   }
   console.log("Work experiences created.");
+
+  // Seed Skills
+  const skillDetails = Object.entries(SKILLS).map(([key, value]) => ({
+    key,
+    ...value,
+  }));
+
+  for (const skill of skillDetails) {
+    await prisma.skill.upsert({
+      where: { key: skill.key },
+      update: {},
+      create: skill,
+    });
+  }
+  console.log("Skills created.");
+
+  // Seed Projects
+  for (const project of PROJECTS_BASE_DATA) {
+    // Find skill keys for this project by matching names/icons in SKILLS map
+    const projectSkillKeys = project.technologies
+      .map((tech) => {
+        const entry = Object.entries(SKILLS).find(
+          ([_, val]) => val.name === tech.name,
+        );
+        return entry ? entry[0] : null;
+      })
+      .filter((k): k is string => k !== null);
+
+    // Handle Images
+    const imageUrls: string[] = [];
+    const assetsPath = path.join(
+      process.cwd(),
+      "assets",
+      "projects",
+      project.slug,
+    );
+
+    if (fs.existsSync(assetsPath)) {
+      const files = fs.readdirSync(assetsPath);
+      for (const file of files) {
+        // Skip .DS_Store or other non-image files if any
+        if (file.startsWith(".")) continue;
+
+        const filePath = path.join(assetsPath, file);
+        const fileBuffer = fs.readFileSync(filePath);
+        const contentType = getContentType(file);
+        const minioPath = `projects/${project.slug}/${file}`;
+
+        try {
+          console.log(`Uploading ${file} for project ${project.slug}...`);
+          const url = await uploadFile(minioPath, fileBuffer, contentType);
+          imageUrls.push(url);
+        } catch (error) {
+          console.error(
+            `Failed to upload image ${file} for project ${project.slug}:`,
+            error,
+          );
+        }
+      }
+    } else {
+      console.warn(`No assets found for project: ${project.slug}`);
+    }
+
+    // Sort images if needed, or rely on file system order.
+    // Usually file system order is not guaranteed. Custom sorting might be needed if naming convention exists.
+    imageUrls.sort();
+
+    // Create the project
+    await prisma.project.create({
+      data: {
+        slug: project.slug,
+        status: project.status,
+        category: project.category,
+        github: project.github || null,
+        liveDemo: project.liveDemo || null,
+        featured: project.featured,
+        images: imageUrls,
+        coverImage: imageUrls.length > 0 ? imageUrls[0] : null,
+        technologies: {
+          connect: projectSkillKeys.map((key) => ({ key })),
+        },
+        translations: {
+          create: [
+            {
+              language: "tr",
+              ...project.translations.tr,
+            },
+            {
+              language: "en",
+              ...project.translations.en,
+            },
+          ],
+        },
+      },
+    });
+  }
+  console.log("Projects created.");
 
   console.log("Seeding finished.");
 }

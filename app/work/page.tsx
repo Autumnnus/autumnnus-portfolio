@@ -35,7 +35,7 @@ export default function WorkPage() {
         {/* List */}
         <div className="space-y-8">
           {workExperiences.map((experience, index) => (
-            <div key={experience.company + experience.period}>
+            <div key={experience.company + index}>
               <WorkCard experience={experience} />
               {index < workExperiences.length - 1 && (
                 <Separator.Root className="h-px bg-border/30 my-8 w-full" />

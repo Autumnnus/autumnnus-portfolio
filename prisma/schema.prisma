@@ -88,6 +88,8 @@ model WorkExperience {
 
   translations WorkExperienceTranslation[]
 
+  startDate DateTime?
+  endDate   DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -97,7 +99,6 @@ model WorkExperienceTranslation {
   language     Language
   role         String
   description  String
-  period       String
   locationType String
 
   workExperienceId String

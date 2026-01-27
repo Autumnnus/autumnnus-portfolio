@@ -1,7 +1,6 @@
 "use client";
 
 import SectionHeading from "@/components/common/SectionHeading";
-import { PROJECTS_DATA } from "@/config/contents";
 import { useTranslations } from "next-intl";
 
 interface AboutData {
@@ -9,10 +8,19 @@ interface AboutData {
   aboutDescription?: string;
 }
 
-export default function About({ data }: { data?: AboutData | null }) {
+export default function About({
+  data,
+  stats,
+}: {
+  data?: AboutData | null;
+  stats?: { projectCount: number; experienceYears: number };
+}) {
   const t = useTranslations("About");
-  const experienceYears = new Date().getFullYear() - 2022;
-  const rawProjectCount = PROJECTS_DATA.length;
+
+  const experienceYears = stats?.experienceYears || 0;
+  console.log("stats", stats);
+  const rawProjectCount = stats?.projectCount || 0;
+
   const projectCount =
     rawProjectCount >= 100
       ? Math.floor(rawProjectCount / 100) * 100
