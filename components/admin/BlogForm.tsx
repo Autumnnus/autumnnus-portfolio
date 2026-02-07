@@ -2,10 +2,11 @@
 
 import {
   createBlogAction,
-  updateBlogAction,
+  updateBlogAction, // turbo
   uploadImageAction,
 } from "@/app/admin/actions";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { generateTranslationAction } from "@/app/admin/ai-actions";
+import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -45,6 +46,9 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   );
   const [tags, setTags] = useState<string>(initialData?.tags?.join(", ") || "");
 
+  const [sourceLang, setSourceLang] = useState<"tr" | "en">("tr");
+  const [isTranslating, setIsTranslating] = useState(false);
+
   const trTranslation = initialData?.translations?.find(
     (t) => t.language === "tr",
   );
@@ -66,6 +70,65 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     formData.append("path", path);
     const res = await uploadImageAction(formData);
     return res.url;
+  };
+
+  const handleAutoTranslate = async () => {
+    setIsTranslating(true);
+    try {
+      const targetLang = sourceLang === "tr" ? "en" : "tr";
+      const form = document.querySelector("form") as HTMLFormElement;
+
+      const title = (
+        form.elements.namedItem(`title_${sourceLang}`) as HTMLInputElement
+      ).value;
+      const description = (
+        form.elements.namedItem(
+          `description_${sourceLang}`,
+        ) as HTMLTextAreaElement
+      ).value;
+      const content = (
+        form.elements.namedItem(`content_${sourceLang}`) as HTMLTextAreaElement
+      ).value;
+      const readTime = (
+        form.elements.namedItem(`readTime_${sourceLang}`) as HTMLInputElement
+      ).value;
+
+      if (!title || !description || !content) {
+        alert("Lütfen kaynak dildeki alanları doldurunuz.");
+        setIsTranslating(false);
+        return;
+      }
+
+      const translation = await generateTranslationAction({
+        type: "blog",
+        sourceLang,
+        targetLang,
+        content: { title, description, content, readTime },
+      });
+
+      // Update target inputs
+      (
+        form.elements.namedItem(`title_${targetLang}`) as HTMLInputElement
+      ).value = translation.title;
+      (
+        form.elements.namedItem(
+          `description_${targetLang}`,
+        ) as HTMLTextAreaElement
+      ).value = translation.description;
+      (
+        form.elements.namedItem(`content_${targetLang}`) as HTMLTextAreaElement
+      ).value = translation.content;
+      (
+        form.elements.namedItem(`readTime_${targetLang}`) as HTMLInputElement
+      ).value = translation.readTime; // If returned
+    } catch (error) {
+      alert(
+        "Çeviri başarısız oldu: " +
+          (error instanceof Error ? error.message : "Bilinmeyen hata"),
+      );
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -94,7 +157,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         ).checked,
         translations: [
           {
-            language: "tr",
+            language: "tr" as any,
             title: (
               e.currentTarget.elements.namedItem("title_tr") as HTMLInputElement
             ).value,
@@ -116,7 +179,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             date: new Date().toLocaleDateString("tr-TR"),
           },
           {
-            language: "en",
+            language: "en" as any,
             title: (
               e.currentTarget.elements.namedItem("title_en") as HTMLInputElement
             ).value,
@@ -242,6 +305,57 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       </div>
 
       <div className="h-px bg-border/50" />
+
+      {/* Translation Controls */}
+      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-primary">Kaynak Dil:</span>
+            <div className="flex bg-background rounded-lg border border-border p-1">
+              <button
+                type="button"
+                onClick={() => setSourceLang("tr")}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                  sourceLang === "tr"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "hover:bg-muted"
+                }`}
+              >
+                TR 🇹🇷
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourceLang("en")}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                  sourceLang === "en"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "hover:bg-muted"
+                }`}
+              >
+                EN 🇺🇸
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground hidden md:block">
+            Kaynak dildeki içeriği doldurduktan sonra, diğer dile otomatik
+            çeviri yapabilirsiniz.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleAutoTranslate}
+          disabled={isTranslating}
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
+        >
+          {isTranslating ? (
+            <Loader2 className="animate-spin w-4 h-4" />
+          ) : (
+            <Sparkles className="w-4 h-4" />
+          )}
+          AI ile Çevir ({sourceLang === "tr" ? "EN" : "TR"})
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-4 p-4 bg-muted/30 rounded-lg">

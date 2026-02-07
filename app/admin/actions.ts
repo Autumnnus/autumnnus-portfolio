@@ -30,6 +30,8 @@ interface BlogTranslationInput {
   title: string;
   description: string;
   content: string;
+  readTime: string;
+  date: string;
 }
 
 interface BlogData {
@@ -528,14 +530,14 @@ export async function importDatabaseAction(jsonData: string) {
               coverImage: blog.coverImage,
               featured: blog.featured,
               tags: blog.tags,
-              date: blog.date,
-              readTime: blog.readTime,
               translations: {
                 create: blog.translations.map((t: any) => ({
                   language: t.language,
                   title: t.title,
                   description: t.description,
                   content: t.content,
+                  readTime: t.readTime,
+                  date: t.date,
                 })),
               },
             },
