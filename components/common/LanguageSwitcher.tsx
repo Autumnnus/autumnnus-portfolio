@@ -1,7 +1,7 @@
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { routing, usePathname, useRouter } from "@/i18n/routing";
 import { Check, ChevronDown, Globe } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 const languageNames: Record<string, string> = {
@@ -20,7 +20,7 @@ const languageNames: Record<string, string> = {
 };
 
 export default function LanguageSwitcher() {
-  const { language } = useLanguage();
+  const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +64,7 @@ export default function LanguageSwitcher() {
       >
         <Globe className="w-4 h-4 text-muted-foreground" />
         <span className="text-xs font-pixel uppercase tracking-tighter">
-          {language}
+          {locale}
         </span>
         <ChevronDown
           className={`w-3 h-3 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
@@ -79,15 +79,15 @@ export default function LanguageSwitcher() {
                 key={loc}
                 onClick={() => handleLanguageChange(loc)}
                 className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary/50 ${
-                  language === loc
+                  locale === loc
                     ? "text-primary bg-secondary/30"
                     : "text-foreground/70"
                 }`}
               >
-                <span className={language === loc ? "font-bold" : ""}>
+                <span className={locale === loc ? "font-bold" : ""}>
                   {languageNames[loc] || loc.toUpperCase()}
                 </span>
-                {language === loc && <Check className="w-4 h-4" />}
+                {locale === loc && <Check className="w-4 h-4" />}
               </button>
             ))}
           </div>

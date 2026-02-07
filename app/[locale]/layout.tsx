@@ -3,10 +3,8 @@ import Navbar from "@/components/common/Navbar";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
 import SeasonalEffects from "@/components/decorations/SeasonalEffects";
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import { LanguageProvider } from "@/components/providers/LanguageContext";
 import PageTransition from "@/components/providers/PageTransition";
 import SmoothScroll from "@/components/providers/SmoothScroll";
-import { Language } from "@prisma/client";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
@@ -76,18 +74,16 @@ export default async function LocaleLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <LanguageProvider locale={locale as Language}>
-                <SeasonalEffects />
-                <SmoothScroll>
-                  <TooltipProvider delayDuration={0}>
-                    <Navbar />
-                    <main className="flex-1 flex flex-col">
-                      <PageTransition>{children}</PageTransition>
-                    </main>
-                    <Footer />
-                  </TooltipProvider>
-                </SmoothScroll>
-              </LanguageProvider>
+              <SeasonalEffects />
+              <SmoothScroll>
+                <TooltipProvider delayDuration={0}>
+                  <Navbar />
+                  <main className="flex-1 flex flex-col">
+                    <PageTransition>{children}</PageTransition>
+                  </main>
+                  <Footer />
+                </TooltipProvider>
+              </SmoothScroll>
             </ThemeProvider>
           </NextIntlClientProvider>
         </AuthProvider>

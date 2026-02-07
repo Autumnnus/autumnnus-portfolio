@@ -5,10 +5,10 @@ import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
 import Icon from "@/components/common/Icon";
 import RelatedProjectCard from "@/components/projects/RelatedProjectCard";
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { Badge } from "@/components/ui/Badge";
 import { GithubRepoStats, Project } from "@/types/contents";
 import { ArrowLeft, ArrowRight, ExternalLink, Github } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,7 +22,7 @@ export default function ProjectDetailView({
   project: Project;
   githubStats?: GithubRepoStats | null;
 }) {
-  const { content } = useLanguage();
+  const t = useTranslations("Projects");
   const { resolvedTheme } = useTheme();
 
   const isWinter = resolvedTheme === "dark";
@@ -66,7 +66,7 @@ export default function ProjectDetailView({
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          {content.projects.backToProjectsText}
+          {t("back")}
         </Link>
       </FadeIn>
 
@@ -176,14 +176,14 @@ export default function ProjectDetailView({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <div className="p-4 bg-muted/30 rounded-lg">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {content.projects.categoryLabel}
+              {t("category")}
             </p>
             <p className="text-base font-medium">{project.category}</p>
           </div>
 
           <div className="p-4 bg-muted/30 rounded-lg">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {content.projects.statusLabel}
+              {t("status")}
             </p>
             <p className="text-base font-medium">
               <span
@@ -246,7 +246,7 @@ export default function ProjectDetailView({
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background rounded-md font-medium hover:opacity-90 transition-opacity"
             >
               <ExternalLink className="w-4 h-4" />
-              {content.projects.liveDemoText}
+              {t("liveDemo")}
             </a>
           )}
           {project.github && (
@@ -257,7 +257,7 @@ export default function ProjectDetailView({
               className="inline-flex items-center gap-2 px-5 py-2.5 border border-border rounded-md font-medium hover:bg-accent transition-colors"
             >
               <Github className="w-4 h-4" />
-              {content.projects.sourceCodeText}
+              {t("sourceCode")}
             </a>
           )}
         </div>
@@ -278,7 +278,7 @@ export default function ProjectDetailView({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">
-                  {content.projects.nextProjectText}
+                  {t("next")}
                 </p>
                 <p className="text-lg font-bold group-hover:text-primary transition-colors">
                   {nextProject.title}
@@ -296,7 +296,7 @@ export default function ProjectDetailView({
         <FadeIn delay={0.9}>
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-8">
-              {content.projects.relatedProjectsText}
+              {t("related")}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {relatedProjects.map((relatedProject, index) => (
@@ -317,7 +317,7 @@ export default function ProjectDetailView({
             href="/projects"
             className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background rounded-md font-medium hover:opacity-90 transition-opacity"
           >
-            {content.projects.viewAllText}
+            {t("viewAll")}
           </Link>
         </div>
       </FadeIn>

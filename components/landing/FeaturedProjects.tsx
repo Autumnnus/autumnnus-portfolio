@@ -2,7 +2,6 @@
 
 import SectionHeading from "@/components/common/SectionHeading";
 import ProjectCard from "@/components/projects/ProjectCard";
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { Project } from "@/types/contents";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -13,7 +12,6 @@ interface FeaturedProjectsProps {
 
 export default function FeaturedProjects({ projects }: FeaturedProjectsProps) {
   const t = useTranslations("Projects");
-  const { content } = useLanguage();
 
   // Use passed projects
   const featuredProjects = projects.slice(0, 4);
@@ -30,7 +28,7 @@ export default function FeaturedProjects({ projects }: FeaturedProjectsProps) {
 
       <div className="flex justify-center">
         <Link href="/projects" className="pixel-btn">
-          {content.projects.viewAllText} →
+          {t("viewAll")} →
         </Link>
       </div>
     </section>

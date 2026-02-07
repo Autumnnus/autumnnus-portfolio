@@ -2,8 +2,8 @@
 
 import BlogCard from "@/components/blog/BlogCard";
 import SectionHeading from "@/components/common/SectionHeading";
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { BlogPost } from "@/types/contents";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 interface FeaturedBlogsProps {
@@ -11,15 +11,12 @@ interface FeaturedBlogsProps {
 }
 
 export default function FeaturedBlogs({ posts }: FeaturedBlogsProps) {
-  const { content } = useLanguage();
+  const t = useTranslations("Blog");
   const featuredPosts = posts.slice(0, 2);
 
   return (
     <section className="py-12" id="blog">
-      <SectionHeading
-        subHeading={content.blog.viewAllText}
-        heading={content.blog.title}
-      />
+      <SectionHeading subHeading={t("viewAll")} heading={t("title")} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {featuredPosts.map((post, index) => (
@@ -29,7 +26,7 @@ export default function FeaturedBlogs({ posts }: FeaturedBlogsProps) {
 
       <div className="flex justify-center">
         <Link href="/blog" className="pixel-btn">
-          {content.blog.viewAllText} →
+          {t("viewAll")} →
         </Link>
       </div>
     </section>

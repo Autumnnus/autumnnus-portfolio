@@ -1,6 +1,5 @@
 "use client";
 
-import { useLanguage } from "@/components/providers/LanguageContext";
 import {
   addComment,
   getComments,
@@ -11,6 +10,7 @@ import {
 import { Comment, User } from "@/types/blog";
 import * as Dialog from "@radix-ui/react-dialog";
 import { MessageSquare, User as UserIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import CommentComponent from "./Comment";
 
@@ -19,7 +19,7 @@ interface CommentsectionProps {
 }
 
 export default function CommentSection({ postSlug }: CommentsectionProps) {
-  const { content } = useLanguage();
+  const t = useTranslations("Blog");
   const [comments, setComments] = useState<Comment[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [newComment, setNewComment] = useState("");
@@ -56,7 +56,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
       <div className="flex items-center gap-2 mb-8">
         <MessageSquare className="w-5 h-5" />
         <h2 className="text-2xl font-bold">
-          {content.blog.commentsTitle} ({comments.length})
+          {t("comments")} ({comments.length})
         </h2>
       </div>
 
@@ -66,10 +66,10 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
           <UserIcon className="w-12 h-12 mx-auto text-muted-foreground" />
           <div>
             <h3 className="text-lg font-semibold mb-2">
-              {content.blog.signInToComment}
+              {t("signInToComment")}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {content.blog.joinConversation}
+              {t("joinConversation")}
             </p>
           </div>
           <button
@@ -77,7 +77,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
             className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity"
           >
             <UserIcon className="w-4 h-4" />
-            {content.blog.signInButton}
+            {t("signInButton")}
           </button>
         </div>
       ) : (
@@ -91,15 +91,14 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {content.blog.signedInAs}{" "}
-              <span className="font-medium">{user.name}</span>
+              {t("signedInAs")} <span className="font-medium">{user.name}</span>
             </p>
             <button
               onClick={handleAddComment}
               disabled={!newComment.trim()}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {content.blog.postComment}
+              {t("postComment")}
             </button>
           </div>
         </div>
@@ -109,7 +108,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
       <div className="space-y-1 divide-y divide-border/50">
         {comments.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">
-            {content.blog.noCommentsYet}
+            {t("noCommentsYet")}
           </p>
         ) : (
           comments.map((comment) => (
@@ -124,7 +123,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border border-border rounded-lg p-6 w-full max-w-md z-50 space-y-4">
             <Dialog.Title className="text-xl font-bold">
-              {content.blog.signInToComment}
+              {t("signInToComment")}
             </Dialog.Title>
             <Dialog.Description className="text-sm text-muted-foreground">
               You need to sign in to post comments. This creates a unique

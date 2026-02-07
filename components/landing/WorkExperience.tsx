@@ -2,7 +2,6 @@
 
 import Icon from "@/components/common/Icon";
 import SectionHeading from "@/components/common/SectionHeading";
-import { useLanguage } from "@/components/providers/LanguageContext";
 import { WorkExperience as WorkExperienceType } from "@/types/contents";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
@@ -14,8 +13,7 @@ export default function WorkExperience({
 }) {
   const t = useTranslations("Work");
   const locale = useLocale();
-  const { content } = useLanguage();
-  const workItems = data && data.length > 0 ? data : content.work.items;
+  const workItems = data || [];
 
   const formatDate = (date: string | Date | null | undefined) => {
     if (!date) return "";
@@ -41,9 +39,7 @@ export default function WorkExperience({
             const startStr = formatDate(item.startDate);
             const endStr = item.endDate
               ? formatDate(item.endDate)
-              : locale === "tr"
-                ? "Günümüz"
-                : "Present";
+              : t("present");
             const period = `${startStr} - ${endStr}`;
 
             return (

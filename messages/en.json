@@ -69,7 +69,8 @@
     "subTitle": "Professional Journey",
     "description": "My work experiences across different companies and roles.",
     "allExperiences": "All Experiences",
-    "experienceCount": "experiences"
+    "experienceCount": "experiences",
+    "present": "Present"
   },
   "Footer": {
     "rights": "© 2026 Kadir. All rights reserved."

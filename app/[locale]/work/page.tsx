@@ -1,15 +1,21 @@
-"use client";
-
+import { getWorkExperiences } from "@/app/actions";
 import Container from "@/components/common/Container";
-import { useLanguage } from "@/components/providers/LanguageContext";
 import WorkCard from "@/components/work/WorkCard";
+import { WorkExperience } from "@/types/contents";
+import { Language } from "@prisma/client";
 import * as Separator from "@radix-ui/react-separator";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
-export default function WorkPage() {
-  const { content } = useLanguage();
-  const t = useTranslations("Work");
-  const workExperiences = content.work.items || [];
+export default async function WorkPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Work" });
+  const experiences = (await getWorkExperiences(
+    locale as Language,
+  )) as unknown as WorkExperience[];
 
   return (
     <Container className="py-12 sm:py-20">
@@ -28,16 +34,16 @@ export default function WorkPage() {
         <div className="flex items-baseline gap-3 mb-8">
           <h2 className="text-2xl font-bold">{t("allExperiences")}</h2>
           <span className="text-muted-foreground text-sm">
-            ({workExperiences.length} {t("experienceCount")})
+            ({experiences.length} {t("experienceCount")})
           </span>
         </div>
 
         {/* List */}
         <div className="space-y-8">
-          {workExperiences.map((experience, index) => (
+          {experiences.map((experience, index) => (
             <div key={experience.company + index}>
               <WorkCard experience={experience} />
-              {index < workExperiences.length - 1 && (
+              {index < experiences.length - 1 && (
                 <Separator.Root className="h-px bg-border/30 my-8 w-full" />
               )}
             </div>

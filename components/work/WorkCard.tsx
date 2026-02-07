@@ -27,11 +27,7 @@ export default function WorkCard({ experience }: WorkCardProps) {
   };
 
   const startStr = formatDate(startDate);
-  const endStr = endDate
-    ? formatDate(endDate)
-    : locale === "tr"
-      ? "Günümüz"
-      : "Present";
+  const endStr = endDate ? formatDate(endDate) : t("present");
   const period = `${startStr} - ${endStr}`;
 
   console.log("experience", experience);

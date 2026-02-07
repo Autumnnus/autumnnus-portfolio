@@ -1,7 +1,6 @@
 "use client";
-
 import Icon from "@/components/common/Icon";
-import { useLanguage } from "@/components/providers/LanguageContext";
+import { SKILLS, SOCIAL_LINKS } from "@/config/contents";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
@@ -13,10 +12,26 @@ interface HeroData {
 }
 
 export default function Hero({ data }: { data?: HeroData | null }) {
-  const { content } = useLanguage();
   const t = useTranslations("Hero");
+  const tNav = useTranslations("Navbar");
 
-  const { name, title, skills, buttons, socialLinks } = content.hero;
+  const name = "Kadir";
+  const title = "Full Stack Developer";
+  const skills = Object.values(SKILLS);
+  const socialLinks = Object.values(SOCIAL_LINKS);
+  const buttons = [
+    {
+      text: t("buttons.projects"),
+      href: "#projects",
+      variant: "primary" as const,
+    },
+    {
+      text: tNav("Blog"),
+      href: "/blog",
+      variant: "secondary" as const,
+    },
+  ];
+
   const description = data?.description || t("description");
   const greeting = data?.greetingText || t("greeting");
   const displayName = data?.name || name;
