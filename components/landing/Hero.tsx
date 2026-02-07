@@ -68,14 +68,14 @@ export default function Hero({ data }: { data?: HeroData | null }) {
         ))}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 mb-12">
         {socialLinks.map((link) => (
           <a
             key={link.name}
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-2xl hover:scale-110 transition-transform pixel-border-sm p-2 bg-card hover:bg-secondary/20 block"
+            className="text-2xl hover:scale-110 transition-transform pixel-border-sm p-2 bg-card hover:bg-secondary/20 block ring-accent/20 hover:ring-2"
             title={link.name}
           >
             <Icon src={link.icon} alt={link.name} size={24} />

@@ -10,6 +10,7 @@ const sections = [
   { id: "work", key: "Work.title" },
   { id: "github", key: "GitHub.title" },
   { id: "projects", key: "Projects.title" },
+  { id: "blog", key: "Blog.title" },
 ];
 
 export default function SectionNav() {

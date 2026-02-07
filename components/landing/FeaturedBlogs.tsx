@@ -3,13 +3,16 @@
 import BlogCard from "@/components/blog/BlogCard";
 import SectionHeading from "@/components/common/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageContext";
+import { BlogPost } from "@/types/contents";
 import Link from "next/link";
 
-export default function FeaturedBlogs() {
+interface FeaturedBlogsProps {
+  posts: BlogPost[];
+}
+
+export default function FeaturedBlogs({ posts }: FeaturedBlogsProps) {
   const { content } = useLanguage();
-  const featuredPosts = (content.blog.items || [])
-    .filter((p) => p.featured)
-    .slice(0, 2);
+  const featuredPosts = posts.slice(0, 2);
 
   return (
     <section className="py-12" id="blog">
