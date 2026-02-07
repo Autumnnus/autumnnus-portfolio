@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { Language, PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -123,7 +123,7 @@ async function main() {
       linkedin: PROFILE_DATA.linkedin,
       translations: {
         create: PROFILE_DATA.translations.map((t) => ({
-          language: t.language as any,
+          language: t.language as Language,
           name: t.name,
           title: t.title,
           greetingText: t.greetingText,
@@ -146,7 +146,7 @@ async function main() {
         endDate: work.endDate,
         translations: {
           create: work.translations.map((t) => ({
-            language: t.language as any,
+            language: t.language as Language,
             role: t.role,
             description: t.description,
             locationType: t.locationType,
@@ -178,8 +178,9 @@ async function main() {
     const projectSkillKeys = project.technologies
       .map((tech) => {
         const entry = Object.entries(SKILLS).find(
-          ([_, val]) => val.name === tech.name,
+          ([, val]) => val.name === tech.name,
         );
+
         return entry ? entry[0] : null;
       })
       .filter((k): k is string => k !== null);

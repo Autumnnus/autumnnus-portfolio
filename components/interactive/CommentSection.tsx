@@ -1,7 +1,13 @@
 "use client";
 
-import { CommentItemType, createComment, getComments } from "@/app/actions";
+import {
+  CommentItemType,
+  createComment,
+  deleteComment,
+  getComments,
+} from "@/app/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,11 +20,13 @@ import {
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { formatDistanceToNow } from "date-fns";
-import { de, enUS, tr } from "date-fns/locale"; // Add more locales as needed
-import { Loader2 } from "lucide-react";
+import { de, enUS, tr } from "date-fns/locale";
+import { Loader2, Reply, Trash2, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useLocale } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -36,6 +44,9 @@ interface Comment {
   authorEmail: string;
   content: string;
   createdAt: Date;
+  isAdmin: boolean;
+  parentId?: string | null;
+  replies?: Comment[];
 }
 
 interface CommentSectionProps {
@@ -50,7 +61,17 @@ export default function CommentSection({
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [replyTo, setReplyTo] = useState<Comment | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const { data: session } = useSession();
   const locale = useLocale();
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const isDev = process.env.NODE_ENV === "development";
+
+  const adminEmail =
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL || "prost.alchemist@gmail.com";
+  const isAdmin = session?.user?.email === adminEmail;
 
   const form = useForm<CommentFormValues>({
     resolver: zodResolver(commentSchema),
@@ -61,13 +82,18 @@ export default function CommentSection({
     },
   });
 
-  // Load user details from localStorage
+  // Load user details from localStorage or Session
   useEffect(() => {
-    const savedName = localStorage.getItem("commentAuthorName");
-    const savedEmail = localStorage.getItem("commentAuthorEmail");
-    if (savedName) form.setValue("authorName", savedName);
-    if (savedEmail) form.setValue("authorEmail", savedEmail);
-  }, [form]);
+    if (session?.user) {
+      form.setValue("authorName", session.user.name || "");
+      form.setValue("authorEmail", session.user.email || "");
+    } else {
+      const savedName = localStorage.getItem("commentAuthorName");
+      const savedEmail = localStorage.getItem("commentAuthorEmail");
+      if (savedName) form.setValue("authorName", savedName);
+      if (savedEmail) form.setValue("authorEmail", savedEmail);
+    }
+  }, [form, session]);
 
   // Fetch comments
   useEffect(() => {
@@ -76,12 +102,14 @@ export default function CommentSection({
       try {
         const result = await getComments(itemId, itemType);
         if (mounted) {
-          setComments(
-            result.comments.map((c) => ({
+          const mapComments = (cs: Comment[]): Comment[] =>
+            cs.map((c) => ({
               ...c,
-              createdAt: new Date(c.createdAt), // Ensure Date object
-            })),
-          );
+              createdAt: new Date(c.createdAt),
+              replies: c.replies ? mapComments(c.replies) : [],
+            }));
+
+          setComments(mapComments(result.comments as unknown as Comment[]));
         }
       } catch (error) {
         console.error("Failed to load comments:", error);
@@ -96,6 +124,11 @@ export default function CommentSection({
   }, [itemId, itemType]);
 
   const onSubmit = async (values: CommentFormValues) => {
+    if (!isDev && !turnstileToken) {
+      alert("Please complete the security verification.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const result = await createComment(
@@ -104,25 +137,47 @@ export default function CommentSection({
         values.content,
         values.authorName,
         values.authorEmail,
+        replyTo?.id,
+        turnstileToken,
       );
 
       if (result.success && result.comment) {
-        // Save to localStorage
-        localStorage.setItem("commentAuthorName", values.authorName);
-        localStorage.setItem("commentAuthorEmail", values.authorEmail);
+        if (!session) {
+          localStorage.setItem("commentAuthorName", values.authorName);
+          localStorage.setItem("commentAuthorEmail", values.authorEmail);
+        }
 
-        // Add to list (optimistic-ish, or real from server response)
-        const newComment = {
+        const newComment: Comment = {
           ...result.comment,
           createdAt: new Date(result.comment.createdAt),
+          replies: [],
         };
 
-        setComments((prev) => [newComment, ...prev]);
+        if (replyTo) {
+          setComments((prev) => {
+            const updateReplies = (cs: Comment[]): Comment[] =>
+              cs.map((c) => {
+                if (c.id === replyTo.id) {
+                  return { ...c, replies: [...(c.replies || []), newComment] };
+                }
+                if (c.replies && c.replies.length > 0) {
+                  return { ...c, replies: updateReplies(c.replies) };
+                }
+                return c;
+              });
+            return updateReplies(prev);
+          });
+        } else {
+          setComments((prev) => [newComment, ...prev]);
+        }
+
         form.reset({
           authorName: values.authorName,
           authorEmail: values.authorEmail,
           content: "",
         });
+        setReplyTo(null);
+        setTurnstileToken("");
       } else {
         alert(result.error || "Failed to post comment");
       }
@@ -132,6 +187,34 @@ export default function CommentSection({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!confirm("Are you sure you want to delete this comment?")) return;
+    try {
+      const result = await deleteComment(commentId);
+      if (result.success) {
+        const removeComment = (cs: Comment[]): Comment[] =>
+          cs
+            .filter((c) => c.id !== commentId)
+            .map((c) => ({
+              ...c,
+              replies: c.replies ? removeComment(c.replies) : [],
+            }));
+
+        setComments((prev) => removeComment(prev));
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  const startReply = (comment: Comment) => {
+    setReplyTo(comment);
+    formRef.current?.scrollIntoView({ behavior: "smooth" });
+    setTimeout(() => {
+      form.setFocus("content");
+    }, 100);
   };
 
   const getDateLocale = () => {
@@ -145,12 +228,100 @@ export default function CommentSection({
     }
   };
 
+  const CommentItem = ({
+    comment,
+    isReply = false,
+  }: {
+    comment: Comment;
+    isReply?: boolean;
+  }) => (
+    <div className={`space-y-4 ${isReply ? "ml-8 sm:ml-12 mt-4" : ""}`}>
+      <div
+        className={`flex gap-4 p-4 rounded-lg border ${comment.isAdmin ? "bg-yellow-500/5 border-yellow-500/20" : "bg-card"}`}
+      >
+        <Avatar>
+          <AvatarImage
+            src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.authorName}`}
+          />
+          <AvatarFallback>
+            {comment.authorName.substring(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold">{comment.authorName}</h4>
+              {comment.isAdmin && (
+                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-[10px] px-1.5 py-0 h-4">
+                  ADMIN
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+                {formatDistanceToNow(comment.createdAt, {
+                  addSuffix: true,
+                  locale: getDateLocale(),
+                })}
+              </span>
+              {isAdmin && (
+                <button
+                  onClick={() => handleDelete(comment.id)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">
+            {comment.content}
+          </p>
+          <div className="pt-1">
+            <button
+              onClick={() => startReply(comment)}
+              className="text-xs font-medium text-primary hover:underline flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <Reply className="w-3 h-3" />
+              Reply
+            </button>
+          </div>
+        </div>
+      </div>
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="space-y-4">
+          {comment.replies.map((reply) => (
+            <CommentItem key={reply.id} comment={reply} isReply />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-8 mt-12 border-t pt-8">
       <h3 className="text-2xl font-semibold">Comments ({comments.length})</h3>
 
-      {/* Comment Form */}
-      <div className="bg-card p-6 rounded-lg border">
+      <div
+        ref={formRef}
+        className={`bg-card p-6 rounded-lg border relative transition-all duration-300 ${replyTo ? "ring-2 ring-primary pt-10" : ""}`}
+      >
+        {replyTo && (
+          <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground px-4 py-2 rounded-t-lg flex items-center justify-between animate-in slide-in-from-top-2">
+            <div className="text-sm font-medium flex items-center gap-2">
+              <Reply className="w-4 h-4" />
+              Replying to{" "}
+              <span className="underline font-bold">{replyTo.authorName}</span>
+            </div>
+            <button
+              onClick={() => setReplyTo(null)}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -161,7 +332,11 @@ export default function CommentSection({
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your Name" {...field} />
+                      <Input
+                        placeholder="Your Name"
+                        {...field}
+                        disabled={!!session}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -174,7 +349,11 @@ export default function CommentSection({
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="your@email.com" {...field} />
+                      <Input
+                        placeholder="your@email.com"
+                        {...field}
+                        disabled={!!session}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,23 +365,51 @@ export default function CommentSection({
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Comment</FormLabel>
+                  <FormLabel>
+                    {replyTo
+                      ? `Your reply to ${replyTo.authorName}`
+                      : "Comment"}
+                  </FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Share your thoughts..." {...field} />
+                    <Textarea
+                      placeholder={
+                        replyTo ? "Write a reply..." : "Share your thoughts..."
+                      }
+                      className="min-h-[100px]"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Post Comment
-            </Button>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
+              <Button
+                type="submit"
+                disabled={submitting || (!isDev && !turnstileToken)}
+                className="w-full sm:w-auto"
+              >
+                {submitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {replyTo ? "Post Reply" : "Post Comment"}
+              </Button>
+
+              {!isDev && (
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken("")}
+                  onError={() => setTurnstileToken("")}
+                  options={{ theme: "light", size: "normal" }}
+                />
+              )}
+            </div>
           </form>
         </Form>
       </div>
 
-      {/* Comments List */}
       <div className="space-y-6">
         {loading ? (
           <div className="flex justify-center py-8">
@@ -210,30 +417,7 @@ export default function CommentSection({
           </div>
         ) : comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment.id} className="flex gap-4">
-              <Avatar>
-                <AvatarImage
-                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.authorName}`}
-                />
-                <AvatarFallback>
-                  {comment.authorName.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">{comment.authorName}</h4>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(comment.createdAt, {
-                      addSuffix: true,
-                      locale: getDateLocale(),
-                    })}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">
-                  {comment.content}
-                </p>
-              </div>
-            </div>
+            <CommentItem key={comment.id} comment={comment} />
           ))
         ) : (
           <p className="text-center text-muted-foreground py-8">

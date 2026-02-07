@@ -7,7 +7,13 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 interface ProjectListProps {
-  projects: any[];
+  projects: {
+    id: string;
+    title: string;
+    slug: string;
+    status: string;
+    category: string;
+  }[];
 }
 
 export default function AdminProjectList({ projects }: ProjectListProps) {
@@ -21,7 +27,7 @@ export default function AdminProjectList({ projects }: ProjectListProps) {
       try {
         await deleteProjectAction(id);
         router.refresh();
-      } catch (err) {
+      } catch {
         alert("Silme işlemi başarısız");
       }
     });

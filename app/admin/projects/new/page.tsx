@@ -14,7 +14,7 @@ export default async function NewProjectPage() {
           href="/admin"
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all"
         >
-          <ArrowLeft size={20} /> Dashboard'a Dön
+          <ArrowLeft size={20} /> Dashboard&apos;a Dön
         </Link>
         <h1 className="text-4xl font-bold mt-4">Yeni Proje Ekle</h1>
       </div>

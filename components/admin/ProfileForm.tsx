@@ -1,6 +1,10 @@
 "use client";
 
-import { updateProfileAction, uploadImageAction } from "@/app/admin/actions";
+import {
+  ProfileTranslationInput,
+  updateProfileAction,
+  uploadImageAction,
+} from "@/app/admin/actions";
 import { generateTranslationAction } from "@/app/admin/ai-actions";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
@@ -15,7 +19,8 @@ import { useForm } from "react-hook-form";
 
 // Helper to transform array translations to object keyed by language
 const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
-  const result: Record<string, any> = {};
+  const result: Record<string, Omit<ProfileTranslationInput, "language">> = {};
+
   translations.forEach((t) => {
     result[t.language] = {
       name: t.name,
@@ -127,18 +132,16 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       });
 
       // Update target inputs
-      Object.entries(translations).forEach(([lang, content]: [string, any]) => {
-        if (!content) return;
+      Object.entries(translations).forEach(([lang, content]) => {
+        const c = content as Omit<ProfileTranslationInput, "language">;
+        if (!c) return;
 
-        setValue(`translations.${lang}.name`, content.name);
-        setValue(`translations.${lang}.title`, content.title);
-        setValue(`translations.${lang}.greetingText`, content.greetingText);
-        setValue(`translations.${lang}.description`, content.description);
-        setValue(`translations.${lang}.aboutTitle`, content.aboutTitle);
-        setValue(
-          `translations.${lang}.aboutDescription`,
-          content.aboutDescription,
-        );
+        setValue(`translations.${lang}.name`, c.name);
+        setValue(`translations.${lang}.title`, c.title);
+        setValue(`translations.${lang}.greetingText`, c.greetingText);
+        setValue(`translations.${lang}.description`, c.description);
+        setValue(`translations.${lang}.aboutTitle`, c.aboutTitle);
+        setValue(`translations.${lang}.aboutDescription`, c.aboutDescription);
       });
 
       alert("Çeviri tamamlandı!");

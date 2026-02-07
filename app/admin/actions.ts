@@ -5,14 +5,14 @@ import { deleteFolder, uploadFile } from "@/lib/minio";
 import { prisma } from "@/lib/prisma";
 import { Language } from "@prisma/client";
 
-interface ProjectTranslationInput {
+export interface ProjectTranslationInput {
   language: Language;
   title: string;
   shortDescription: string;
   fullDescription: string;
 }
 
-interface ProjectData {
+export interface ProjectData {
   slug: string;
   status: string;
   category: string;
@@ -25,7 +25,7 @@ interface ProjectData {
   technologies: string[];
 }
 
-interface BlogTranslationInput {
+export interface BlogTranslationInput {
   language: Language;
   title: string;
   description: string;
@@ -34,7 +34,7 @@ interface BlogTranslationInput {
   date: string;
 }
 
-interface BlogData {
+export interface BlogData {
   slug: string;
   coverImage?: string | null;
   featured: boolean;
@@ -42,7 +42,7 @@ interface BlogData {
   translations: BlogTranslationInput[];
 }
 
-interface ProfileTranslationInput {
+export interface ProfileTranslationInput {
   language: Language;
   name: string;
   title: string;
@@ -52,7 +52,7 @@ interface ProfileTranslationInput {
   aboutDescription: string;
 }
 
-interface ProfileData {
+export interface ProfileData {
   avatar: string;
   email: string;
   github: string;
@@ -60,14 +60,14 @@ interface ProfileData {
   translations: ProfileTranslationInput[];
 }
 
-interface ExperienceTranslationInput {
+export interface ExperienceTranslationInput {
   language: Language;
   role: string;
   description: string;
   locationType: string;
 }
 
-interface ExperienceData {
+export interface ExperienceData {
   company: string;
   logo: string;
   startDate?: Date | null;
@@ -471,7 +471,9 @@ export async function importDatabaseAction(jsonData: string) {
 
       if (skills && skills.length > 0) {
         await tx.skill.createMany({
-          data: skills.map((s: any) => ({
+          data: (
+            skills as { id: string; key: string; name: string; icon: string }[]
+          ).map((s) => ({
             id: s.id,
             key: s.key,
             name: s.name,
@@ -480,14 +482,15 @@ export async function importDatabaseAction(jsonData: string) {
         });
       }
       if (profile) {
+        const p = profile as ProfileData;
         await tx.profile.create({
           data: {
-            avatar: profile.avatar,
-            email: profile.email,
-            github: profile.github,
-            linkedin: profile.linkedin,
+            avatar: p.avatar,
+            email: p.email,
+            github: p.github,
+            linkedin: p.linkedin,
             translations: {
-              create: profile.translations.map((t: any) => ({
+              create: p.translations.map((t) => ({
                 language: t.language,
                 name: t.name,
                 title: t.title,
@@ -502,7 +505,7 @@ export async function importDatabaseAction(jsonData: string) {
       }
 
       if (experiences && experiences.length > 0) {
-        for (const exp of experiences) {
+        for (const exp of experiences as ExperienceData[]) {
           await tx.workExperience.create({
             data: {
               company: exp.company,
@@ -510,7 +513,7 @@ export async function importDatabaseAction(jsonData: string) {
               startDate: exp.startDate,
               endDate: exp.endDate,
               translations: {
-                create: exp.translations.map((t: any) => ({
+                create: exp.translations.map((t) => ({
                   language: t.language,
                   role: t.role,
                   description: t.description,
@@ -523,7 +526,7 @@ export async function importDatabaseAction(jsonData: string) {
       }
 
       if (blogs && blogs.length > 0) {
-        for (const blog of blogs) {
+        for (const blog of blogs as BlogData[]) {
           await tx.blogPost.create({
             data: {
               slug: blog.slug,
@@ -531,7 +534,7 @@ export async function importDatabaseAction(jsonData: string) {
               featured: blog.featured,
               tags: blog.tags,
               translations: {
-                create: blog.translations.map((t: any) => ({
+                create: blog.translations.map((t) => ({
                   language: t.language,
                   title: t.title,
                   description: t.description,
@@ -546,7 +549,7 @@ export async function importDatabaseAction(jsonData: string) {
       }
 
       if (projects && projects.length > 0) {
-        for (const project of projects) {
+        for (const project of projects as ProjectData[]) {
           await tx.project.create({
             data: {
               slug: project.slug,
@@ -558,12 +561,14 @@ export async function importDatabaseAction(jsonData: string) {
               coverImage: project.coverImage,
               images: project.images,
               technologies: {
-                connect: project.technologies.map((tech: any) => ({
+                connect: (
+                  project.technologies as unknown as { id: string }[]
+                ).map((tech) => ({
                   id: tech.id, // Connect by ID since we restored skills with IDs
                 })),
               },
               translations: {
-                create: project.translations.map((t: any) => ({
+                create: project.translations.map((t) => ({
                   language: t.language,
                   title: t.title,
                   shortDescription: t.shortDescription,

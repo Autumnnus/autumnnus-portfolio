@@ -103,10 +103,14 @@ model Comment {
   content     String
   authorName  String
   authorEmail String
-  // authorImage removed or made optional/null if not used from session
   ipAddress   String   @default("0.0.0.0")
+  isAdmin     Boolean  @default(false)
   
   approved    Boolean  @default(true)
+
+  parentId    String?
+  parent      Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
 
   blogPostId  String?
   blogPost    BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
@@ -203,3 +207,13 @@ model ProfileTranslation {
 
   @@unique([profileId, language])
 }
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // e.g., "COMMENT_CREATED", "LIKE_TOGGLED", "VIEW_MILESTONE"
+  entityType  String   // e.g., "BLOG", "PROJECT"
+  entityId    String
+  details     Json?    // Additional info like IP, author, milestone value
+  createdAt   DateTime @default(now())
+}
+

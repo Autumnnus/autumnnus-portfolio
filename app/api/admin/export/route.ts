@@ -3,7 +3,7 @@ import { getFile } from "@/lib/minio";
 import { prisma } from "@/lib/prisma";
 import JSZip from "jszip";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await auth();
     if (
@@ -93,10 +93,10 @@ export async function GET(request: Request) {
 
     const zipContent = await zip.generateAsync({ type: "nodebuffer" });
 
-    return new Response(zipContent, {
+    return new Response(new Uint8Array(zipContent), {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="backup-${new Date().toISOString().split("T")[0]}.zip"`,
+        "Content-Disposition": `attachment; filename=\"backup-${new Date().toISOString().split("T")[0]}.zip\"`,
       },
     });
   } catch (error) {

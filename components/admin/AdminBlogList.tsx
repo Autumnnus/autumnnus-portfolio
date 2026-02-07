@@ -7,7 +7,11 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 interface BlogListProps {
-  posts: any[];
+  posts: {
+    id: string;
+    title: string;
+    slug: string;
+  }[];
 }
 
 export default function AdminBlogList({ posts }: BlogListProps) {
@@ -21,7 +25,7 @@ export default function AdminBlogList({ posts }: BlogListProps) {
       try {
         await deleteBlogAction(id);
         router.refresh();
-      } catch (err) {
+      } catch {
         alert("Silme işlemi başarısız");
       }
     });

@@ -1,3 +1,9 @@
+import {
+  BlogData,
+  ExperienceData,
+  ProfileData,
+  ProjectData,
+} from "@/app/admin/actions";
 import { auth } from "@/auth";
 import { uploadFile } from "@/lib/minio";
 import { prisma } from "@/lib/prisma";
@@ -46,7 +52,9 @@ export async function POST(request: Request) {
 
       if (skills?.length) {
         await tx.skill.createMany({
-          data: skills.map((s: any) => ({
+          data: (
+            skills as { id: string; key: string; name: string; icon: string }[]
+          ).map((s) => ({
             id: s.id,
             key: s.key,
             name: s.name,
@@ -57,14 +65,15 @@ export async function POST(request: Request) {
 
       // Profile
       if (profile) {
+        const pr = profile as ProfileData;
         await tx.profile.create({
           data: {
-            avatar: profile.avatar,
-            email: profile.email,
-            github: profile.github,
-            linkedin: profile.linkedin,
+            avatar: pr.avatar,
+            email: pr.email,
+            github: pr.github,
+            linkedin: pr.linkedin,
             translations: {
-              create: profile.translations.map((t: any) => ({
+              create: pr.translations.map((t) => ({
                 language: t.language,
                 name: t.name,
                 title: t.title,
@@ -80,7 +89,7 @@ export async function POST(request: Request) {
 
       // Work Experiences
       if (experiences?.length) {
-        for (const exp of experiences) {
+        for (const exp of experiences as ExperienceData[]) {
           await tx.workExperience.create({
             data: {
               company: exp.company,
@@ -88,7 +97,7 @@ export async function POST(request: Request) {
               startDate: exp.startDate,
               endDate: exp.endDate,
               translations: {
-                create: exp.translations.map((t: any) => ({
+                create: exp.translations.map((t) => ({
                   language: t.language,
                   role: t.role,
                   description: t.description,
@@ -101,21 +110,21 @@ export async function POST(request: Request) {
       }
 
       if (blogs?.length) {
-        for (const blog of blogs) {
+        for (const blog of blogs as BlogData[]) {
           await tx.blogPost.create({
             data: {
               slug: blog.slug,
               coverImage: blog.coverImage,
               featured: blog.featured,
               tags: blog.tags,
-              date: blog.date,
-              readTime: blog.readTime,
               translations: {
-                create: blog.translations.map((t: any) => ({
+                create: blog.translations.map((t) => ({
                   language: t.language,
                   title: t.title,
                   description: t.description,
                   content: t.content,
+                  readTime: t.readTime,
+                  date: t.date,
                 })),
               },
             },
@@ -124,7 +133,7 @@ export async function POST(request: Request) {
       }
 
       if (projects?.length) {
-        for (const project of projects) {
+        for (const project of projects as ProjectData[]) {
           await tx.project.create({
             data: {
               slug: project.slug,
@@ -136,12 +145,14 @@ export async function POST(request: Request) {
               coverImage: project.coverImage,
               images: project.images,
               technologies: {
-                connect: project.technologies.map((tech: any) => ({
+                connect: (
+                  project.technologies as unknown as { id: string }[]
+                ).map((tech) => ({
                   id: tech.id,
                 })),
               },
               translations: {
-                create: project.translations.map((t: any) => ({
+                create: project.translations.map((t) => ({
                   language: t.language,
                   title: t.title,
                   shortDescription: t.shortDescription,
@@ -156,7 +167,7 @@ export async function POST(request: Request) {
 
     const assetsFolder = zip.folder("assets");
     if (assetsFolder) {
-      const uploadPromises: Promise<any>[] = [];
+      const uploadPromises: Promise<void>[] = [];
 
       assetsFolder.forEach((relativePath, fileEntry) => {
         if (fileEntry.dir) return;
