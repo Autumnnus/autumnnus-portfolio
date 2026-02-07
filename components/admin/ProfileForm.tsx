@@ -1,13 +1,16 @@
 "use client";
 
 import { updateProfileAction, uploadImageAction } from "@/app/admin/actions";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { generateTranslationAction } from "@/app/admin/ai-actions";
+import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
+import { languageNames } from "@/i18n/routing";
+import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export interface ProfileTranslation {
-  language: "tr" | "en";
+  language: string;
   name: string;
   title: string;
   greetingText: string;
@@ -41,12 +44,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     initialData?.avatar ? { url: initialData.avatar } : null,
   );
 
-  const trTranslation = initialData?.translations?.find(
-    (t) => t.language === "tr",
-  );
-  const enTranslation = initialData?.translations?.find(
-    (t) => t.language === "en",
-  );
+  const [sourceLang, setSourceLang] = useState<string>("tr");
+  const [targetLangs, setTargetLangs] = useState<string[]>([]);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,6 +64,88 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     return res.url;
   };
 
+  const handleAutoTranslate = async () => {
+    if (targetLangs.length === 0) {
+      alert("Lütfen en az bir hedef dil seçiniz.");
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const form = document.querySelector("form") as HTMLFormElement;
+
+      // Helper to get value safely
+      const getValue = (name: string) =>
+        (
+          form.elements.namedItem(name) as
+            | HTMLInputElement
+            | HTMLTextAreaElement
+        )?.value || "";
+
+      const name = getValue(`name_${sourceLang}`);
+      const title = getValue(`title_${sourceLang}`);
+      const greetingText = getValue(`greetingText_${sourceLang}`);
+      const description = getValue(`description_${sourceLang}`);
+      const aboutTitle = getValue(`aboutTitle_${sourceLang}`);
+      const aboutDescription = getValue(`aboutDescription_${sourceLang}`);
+
+      if (
+        !name ||
+        !title ||
+        !greetingText ||
+        !description ||
+        !aboutTitle ||
+        !aboutDescription
+      ) {
+        alert("Lütfen kaynak dildeki alanları doldurunuz.");
+        setIsTranslating(false);
+        return;
+      }
+
+      const translations = await generateTranslationAction({
+        type: "profile",
+        sourceLang,
+        targetLangs,
+        content: {
+          name,
+          title,
+          greetingText,
+          description,
+          aboutTitle,
+          aboutDescription,
+        },
+      });
+
+      // Update target inputs
+      Object.entries(translations).forEach(([lang, content]: [string, any]) => {
+        if (!content) return;
+
+        const setValue = (name: string, val: string) => {
+          const el = form.elements.namedItem(name) as
+            | HTMLInputElement
+            | HTMLTextAreaElement;
+          if (el) el.value = val;
+        };
+
+        setValue(`name_${lang}`, content.name);
+        setValue(`title_${lang}`, content.title);
+        setValue(`greetingText_${lang}`, content.greetingText);
+        setValue(`description_${lang}`, content.description);
+        setValue(`aboutTitle_${lang}`, content.aboutTitle);
+        setValue(`aboutDescription_${lang}`, content.aboutDescription);
+      });
+
+      alert("Çeviri tamamlandı!");
+    } catch (error) {
+      alert(
+        "Çeviri başarısız oldu: " +
+          (error instanceof Error ? error.message : "Bilinmeyen hata"),
+      );
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -75,31 +157,22 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       }
 
       const formData = new FormData(e.currentTarget);
+      const translations = Object.keys(languageNames).map((lang) => ({
+        language: lang as any,
+        name: formData.get(`name_${lang}`) as string,
+        title: formData.get(`title_${lang}`) as string,
+        greetingText: formData.get(`greetingText_${lang}`) as string,
+        description: formData.get(`description_${lang}`) as string,
+        aboutTitle: formData.get(`aboutTitle_${lang}`) as string,
+        aboutDescription: formData.get(`aboutDescription_${lang}`) as string,
+      }));
+
       const data = {
         avatar: finalAvatar,
         email: formData.get("email") as string,
         github: formData.get("github") as string,
         linkedin: formData.get("linkedin") as string,
-        translations: [
-          {
-            language: "tr" as const,
-            name: formData.get("name_tr") as string,
-            title: formData.get("title_tr") as string,
-            greetingText: formData.get("greetingText_tr") as string,
-            description: formData.get("description_tr") as string,
-            aboutTitle: formData.get("aboutTitle_tr") as string,
-            aboutDescription: formData.get("aboutDescription_tr") as string,
-          },
-          {
-            language: "en" as const,
-            name: formData.get("name_en") as string,
-            title: formData.get("title_en") as string,
-            greetingText: formData.get("greetingText_en") as string,
-            description: formData.get("description_en") as string,
-            aboutTitle: formData.get("aboutTitle_en") as string,
-            aboutDescription: formData.get("aboutDescription_en") as string,
-          },
-        ],
+        translations: translations,
       };
 
       await updateProfileAction(data);
@@ -190,155 +263,142 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
       <div className="h-px bg-border/50" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Türkçe */}
-        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-          <h3 className="font-bold border-b border-border pb-2">
-            Türkçe Bilgiler
-          </h3>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              İsim
-            </label>
-            <input
-              name="name_tr"
-              defaultValue={trTranslation?.name}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-            />
+      {/* Translation Controls */}
+      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-primary">Kaynak Dil:</span>
+            <select
+              value={sourceLang}
+              onChange={(e) => setSourceLang(e.target.value)}
+              className="px-3 py-1 text-xs font-bold rounded-md border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer"
+            >
+              {Object.entries(languageNames).map(([code, name]) => (
+                <option key={code} value={code}>
+                  {name} ({code.toUpperCase()})
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Unvan
-            </label>
-            <input
-              name="title_tr"
-              defaultValue={trTranslation?.title}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-              placeholder="Full Stack Developer"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Karşılama Metni
-            </label>
-            <input
-              name="greetingText_tr"
-              defaultValue={trTranslation?.greetingText}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-              placeholder="Merhaba, ben"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Hero Açıklama
-            </label>
-            <textarea
-              name="description_tr"
-              defaultValue={trTranslation?.description}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-24"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Hakkımda Başlık
-            </label>
-            <input
-              name="aboutTitle_tr"
-              defaultValue={trTranslation?.aboutTitle}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-              placeholder="Hakkımda"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Hakkımda Detay
-            </label>
-            <textarea
-              name="aboutDescription_tr"
-              defaultValue={trTranslation?.aboutDescription}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-48"
-            />
-          </div>
+
+          <MultiLanguageSelector
+            sourceLang={sourceLang}
+            targetLangs={targetLangs}
+            onChange={setTargetLangs}
+          />
         </div>
 
-        {/* English */}
-        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-          <h3 className="font-bold border-b border-border pb-2">
-            English Info
-          </h3>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Name
-            </label>
-            <input
-              name="name_en"
-              defaultValue={enTranslation?.name}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Title
-            </label>
-            <input
-              name="title_en"
-              defaultValue={enTranslation?.title}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Greeting Text
-            </label>
-            <input
-              name="greetingText_en"
-              defaultValue={enTranslation?.greetingText}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              Hero Description
-            </label>
-            <textarea
-              name="description_en"
-              defaultValue={enTranslation?.description}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-24"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              About Title
-            </label>
-            <input
-              name="aboutTitle_en"
-              defaultValue={enTranslation?.aboutTitle}
-              required
-              className="w-full p-2 bg-muted rounded border border-border"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground">
-              About Description
-            </label>
-            <textarea
-              name="aboutDescription_en"
-              defaultValue={enTranslation?.aboutDescription}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-48"
-            />
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={handleAutoTranslate}
+          disabled={isTranslating || targetLangs.length === 0}
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
+        >
+          {isTranslating ? (
+            <Loader2 className="animate-spin w-4 h-4" />
+          ) : (
+            <Sparkles className="w-4 h-4" />
+          )}
+          Seçilen Dillerde Çevir
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {Object.keys(languageNames).map((lang) => {
+          const translation = initialData?.translations?.find(
+            (t) => t.language === lang,
+          );
+          return (
+            <div
+              key={lang}
+              className={`space-y-4 p-4 rounded-lg border transition-all ${
+                sourceLang === lang
+                  ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
+                  : "bg-muted/30 border-border"
+              }`}
+            >
+              <h3 className="font-bold border-b border-border pb-2 flex items-center justify-between">
+                <span>
+                  {languageNames[lang]} ({lang.toUpperCase()})
+                </span>
+                {sourceLang === lang && (
+                  <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                    Kaynak
+                  </span>
+                )}
+              </h3>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  İsim
+                </label>
+                <input
+                  name={`name_${lang}`}
+                  defaultValue={translation?.name}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  Unvan
+                </label>
+                <input
+                  name={`title_${lang}`}
+                  defaultValue={translation?.title}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border"
+                  placeholder="Full Stack Developer"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  Karşılama Metni
+                </label>
+                <input
+                  name={`greetingText_${lang}`}
+                  defaultValue={translation?.greetingText}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border"
+                  placeholder="Merhaba, ben"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  Hero Açıklama
+                </label>
+                <textarea
+                  name={`description_${lang}`}
+                  defaultValue={translation?.description}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border h-24"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  Hakkımda Başlık
+                </label>
+                <input
+                  name={`aboutTitle_${lang}`}
+                  defaultValue={translation?.aboutTitle}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border"
+                  placeholder="Hakkımda"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  Hakkımda Detay
+                </label>
+                <textarea
+                  name={`aboutDescription_${lang}`}
+                  defaultValue={translation?.aboutDescription}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border h-48"
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex justify-end gap-4 border-t border-border pt-8">

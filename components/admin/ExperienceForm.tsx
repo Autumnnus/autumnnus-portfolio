@@ -6,14 +6,16 @@ import {
   uploadImageAction,
 } from "@/app/admin/actions";
 import { generateTranslationAction } from "@/app/admin/ai-actions";
+import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { Input } from "@/components/ui/Input";
+import { languageNames } from "@/i18n/routing";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export interface ExperienceTranslation {
-  language: "tr" | "en";
+  language: string;
   role: string;
   description: string;
   locationType: string;
@@ -46,18 +48,12 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const [sourceLang, setSourceLang] = useState<"tr" | "en">("tr");
+  const [sourceLang, setSourceLang] = useState<string>("tr");
+  const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
 
   const [logo, setLogo] = useState<ImageData | null>(
     initialData?.logo ? { url: initialData.logo } : null,
-  );
-
-  const trTranslation = initialData?.translations?.find(
-    (t) => t.language === "tr",
-  );
-  const enTranslation = initialData?.translations?.find(
-    (t) => t.language === "en",
   );
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,9 +73,13 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   };
 
   const handleAutoTranslate = async () => {
+    if (targetLangs.length === 0) {
+      alert("Lütfen en az bir hedef dil seçiniz.");
+      return;
+    }
+
     setIsTranslating(true);
     try {
-      const targetLang = sourceLang === "tr" ? "en" : "tr";
       const form = document.querySelector("form") as HTMLFormElement;
 
       const role = (
@@ -102,27 +102,32 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         return;
       }
 
-      const translation = await generateTranslationAction({
+      const translations = await generateTranslationAction({
         type: "experience",
         sourceLang,
-        targetLang,
+        targetLangs,
         content: { role, description, locationType },
       });
 
       // Update target inputs
-      (
-        form.elements.namedItem(`role_${targetLang}`) as HTMLInputElement
-      ).value = translation.role;
-      (
-        form.elements.namedItem(
-          `description_${targetLang}`,
-        ) as HTMLTextAreaElement
-      ).value = translation.description;
-      (
-        form.elements.namedItem(
-          `locationType_${targetLang}`,
-        ) as HTMLInputElement
-      ).value = translation.locationType;
+      Object.entries(translations).forEach(([lang, content]: [string, any]) => {
+        if (!content) return;
+        const roleInput = form.elements.namedItem(
+          `role_${lang}`,
+        ) as HTMLInputElement;
+        const descInput = form.elements.namedItem(
+          `description_${lang}`,
+        ) as HTMLTextAreaElement;
+        const locationTypeInput = form.elements.namedItem(
+          `locationType_${lang}`,
+        ) as HTMLInputElement;
+
+        if (roleInput) roleInput.value = content.role;
+        if (descInput) descInput.value = content.description;
+        if (locationTypeInput) locationTypeInput.value = content.locationType;
+      });
+
+      alert("Çeviri tamamlandı!");
     } catch (error) {
       alert(
         "Çeviri başarısız oldu: " +
@@ -147,25 +152,19 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
       const startDateStr = formData.get("startDate") as string;
       const endDateStr = formData.get("endDate") as string;
 
+      const translations = Object.keys(languageNames).map((lang) => ({
+        language: lang as any,
+        role: formData.get(`role_${lang}`) as string,
+        description: formData.get(`description_${lang}`) as string,
+        locationType: formData.get(`locationType_${lang}`) as string,
+      }));
+
       const data = {
         company: formData.get("company") as string,
         logo: finalLogo,
         startDate: startDateStr ? new Date(startDateStr) : null,
         endDate: endDateStr ? new Date(endDateStr) : null,
-        translations: [
-          {
-            language: "tr",
-            role: formData.get("role_tr") as string,
-            description: formData.get("description_tr") as string,
-            locationType: formData.get("locationType_tr") as string,
-          },
-          {
-            language: "en",
-            role: formData.get("role_en") as string,
-            description: formData.get("description_en") as string,
-            locationType: formData.get("locationType_en") as string,
-          },
-        ],
+        translations: translations,
       };
 
       if (initialData?.id) {
@@ -267,31 +266,23 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-primary">Kaynak Dil:</span>
-            <div className="flex bg-background rounded-lg border border-border p-1">
-              <button
-                type="button"
-                onClick={() => setSourceLang("tr")}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                  sourceLang === "tr"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "hover:bg-muted"
-                }`}
-              >
-                TR 🇹🇷
-              </button>
-              <button
-                type="button"
-                onClick={() => setSourceLang("en")}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                  sourceLang === "en"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "hover:bg-muted"
-                }`}
-              >
-                EN 🇺🇸
-              </button>
-            </div>
+            <select
+              value={sourceLang}
+              onChange={(e) => setSourceLang(e.target.value)}
+              className="px-3 py-1 text-xs font-bold rounded-md border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer"
+            >
+              {Object.entries(languageNames).map(([code, name]) => (
+                <option key={code} value={code}>
+                  {name} ({code.toUpperCase()})
+                </option>
+              ))}
+            </select>
           </div>
+          <MultiLanguageSelector
+            sourceLang={sourceLang}
+            targetLangs={targetLangs}
+            onChange={setTargetLangs}
+          />
           <p className="text-xs text-muted-foreground hidden md:block">
             Kaynak dildeki içeriği doldurduktan sonra, diğer dile otomatik
             çeviri yapabilirsiniz.
@@ -314,75 +305,64 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Türkçe */}
-        <div className="space-y-4 p-6 bg-muted/30 rounded-xl border border-border/50">
-          <h3 className="font-bold border-b border-border pb-2 text-primary flex items-center gap-2">
-            <span className="text-lg">🇹🇷</span> Türkçe Bilgiler
-          </h3>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Pozisyon
-            </label>
-            <Input name="role_tr" defaultValue={trTranslation?.role} required />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Çalışma Şekli
-            </label>
-            <Input
-              name="locationType_tr"
-              defaultValue={trTranslation?.locationType}
-              required
-              placeholder="Hibrit, Uzaktan"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Açıklama (Markdown)
-            </label>
-            <textarea
-              name="description_tr"
-              defaultValue={trTranslation?.description}
-              required
-              className="w-full p-3 bg-background rounded-md border border-input min-h-[200px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm resize-y"
-            />
-          </div>
-        </div>
-
-        {/* English */}
-        <div className="space-y-4 p-6 bg-muted/30 rounded-xl border border-border/50">
-          <h3 className="font-bold border-b border-border pb-2 text-primary flex items-center gap-2">
-            <span className="text-lg">🇺🇸</span> English Info
-          </h3>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Role
-            </label>
-            <Input name="role_en" defaultValue={enTranslation?.role} required />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Location Type
-            </label>
-            <Input
-              name="locationType_en"
-              defaultValue={enTranslation?.locationType}
-              required
-              placeholder="Hybrid, Remote"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Description (Markdown)
-            </label>
-            <textarea
-              name="description_en"
-              defaultValue={enTranslation?.description}
-              required
-              className="w-full p-3 bg-background rounded-md border border-input min-h-[200px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm resize-y"
-            />
-          </div>
-        </div>
+        {Object.keys(languageNames).map((lang) => {
+          const translation = initialData?.translations?.find(
+            (t) => t.language === lang,
+          );
+          return (
+            <div
+              key={lang}
+              className={`space-y-4 p-6 bg-muted/30 rounded-xl border transition-all ${
+                sourceLang === lang
+                  ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
+                  : "border-border/50"
+              }`}
+            >
+              <h3 className="font-bold border-b border-border pb-2 text-primary flex items-center gap-2">
+                <span>
+                  {languageNames[lang]} ({lang.toUpperCase()})
+                </span>
+                {sourceLang === lang && (
+                  <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                    Kaynak
+                  </span>
+                )}
+              </h3>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  Pozisyon
+                </label>
+                <Input
+                  name={`role_${lang}`}
+                  defaultValue={translation?.role}
+                  required={lang === sourceLang}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  Çalışma Şekli
+                </label>
+                <Input
+                  name={`locationType_${lang}`}
+                  defaultValue={translation?.locationType}
+                  required={lang === sourceLang}
+                  placeholder="Hibrit, Uzaktan / Hybrid, Remote"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  Açıklama (Markdown)
+                </label>
+                <textarea
+                  name={`description_${lang}`}
+                  defaultValue={translation?.description}
+                  required={lang === sourceLang}
+                  className="w-full p-3 bg-background rounded-md border border-input min-h-[200px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm resize-y"
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex justify-end gap-4 border-t border-border pt-8">

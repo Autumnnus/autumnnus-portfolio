@@ -6,6 +6,8 @@ import {
   uploadImageAction,
 } from "@/app/admin/actions";
 import { generateTranslationAction } from "@/app/admin/ai-actions";
+import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
+import { languageNames } from "@/i18n/routing";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -46,15 +48,9 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   );
   const [tags, setTags] = useState<string>(initialData?.tags?.join(", ") || "");
 
-  const [sourceLang, setSourceLang] = useState<"tr" | "en">("tr");
+  const [sourceLang, setSourceLang] = useState<string>("tr");
+  const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
-
-  const trTranslation = initialData?.translations?.find(
-    (t) => t.language === "tr",
-  );
-  const enTranslation = initialData?.translations?.find(
-    (t) => t.language === "en",
-  );
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,9 +69,13 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   };
 
   const handleAutoTranslate = async () => {
+    if (targetLangs.length === 0) {
+      alert("Lütfen en least bir hedef dil seçiniz.");
+      return;
+    }
+
     setIsTranslating(true);
     try {
-      const targetLang = sourceLang === "tr" ? "en" : "tr";
       const form = document.querySelector("form") as HTMLFormElement;
 
       const title = (
@@ -99,28 +99,37 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         return;
       }
 
-      const translation = await generateTranslationAction({
+      const translations = await generateTranslationAction({
         type: "blog",
         sourceLang,
-        targetLang,
+        targetLangs,
         content: { title, description, content, readTime },
       });
 
       // Update target inputs
-      (
-        form.elements.namedItem(`title_${targetLang}`) as HTMLInputElement
-      ).value = translation.title;
-      (
-        form.elements.namedItem(
-          `description_${targetLang}`,
-        ) as HTMLTextAreaElement
-      ).value = translation.description;
-      (
-        form.elements.namedItem(`content_${targetLang}`) as HTMLTextAreaElement
-      ).value = translation.content;
-      (
-        form.elements.namedItem(`readTime_${targetLang}`) as HTMLInputElement
-      ).value = translation.readTime; // If returned
+      Object.entries(translations).forEach(([lang, content]: [string, any]) => {
+        if (!content) return;
+        const titleInput = form.elements.namedItem(
+          `title_${lang}`,
+        ) as HTMLInputElement;
+        const descInput = form.elements.namedItem(
+          `description_${lang}`,
+        ) as HTMLTextAreaElement;
+        const contentInput = form.elements.namedItem(
+          `content_${lang}`,
+        ) as HTMLTextAreaElement;
+        const readTimeInput = form.elements.namedItem(
+          `readTime_${lang}`,
+        ) as HTMLInputElement;
+
+        if (titleInput) titleInput.value = content.title;
+        if (descInput) descInput.value = content.description;
+        if (contentInput) contentInput.value = content.content;
+        if (readTimeInput && content.readTime)
+          readTimeInput.value = content.readTime;
+      });
+
+      alert("Çeviri tamamlandı!");
     } catch (error) {
       alert(
         "Çeviri başarısız oldu: " +
@@ -145,6 +154,24 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         );
       }
 
+      const formElements = e.currentTarget.elements;
+
+      const translations = Object.keys(languageNames).map((lang) => ({
+        language: lang as any,
+        title: (formElements.namedItem(`title_${lang}`) as HTMLInputElement)
+          .value,
+        description: (
+          formElements.namedItem(`description_${lang}`) as HTMLTextAreaElement
+        ).value,
+        content: (
+          formElements.namedItem(`content_${lang}`) as HTMLTextAreaElement
+        ).value,
+        readTime: (
+          formElements.namedItem(`readTime_${lang}`) as HTMLInputElement
+        ).value,
+        date: new Date().toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US"), // Fallback to en-US for others or ideally use dynamic locale
+      }));
+
       const data = {
         slug,
         coverImage: finalCoverImage,
@@ -152,55 +179,9 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           .split(",")
           .map((t) => t.trim())
           .filter((t) => t !== ""),
-        featured: (
-          e.currentTarget.elements.namedItem("featured") as HTMLInputElement
-        ).checked,
-        translations: [
-          {
-            language: "tr" as any,
-            title: (
-              e.currentTarget.elements.namedItem("title_tr") as HTMLInputElement
-            ).value,
-            description: (
-              e.currentTarget.elements.namedItem(
-                "description_tr",
-              ) as HTMLTextAreaElement
-            ).value,
-            content: (
-              e.currentTarget.elements.namedItem(
-                "content_tr",
-              ) as HTMLTextAreaElement
-            ).value,
-            readTime: (
-              e.currentTarget.elements.namedItem(
-                "readTime_tr",
-              ) as HTMLInputElement
-            ).value,
-            date: new Date().toLocaleDateString("tr-TR"),
-          },
-          {
-            language: "en" as any,
-            title: (
-              e.currentTarget.elements.namedItem("title_en") as HTMLInputElement
-            ).value,
-            description: (
-              e.currentTarget.elements.namedItem(
-                "description_en",
-              ) as HTMLTextAreaElement
-            ).value,
-            content: (
-              e.currentTarget.elements.namedItem(
-                "content_en",
-              ) as HTMLTextAreaElement
-            ).value,
-            readTime: (
-              e.currentTarget.elements.namedItem(
-                "readTime_en",
-              ) as HTMLInputElement
-            ).value,
-            date: new Date().toLocaleDateString("en-US"),
-          },
-        ],
+        featured: (formElements.namedItem("featured") as HTMLInputElement)
+          .checked,
+        translations: translations,
       };
 
       if (initialData?.id) {
@@ -307,156 +288,124 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       <div className="h-px bg-border/50" />
 
       {/* Translation Controls */}
-      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-primary">Kaynak Dil:</span>
-            <div className="flex bg-background rounded-lg border border-border p-1">
-              <button
-                type="button"
-                onClick={() => setSourceLang("tr")}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                  sourceLang === "tr"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "hover:bg-muted"
-                }`}
+      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-primary">
+                Kaynak Dil:
+              </span>
+              <select
+                value={sourceLang}
+                onChange={(e) => setSourceLang(e.target.value)}
+                className="px-3 py-1 text-xs font-bold rounded-md border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer"
               >
-                TR 🇹🇷
-              </button>
-              <button
-                type="button"
-                onClick={() => setSourceLang("en")}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-                  sourceLang === "en"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "hover:bg-muted"
-                }`}
-              >
-                EN 🇺🇸
-              </button>
+                {Object.entries(languageNames).map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name} ({code.toUpperCase()})
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
-          <p className="text-xs text-muted-foreground hidden md:block">
-            Kaynak dildeki içeriği doldurduktan sonra, diğer dile otomatik
-            çeviri yapabilirsiniz.
-          </p>
-        </div>
 
-        <button
-          type="button"
-          onClick={handleAutoTranslate}
-          disabled={isTranslating}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
-        >
-          {isTranslating ? (
-            <Loader2 className="animate-spin w-4 h-4" />
-          ) : (
-            <Sparkles className="w-4 h-4" />
-          )}
-          AI ile Çevir ({sourceLang === "tr" ? "EN" : "TR"})
-        </button>
+            <MultiLanguageSelector
+              sourceLang={sourceLang}
+              targetLangs={targetLangs}
+              onChange={setTargetLangs}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAutoTranslate}
+            disabled={isTranslating || targetLangs.length === 0}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
+          >
+            {isTranslating ? (
+              <Loader2 className="animate-spin w-4 h-4" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            Seçilen Dillerde Çevir
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Kaynak dildeki alanları doldurduktan sonra, en az bir hedef dil seçip
+          çeviri yapabilirsiniz.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-          <h3 className="font-bold border-b border-border pb-2 text-primary">
-            Türkçe İçerik
-          </h3>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Başlık
-            </label>
-            <input
-              name="title_tr"
-              defaultValue={trTranslation?.title}
-              required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Okuma Süresi
-            </label>
-            <input
-              name="readTime_tr"
-              defaultValue={trTranslation?.readTime}
-              placeholder="5 dk okuma"
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Kısa Açıklama
-            </label>
-            <textarea
-              name="description_tr"
-              defaultValue={trTranslation?.description}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-24 focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              İçerik (Markdown)
-            </label>
-            <textarea
-              name="content_tr"
-              defaultValue={trTranslation?.content}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-64 focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-          <h3 className="font-bold border-b border-border pb-2 text-primary">
-            English Content
-          </h3>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Title
-            </label>
-            <input
-              name="title_en"
-              defaultValue={enTranslation?.title}
-              required
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Read Time
-            </label>
-            <input
-              name="readTime_en"
-              defaultValue={enTranslation?.readTime}
-              placeholder="5 min read"
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Short Description
-            </label>
-            <textarea
-              name="description_en"
-              defaultValue={enTranslation?.description}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-24 focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Content (Markdown)
-            </label>
-            <textarea
-              name="content_en"
-              defaultValue={enTranslation?.content}
-              required
-              className="w-full p-2 bg-muted rounded border border-border h-64 focus:border-primary outline-hidden transition-all"
-            />
-          </div>
-        </div>
+        {Object.keys(languageNames).map((lang) => {
+          const translation = initialData?.translations?.find(
+            (t) => t.language === lang,
+          );
+          return (
+            <div
+              key={lang}
+              className={`space-y-4 p-4 rounded-lg border transition-all ${
+                sourceLang === lang
+                  ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
+                  : "bg-muted/30 border-border"
+              }`}
+            >
+              <h3 className="font-bold border-b border-border pb-2 flex items-center justify-between">
+                <span>
+                  {languageNames[lang]} ({lang.toUpperCase()})
+                </span>
+                {sourceLang === lang && (
+                  <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                    Kaynak
+                  </span>
+                )}
+              </h3>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  Başlık
+                </label>
+                <input
+                  name={`title_${lang}`}
+                  defaultValue={translation?.title}
+                  required={lang === sourceLang} // Only require source lang initially, or let submit handle validation if needed
+                  className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  Okuma Süresi
+                </label>
+                <input
+                  name={`readTime_${lang}`}
+                  defaultValue={translation?.readTime}
+                  placeholder="5 dk okuma"
+                  className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  Kısa Açıklama
+                </label>
+                <textarea
+                  name={`description_${lang}`}
+                  defaultValue={translation?.description}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border h-24 focus:border-primary outline-hidden transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  İçerik (Markdown)
+                </label>
+                <textarea
+                  name={`content_${lang}`}
+                  defaultValue={translation?.content}
+                  required={lang === sourceLang}
+                  className="w-full p-2 bg-muted rounded border border-border h-64 focus:border-primary outline-hidden transition-all"
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex justify-end gap-4 border-t border-border pt-8">

@@ -1,23 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { routing, usePathname, useRouter } from "@/i18n/routing";
+import { languageNames, routing, usePathname, useRouter } from "@/i18n/routing";
 import { Check, ChevronDown, Globe } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-
-const languageNames: Record<string, string> = {
-  tr: "Türkçe",
-  en: "English",
-  de: "Deutsch",
-  fr: "Français",
-  es: "Español",
-  it: "Italiano",
-  pt: "Português",
-  ru: "Русский",
-  ja: "日本語",
-  ko: "한국어",
-  ar: "العربية",
-  zh: "中文",
-};
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
