@@ -62,6 +62,7 @@ export default function CommentSection({
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
+  const [adminAvatar, setAdminAvatar] = useState<string>("");
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const { data: session } = useSession();
   const locale = useLocale();
@@ -110,6 +111,7 @@ export default function CommentSection({
             }));
 
           setComments(mapComments(result.comments as unknown as Comment[]));
+          if (result.adminAvatar) setAdminAvatar(result.adminAvatar);
         }
       } catch (error) {
         console.error("Failed to load comments:", error);
@@ -241,7 +243,11 @@ export default function CommentSection({
       >
         <Avatar>
           <AvatarImage
-            src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.authorName}`}
+            src={
+              comment.isAdmin
+                ? adminAvatar || "/assets/admin-avatar.png"
+                : `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(comment.authorEmail)}`
+            }
           />
           <AvatarFallback>
             {comment.authorName.substring(0, 2).toUpperCase()}

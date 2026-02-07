@@ -726,7 +726,7 @@ export async function getComments(
       where.projectId = itemId;
     }
 
-    const [comments, total] = await Promise.all([
+    const [comments, total, adminProfile] = await Promise.all([
       prisma.comment.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -735,12 +735,15 @@ export async function getComments(
         include: {
           replies: {
             orderBy: { createdAt: "asc" },
-            where: { approved: true }, // Assuming replies also need approval if that system was active
+            where: { approved: true },
           },
         },
       }),
       prisma.comment.count({ where }),
+      prisma.profile.findFirst({ select: { avatar: true } }),
     ]);
+
+    const adminAvatar = adminProfile?.avatar || "";
 
     return {
       comments,
@@ -748,6 +751,7 @@ export async function getComments(
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      adminAvatar,
     };
   } catch (error) {
     console.error("Failed to fetch comments:", error);
@@ -887,6 +891,12 @@ export async function getLikeStatus(itemId: string, itemType: CommentItemType) {
 export async function incrementView(itemId: string, itemType: CommentItemType) {
   try {
     const ipAddress = await getIpIdentifier();
+    const countWhere: Prisma.ViewWhereInput = {};
+    if (itemType === "blog") {
+      countWhere.blogPostId = itemId;
+    } else {
+      countWhere.projectId = itemId;
+    }
 
     const existingView = await prisma.view.findFirst({
       where: {
@@ -910,35 +920,53 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
         data.projectId = itemId;
       }
       await prisma.view.create({ data });
+
+      // Only check milestones when a NEW view is registered
+      const count = await prisma.view.count({ where: countWhere });
+      const milestones = [1, 5, 10, 50, 100, 500, 1000, 5000, 10000];
+
+      if (milestones.includes(count)) {
+        // Check if we already notified for this specific milestone
+        const auditLogs = await prisma.auditLog.findMany({
+          where: {
+            action: "VIEW_MILESTONE",
+            entityId: itemId,
+            entityType: itemType.toUpperCase(),
+          },
+        });
+
+        const hasNotifiedThisMilestone = auditLogs.some((log) => {
+          const details = log.details as Record<string, unknown> | null;
+          return details?.milestone === count;
+        });
+
+        if (!hasNotifiedThisMilestone) {
+          const { itemTitle, itemLink, coverImage } =
+            await getNotificationDetails(itemId, itemType);
+
+          await sendTelegramNotification(
+            `📈 <b>New View Milestone Reached!</b>\n\n` +
+              `🚀 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
+              `📊 <b>Total Views:</b> <code>${count}</code>\n` +
+              `✨ This ${itemType === "blog" ? "blog post" : "project"} just hit a new milestone!\n\n` +
+              `🔗 <a href="${itemLink}">View on Website</a>`,
+            coverImage,
+          );
+
+          await createAuditLog(
+            "VIEW_MILESTONE",
+            itemType.toUpperCase(),
+            itemId,
+            {
+              milestone: count,
+              ipAddress,
+            },
+          );
+        }
+      }
     }
 
-    const countWhere: Prisma.ViewWhereInput = {};
-    if (itemType === "blog") {
-      countWhere.blogPostId = itemId;
-    } else {
-      countWhere.projectId = itemId;
-    }
     const count = await prisma.view.count({ where: countWhere });
-
-    const milestones = [1, 5, 10, 50, 100, 500, 1000, 5000, 10000];
-    if (milestones.includes(count)) {
-      const { itemTitle, itemLink, coverImage } = await getNotificationDetails(
-        itemId,
-        itemType,
-      );
-
-      await sendTelegramNotification(
-        `📈 <b>View Milestone!</b>\n\n` +
-          `🚀 The ${itemType === "blog" ? "blog post" : "project"} <b>${escapeHtml(itemTitle)}</b> has reached <b>${count}</b> views!\n\n` +
-          `🔗 <a href="${itemLink}">Check it out</a>`,
-        coverImage,
-      );
-
-      await createAuditLog("VIEW_MILESTONE", itemType.toUpperCase(), itemId, {
-        milestone: count,
-      });
-    }
-
     return { success: true, count };
   } catch (error) {
     console.error("Failed to increment view:", error);
