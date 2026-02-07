@@ -14,10 +14,13 @@ import {
 import SectionNav from "@/components/common/SectionNav";
 import { Project, WorkExperience } from "@/types/contents";
 import { Language } from "@prisma/client";
-import { getLocale } from "next-intl/server";
 
-export default async function Home() {
-  const locale = await getLocale();
+interface HomeProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function Home({ params }: HomeProps) {
+  const { locale } = await params;
   const lang = locale as Language;
 
   const [projectsResult, profileData, experiencesData, aboutStats] =

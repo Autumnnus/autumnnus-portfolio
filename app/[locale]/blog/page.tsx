@@ -2,9 +2,9 @@ import { getBlogFilters, getBlogPosts } from "@/app/actions";
 import BlogClient from "@/components/blog/BlogClient";
 import { BlogPost } from "@/types/contents";
 import { Language } from "@prisma/client";
-import { getLocale } from "next-intl/server";
 
 interface BlogPageProps {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     query?: string;
     tag?: string;
@@ -12,13 +12,16 @@ interface BlogPageProps {
   }>;
 }
 
-export default async function BlogPage({ searchParams }: BlogPageProps) {
-  const locale = await getLocale();
-  const params = await searchParams;
+export default async function BlogPage({
+  params,
+  searchParams,
+}: BlogPageProps) {
+  const { locale } = await params;
+  const searchParamsValue = await searchParams;
 
-  const query = params.query || "";
-  const tag = params.tag || "All";
-  const page = Number(params.page) || 1;
+  const query = searchParamsValue.query || "";
+  const tag = searchParamsValue.tag || "All";
+  const page = Number(searchParamsValue.page) || 1;
 
   const [paginatedResult, filters] = await Promise.all([
     getBlogPosts({

@@ -9,6 +9,16 @@ datasource db {
 enum Language {
   tr
   en
+  de
+  fr
+  es
+  it
+  pt
+  ru
+  ja
+  ko
+  ar
+  zh
 }
 
 model Skill {
@@ -61,6 +71,7 @@ model BlogPost {
   // In contents.tsx: date: { tr: "...", en: "..." }. So it is translated.
 
   translations BlogPostTranslation[]
+  comments     Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,6 +90,21 @@ model BlogPostTranslation {
   blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
 
   @@unique([blogPostId, language])
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  content     String
+  authorName  String
+  authorEmail String
+  authorImage String?
+  
+  approved    Boolean  @default(true)
+
+  blogPostId String
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
 }
 
 model WorkExperience {

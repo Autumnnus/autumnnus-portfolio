@@ -2,9 +2,9 @@ import { getProjectFilters, getProjects } from "@/app/actions";
 import ProjectsClient from "@/components/projects/ProjectsClient";
 import { Project } from "@/types/contents";
 import { Language } from "@prisma/client";
-import { getLocale } from "next-intl/server";
 
 interface ProjectsPageProps {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     query?: string;
     status?: string;
@@ -14,15 +14,16 @@ interface ProjectsPageProps {
 }
 
 export default async function ProjectsPage({
+  params,
   searchParams,
 }: ProjectsPageProps) {
-  const locale = await getLocale();
-  const params = await searchParams;
+  const { locale } = await params;
+  const searchParamsValue = await searchParams;
 
-  const query = params.query || "";
-  const status = params.status || "All";
-  const category = params.category || "All";
-  const page = Number(params.page) || 1;
+  const query = searchParamsValue.query || "";
+  const status = searchParamsValue.status || "All";
+  const category = searchParamsValue.category || "All";
+  const page = Number(searchParamsValue.page) || 1;
 
   const [paginatedResult, filters] = await Promise.all([
     getProjects({

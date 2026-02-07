@@ -1,6 +1,18 @@
 import { StaticImageData } from "next/image";
 
-export type Language = "tr" | "en";
+export type Language =
+  | "tr"
+  | "en"
+  | "de"
+  | "fr"
+  | "es"
+  | "it"
+  | "pt"
+  | "ru"
+  | "ja"
+  | "ko"
+  | "ar"
+  | "zh";
 
 export interface GithubRepoStats {
   stars: number;
@@ -149,10 +161,7 @@ export interface ContentConfig {
   };
 }
 
-export interface PortfolioConfig {
-  tr: ContentConfig;
-  en: ContentConfig;
-}
+export type PortfolioConfig = Record<Language, ContentConfig>;
 
 export interface DataWithTranslations<TCommon, TLocalized> {
   common: TCommon;

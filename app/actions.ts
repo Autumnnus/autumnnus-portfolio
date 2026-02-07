@@ -436,3 +436,82 @@ export async function getAboutStats() {
     };
   }
 }
+
+import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
+
+export async function createCommentAction(blogPostId: string, content: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      throw new Error("Unauthorized");
+    }
+
+    if (!content || content.trim().length === 0) {
+      throw new Error("Comment content is required");
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        blogPostId,
+        content,
+        authorName: session.user.name || "Anonymous",
+        authorEmail: session.user.email,
+        authorImage: session.user.image,
+        approved: true,
+      },
+    });
+
+    revalidatePath("/[locale]/blog/[slug]", "page");
+
+    return { success: true, comment };
+  } catch (error) {
+    console.error("Failed to create comment:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function getCommentsAction(
+  blogPostId: string,
+  page: number = 1,
+  limit: number = 20,
+) {
+  try {
+    const skip = (page - 1) * limit;
+
+    const [comments, total] = await Promise.all([
+      prisma.comment.findMany({
+        where: {
+          blogPostId,
+          approved: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.comment.count({
+        where: {
+          blogPostId,
+          approved: true,
+        },
+      }),
+    ]);
+
+    return {
+      comments,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  } catch (error) {
+    console.error("Failed to fetch comments:", error);
+    return {
+      comments: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    };
+  }
+}

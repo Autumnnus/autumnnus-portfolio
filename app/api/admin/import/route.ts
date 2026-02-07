@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const session = await auth();
     if (
       !session?.user?.email ||
-      session.user.email !== process.env.ADMIN_EMAIL
+      session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
     ) {
       return new Response("Unauthorized", { status: 401 });
     }

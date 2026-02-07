@@ -3,11 +3,10 @@ import ProjectDetailView from "@/components/projects/ProjectDetailView";
 import { Project } from "@/types/contents";
 import { Language } from "@prisma/client";
 import { Metadata } from "next";
-import { getLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 interface ProjectDetailPageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 export async function generateStaticParams() {
@@ -20,8 +19,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: ProjectDetailPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const locale = await getLocale();
+  const { locale, slug } = await params;
   const project = await getProjectBySlug(slug, locale as Language);
 
   if (!project) {
@@ -39,8 +37,7 @@ export async function generateMetadata({
 export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
-  const { slug } = await params;
-  const locale = await getLocale();
+  const { locale, slug } = await params;
   const project = await getProjectBySlug(slug, locale as Language);
 
   if (!project) {

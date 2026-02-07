@@ -16,7 +16,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (isOnAdmin) {
         if (isLoggedIn) {
           // Check if it's the admin email
-          return auth.user?.email === process.env.ADMIN_EMAIL;
+          return auth.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
         }
         return false; // Redirect unauthenticated users to login page
       }

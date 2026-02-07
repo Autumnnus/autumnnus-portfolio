@@ -3,9 +3,10 @@
 import { auth } from "@/auth";
 import { deleteFolder, uploadFile } from "@/lib/minio";
 import { prisma } from "@/lib/prisma";
+import { Language } from "@prisma/client";
 
 interface ProjectTranslationInput {
-  language: "tr" | "en";
+  language: Language;
   title: string;
   shortDescription: string;
   fullDescription: string;
@@ -25,7 +26,7 @@ interface ProjectData {
 }
 
 interface BlogTranslationInput {
-  language: "tr" | "en";
+  language: Language;
   title: string;
   description: string;
   content: string;
@@ -40,7 +41,7 @@ interface BlogData {
 }
 
 interface ProfileTranslationInput {
-  language: "tr" | "en";
+  language: Language;
   name: string;
   title: string;
   greetingText: string;
@@ -58,7 +59,7 @@ interface ProfileData {
 }
 
 interface ExperienceTranslationInput {
-  language: "tr" | "en";
+  language: Language;
   role: string;
   description: string;
   locationType: string;
@@ -74,7 +75,10 @@ interface ExperienceData {
 
 export async function uploadImageAction(formData: FormData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -95,7 +99,10 @@ export async function uploadImageAction(formData: FormData) {
 
 export async function createProjectAction(data: ProjectData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -127,7 +134,10 @@ export async function createProjectAction(data: ProjectData) {
 
 export async function updateProjectAction(id: string, data: ProjectData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -165,7 +175,10 @@ export async function updateProjectAction(id: string, data: ProjectData) {
 
 export async function deleteProjectAction(id: string) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -185,7 +198,10 @@ export async function deleteProjectAction(id: string) {
 
 export async function createBlogAction(data: BlogData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -213,7 +229,10 @@ export async function createBlogAction(data: BlogData) {
 
 export async function updateBlogAction(id: string, data: BlogData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -247,7 +266,10 @@ export async function updateBlogAction(id: string, data: BlogData) {
 
 export async function deleteBlogAction(id: string) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -267,7 +289,10 @@ export async function deleteBlogAction(id: string) {
 
 export async function createSkillAction(data: { name: string; icon: string }) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -283,7 +308,10 @@ export async function createSkillAction(data: { name: string; icon: string }) {
 }
 export async function updateProfileAction(data: ProfileData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -319,7 +347,10 @@ export async function updateProfileAction(data: ProfileData) {
 // Experience Actions
 export async function createExperienceAction(data: ExperienceData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -337,7 +368,10 @@ export async function createExperienceAction(data: ExperienceData) {
 
 export async function updateExperienceAction(id: string, data: ExperienceData) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -360,7 +394,10 @@ export async function updateExperienceAction(id: string, data: ExperienceData) {
 
 export async function deleteExperienceAction(id: string) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -371,7 +408,10 @@ export async function deleteExperienceAction(id: string) {
 
 export async function exportDatabaseAction() {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -405,7 +445,10 @@ export async function exportDatabaseAction() {
 
 export async function importDatabaseAction(jsonData: string) {
   const session = await auth();
-  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -536,4 +579,18 @@ export async function importDatabaseAction(jsonData: string) {
     console.error("Import error:", error);
     throw new Error("Import failed: " + (error as Error).message);
   }
+}
+
+export async function deleteCommentAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  return await prisma.comment.delete({
+    where: { id },
+  });
 }
