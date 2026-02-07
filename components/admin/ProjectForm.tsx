@@ -10,6 +10,9 @@ import { generateTranslationAction } from "@/app/admin/ai-actions";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import Icon from "@/components/common/Icon";
 import { languageNames } from "@/i18n/routing";
+import { ProjectFormValues, ProjectSchema } from "@/lib/validations";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Language, Project, ProjectTranslation, Skill } from "@prisma/client";
 import {
   ChevronLeft,
   ChevronRight,
@@ -24,16 +27,30 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
-interface Skill {
-  id: string;
-  name: string;
-  icon: string;
-}
+// Helper to update translations
+const transformTranslationsToObject = (translations: ProjectTranslation[]) => {
+  const result: Record<
+    string,
+    { title: string; shortDescription: string; fullDescription: string }
+  > = {};
+  translations.forEach((t) => {
+    result[t.language] = {
+      title: t.title,
+      shortDescription: t.shortDescription,
+      fullDescription: t.fullDescription,
+    };
+  });
+  return result;
+};
 
 interface ProjectFormProps {
   skills: Skill[];
-  initialData?: any;
+  initialData?: Project & {
+    translations: ProjectTranslation[];
+    technologies: Skill[];
+  };
 }
 
 interface ImageData {
@@ -55,11 +72,7 @@ export default function ProjectForm({
   );
   const [availableSkills, setAvailableSkills] =
     useState<Skill[]>(initialSkills);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>(
-    initialData?.technologies?.map((t: any) => t.id) || [],
-  );
 
-  const [slug, setSlug] = useState(initialData?.slug || "");
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillIcon, setNewSkillIcon] = useState("");
@@ -69,6 +82,35 @@ export default function ProjectForm({
   const [sourceLang, setSourceLang] = useState<string>("tr");
   const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
+
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(ProjectSchema),
+    defaultValues: {
+      slug: initialData?.slug || "",
+      status: initialData?.status || "Completed",
+      category: initialData?.category || "",
+      github: initialData?.github || "",
+      liveDemo: initialData?.liveDemo || "",
+      featured: initialData?.featured ?? false,
+      coverImage: initialData?.coverImage || "",
+      images: initialData?.images || [],
+      technologies: initialData?.technologies?.map((t) => t.id) || [],
+      translations: initialData?.translations
+        ? transformTranslationsToObject(initialData.translations)
+        : {},
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    getValues,
+    formState: { errors },
+  } = form;
+
+  const selectedSkills = watch("technologies");
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -89,6 +131,7 @@ export default function ProjectForm({
         const res = await uploadImageAction(formData);
         setter({ url: res.url });
       } catch (err) {
+        console.error(err);
         alert("Yükleme başarısız oldu");
       } finally {
         setLoading(false);
@@ -98,6 +141,10 @@ export default function ProjectForm({
 
     const previewUrl = URL.createObjectURL(file);
     setter({ url: previewUrl, file });
+    // Note: We don't verify 'coverImage' field in Zod immediately with blob url if we want,
+    // but here we primarily use state 'coverImage' for preview and upload on submit.
+    // However, we should sync with form if we want validation "required" to pass.
+    setValue("coverImage", previewUrl, { shouldDirty: true });
   };
 
   const handleGalleryUpload = async (
@@ -111,15 +158,32 @@ export default function ProjectForm({
       file,
     }));
 
-    setGalleryImages((prev) => [...prev, ...newImages]);
+    setGalleryImages((prev) => {
+      const updated = [...prev, ...newImages];
+      // Sync with form
+      setValue(
+        "images",
+        updated.map((img) => img.url),
+        { shouldDirty: true },
+      );
+      return updated;
+    });
   };
 
   const removeGalleryImage = (index: number) => {
-    const imageToRemove = galleryImages[index];
-    if (imageToRemove.file) {
-      URL.revokeObjectURL(imageToRemove.url);
-    }
-    setGalleryImages((prev) => prev.filter((_, i) => i !== index));
+    setGalleryImages((prev) => {
+      const imageToRemove = prev[index];
+      if (imageToRemove.file) {
+        URL.revokeObjectURL(imageToRemove.url);
+      }
+      const updated = prev.filter((_, i) => i !== index);
+      setValue(
+        "images",
+        updated.map((img) => img.url),
+        { shouldDirty: true },
+      );
+      return updated;
+    });
   };
 
   const moveGalleryImage = (index: number, direction: "left" | "right") => {
@@ -133,6 +197,11 @@ export default function ProjectForm({
       newImages[index] = newImages[targetIndex];
       newImages[targetIndex] = temp;
 
+      setValue(
+        "images",
+        newImages.map((img) => img.url),
+        { shouldDirty: true },
+      );
       return newImages;
     });
   };
@@ -149,12 +218,17 @@ export default function ProjectForm({
         name: newSkillName,
         icon: newSkillIcon,
       });
-      setAvailableSkills((prev) => [...prev, newSkill as any]);
-      setSelectedSkills((prev) => [...prev, (newSkill as any).id]);
+      setAvailableSkills((prev) => [...prev, newSkill]);
+
+      // Auto select the new skill
+      const currentSkills = getValues("technologies");
+      setValue("technologies", [...currentSkills, newSkill.id]);
+
       setShowAddSkill(false);
       setNewSkillName("");
       setNewSkillIcon("");
     } catch (err) {
+      console.error(err);
       alert("Teknoloji eklenemedi");
     } finally {
       setIsAddingSkill(false);
@@ -177,51 +251,46 @@ export default function ProjectForm({
 
     setIsTranslating(true);
     try {
-      const form = document.querySelector("form") as HTMLFormElement;
+      const currentValues = getValues();
+      const sourceContent = currentValues.translations?.[sourceLang];
 
-      const title = (
-        form.elements.namedItem(`title_${sourceLang}`) as HTMLInputElement
-      ).value;
-      const shortDescription = (
-        form.elements.namedItem(
-          `shortDescription_${sourceLang}`,
-        ) as HTMLTextAreaElement
-      ).value;
-      const fullDescription = (
-        form.elements.namedItem(
-          `fullDescription_${sourceLang}`,
-        ) as HTMLTextAreaElement
-      ).value;
-
-      if (!title || !shortDescription || !fullDescription) {
+      if (
+        !sourceContent ||
+        !sourceContent.title ||
+        !sourceContent.shortDescription ||
+        !sourceContent.fullDescription
+      ) {
         alert("Lütfen kaynak dildeki alanları doldurunuz.");
         setIsTranslating(false);
         return;
       }
 
-      const translations = await generateTranslationAction({
+      const translations = (await generateTranslationAction({
         type: "project",
         sourceLang,
         targetLangs,
-        content: { title, shortDescription, fullDescription },
-      });
+        content: {
+          title: sourceContent.title,
+          shortDescription: sourceContent.shortDescription,
+          fullDescription: sourceContent.fullDescription,
+        },
+      })) as Record<
+        string,
+        { title: string; shortDescription: string; fullDescription: string }
+      >;
 
       // Update target inputs
-      Object.entries(translations).forEach(([lang, content]: [string, any]) => {
+      Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
-        const titleInput = form.elements.namedItem(
-          `title_${lang}`,
-        ) as HTMLInputElement;
-        const shortDescInput = form.elements.namedItem(
-          `shortDescription_${lang}`,
-        ) as HTMLTextAreaElement;
-        const fullDescInput = form.elements.namedItem(
-          `fullDescription_${lang}`,
-        ) as HTMLTextAreaElement;
-
-        if (titleInput) titleInput.value = content.title;
-        if (shortDescInput) shortDescInput.value = content.shortDescription;
-        if (fullDescInput) fullDescInput.value = content.fullDescription;
+        setValue(`translations.${lang}.title` as const, content.title);
+        setValue(
+          `translations.${lang}.shortDescription` as const,
+          content.shortDescription,
+        );
+        setValue(
+          `translations.${lang}.fullDescription` as const,
+          content.fullDescription,
+        );
       });
 
       alert("Çeviri tamamlandı!");
@@ -235,17 +304,16 @@ export default function ProjectForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit: SubmitHandler<ProjectFormValues> = async (data) => {
     setLoading(true);
 
     try {
       // 1. Upload cover image if it's new
-      let finalCoverImage = coverImage?.url || "";
+      let finalCoverImage = data.coverImage || "";
       if (coverImage?.file) {
         finalCoverImage = await uploadSingleFile(
           coverImage.file,
-          `projects/${slug}`,
+          `projects/${data.slug}`,
         );
       }
 
@@ -253,37 +321,38 @@ export default function ProjectForm({
       const finalGalleryImages = await Promise.all(
         galleryImages.map(async (img) => {
           if (img.file) {
-            return await uploadSingleFile(img.file, `projects/${slug}`);
+            return await uploadSingleFile(img.file, `projects/${data.slug}`);
           }
           return img.url;
         }),
       );
 
-      const formData = new FormData(e.currentTarget);
-      const translations = Object.keys(languageNames).map((lang) => ({
-        language: lang as any,
-        title: formData.get(`title_${lang}`) as string,
-        shortDescription: formData.get(`shortDescription_${lang}`) as string,
-        fullDescription: formData.get(`fullDescription_${lang}`) as string,
-      }));
+      const translationsArray = Object.entries(data.translations)
+        .filter(([, t]) => t.title && t.title.trim() !== "")
+        .map(([lang, t]) => ({
+          language: lang as Language,
+          title: t.title,
+          shortDescription: t.shortDescription,
+          fullDescription: t.fullDescription,
+        }));
 
-      const data = {
-        slug: slug,
-        status: formData.get("status") as string,
-        category: formData.get("category") as string,
-        github: formData.get("github") as string,
-        liveDemo: formData.get("liveDemo") as string,
-        featured: formData.get("featured") === "on",
+      const submitData = {
+        slug: data.slug,
+        status: data.status,
+        category: data.category,
+        github: data.github || "",
+        liveDemo: data.liveDemo || "",
+        featured: data.featured,
         coverImage: finalCoverImage,
         images: finalGalleryImages,
-        translations: translations,
-        technologies: selectedSkills,
+        translations: translationsArray,
+        technologies: data.technologies,
       };
 
       if (initialData?.id) {
-        await updateProjectAction(initialData.id, data);
+        await updateProjectAction(initialData.id, submitData);
       } else {
-        await createProjectAction(data);
+        await createProjectAction(submitData);
       }
       router.push("/admin/projects");
       router.refresh();
@@ -297,35 +366,38 @@ export default function ProjectForm({
   };
 
   const toggleSkill = (skillId: string) => {
-    setSelectedSkills((prev) =>
-      prev.includes(skillId)
-        ? prev.filter((id) => id !== skillId)
-        : [...prev, skillId],
-    );
+    const current = getValues("technologies");
+    const updated = current.includes(skillId)
+      ? current.filter((id) => id !== skillId)
+      : [...current, skillId];
+    setValue("technologies", updated);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-8 max-w-4xl mx-auto pb-20"
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Slug (URL)</label>
             <input
-              name="slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
+              {...register("slug")}
               required
               className="w-full p-2 bg-muted rounded border border-border"
               placeholder="my-awesome-project"
             />
+            {errors.slug && (
+              <p className="text-xs text-red-500">{errors.slug.message}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Durum</label>
               <select
-                name="status"
-                defaultValue={initialData?.status || "Completed"}
+                {...register("status")}
                 className="w-full p-2 bg-muted rounded border border-border"
               >
                 <option>Completed</option>
@@ -333,16 +405,23 @@ export default function ProjectForm({
                 <option>Building</option>
                 <option>Archived</option>
               </select>
+              {errors.status && (
+                <p className="text-xs text-red-500">{errors.status.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Kategori</label>
               <input
-                name="category"
-                defaultValue={initialData?.category}
+                {...register("category")}
                 required
                 className="w-full p-2 bg-muted rounded border border-border"
                 placeholder="Web App"
               />
+              {errors.category && (
+                <p className="text-xs text-red-500">
+                  {errors.category.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -360,7 +439,10 @@ export default function ProjectForm({
                   />
                   <button
                     type="button"
-                    onClick={() => setCoverImage(null)}
+                    onClick={() => {
+                      setCoverImage(null);
+                      setValue("coverImage", "");
+                    }}
                     className="absolute top-2 right-2 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
                   >
                     <X size={16} />
@@ -391,9 +473,8 @@ export default function ProjectForm({
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              name="featured"
               id="featured"
-              defaultChecked={initialData?.featured}
+              {...register("featured")}
               className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
             />
             <label htmlFor="featured" className="text-sm font-medium">
@@ -406,8 +487,7 @@ export default function ProjectForm({
           <div className="space-y-2">
             <label className="text-sm font-medium">GitHub URL</label>
             <input
-              name="github"
-              defaultValue={initialData?.github}
+              {...register("github")}
               className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none transition-all"
               placeholder="https://github.com/..."
             />
@@ -415,8 +495,7 @@ export default function ProjectForm({
           <div className="space-y-2">
             <label className="text-sm font-medium">Canlı Demo URL</label>
             <input
-              name="liveDemo"
-              defaultValue={initialData?.liveDemo}
+              {...register("liveDemo")}
               className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none transition-all"
               placeholder="https://..."
             />
@@ -587,7 +666,10 @@ export default function ProjectForm({
 
                 <button
                   type="button"
-                  onClick={() => setCoverImage(img)}
+                  onClick={() => {
+                    setCoverImage(img);
+                    setValue("coverImage", img.url);
+                  }}
                   className={`p-2 rounded-md transition-colors shadow-lg ${
                     coverImage?.url === img.url
                       ? "bg-yellow-500 text-white cursor-default"
@@ -677,9 +759,6 @@ export default function ProjectForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {Object.keys(languageNames).map((lang) => {
-          const translation = initialData?.translations?.find(
-            (t: any) => t.language === lang,
-          );
           return (
             <div
               key={lang}
@@ -704,30 +783,44 @@ export default function ProjectForm({
                   Başlık
                 </label>
                 <input
-                  name={`title_${lang}`}
-                  defaultValue={translation?.title}
+                  {...register(`translations.${lang}.title` as const)}
                   className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none transition-all"
                 />
+                {errors.translations?.[lang]?.title && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.title?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Kısa Açıklama
                 </label>
                 <textarea
-                  name={`shortDescription_${lang}`}
-                  defaultValue={translation?.shortDescription}
+                  {...register(
+                    `translations.${lang}.shortDescription` as const,
+                  )}
                   className="w-full p-2 bg-muted rounded border border-border h-24 focus:border-primary outline-none transition-all"
                 />
+                {errors.translations?.[lang]?.shortDescription && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.shortDescription?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Detaylı İçerik (Markdown)
                 </label>
                 <textarea
-                  name={`fullDescription_${lang}`}
-                  defaultValue={translation?.fullDescription}
+                  {...register(`translations.${lang}.fullDescription` as const)}
                   className="w-full p-2 bg-muted rounded border border-border h-48 focus:border-primary outline-none transition-all"
                 />
+                {errors.translations?.[lang]?.fullDescription && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.fullDescription?.message}
+                  </p>
+                )}
               </div>
             </div>
           );

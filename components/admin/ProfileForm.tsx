@@ -4,32 +4,33 @@ import { updateProfileAction, uploadImageAction } from "@/app/admin/actions";
 import { generateTranslationAction } from "@/app/admin/ai-actions";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
+import { ProfileFormValues, ProfileSchema } from "@/lib/validations";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Language, Profile, ProfileTranslation } from "@prisma/client";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 
-export interface ProfileTranslation {
-  language: string;
-  name: string;
-  title: string;
-  greetingText: string;
-  description: string;
-  aboutTitle: string;
-  aboutDescription: string;
-}
-
-export interface Profile {
-  id?: string;
-  avatar: string;
-  email: string;
-  github: string;
-  linkedin: string;
-  translations: ProfileTranslation[];
-}
+// Helper to transform array translations to object keyed by language
+const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
+  const result: Record<string, any> = {};
+  translations.forEach((t) => {
+    result[t.language] = {
+      name: t.name,
+      title: t.title,
+      greetingText: t.greetingText,
+      description: t.description,
+      aboutTitle: t.aboutTitle,
+      aboutDescription: t.aboutDescription,
+    };
+  });
+  return result;
+};
 
 interface ProfileFormProps {
-  initialData?: Profile;
+  initialData?: Profile & { translations: ProfileTranslation[] };
 }
 
 interface ImageData {
@@ -48,12 +49,34 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
 
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(ProfileSchema),
+    defaultValues: {
+      email: initialData?.email || "",
+      github: initialData?.github || "",
+      linkedin: initialData?.linkedin || "",
+      avatar: initialData?.avatar || "",
+      translations: initialData?.translations
+        ? transformTranslationsToObject(initialData.translations)
+        : {},
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = form;
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const previewUrl = URL.createObjectURL(file);
     setAvatar({ url: previewUrl, file });
+    setValue("avatar", previewUrl, { shouldDirty: true }); // We'll handle file upload separately on submit but set url for validation/tracking
   };
 
   const uploadSingleFile = async (file: File, path: string) => {
@@ -72,30 +95,17 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
     setIsTranslating(true);
     try {
-      const form = document.querySelector("form") as HTMLFormElement;
-
-      // Helper to get value safely
-      const getValue = (name: string) =>
-        (
-          form.elements.namedItem(name) as
-            | HTMLInputElement
-            | HTMLTextAreaElement
-        )?.value || "";
-
-      const name = getValue(`name_${sourceLang}`);
-      const title = getValue(`title_${sourceLang}`);
-      const greetingText = getValue(`greetingText_${sourceLang}`);
-      const description = getValue(`description_${sourceLang}`);
-      const aboutTitle = getValue(`aboutTitle_${sourceLang}`);
-      const aboutDescription = getValue(`aboutDescription_${sourceLang}`);
+      const currentValues = getValues();
+      const sourceContent = currentValues.translations?.[sourceLang];
 
       if (
-        !name ||
-        !title ||
-        !greetingText ||
-        !description ||
-        !aboutTitle ||
-        !aboutDescription
+        !sourceContent ||
+        !sourceContent.name ||
+        !sourceContent.title ||
+        !sourceContent.greetingText ||
+        !sourceContent.description ||
+        !sourceContent.aboutTitle ||
+        !sourceContent.aboutDescription
       ) {
         alert("Lütfen kaynak dildeki alanları doldurunuz.");
         setIsTranslating(false);
@@ -107,12 +117,12 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         sourceLang,
         targetLangs,
         content: {
-          name,
-          title,
-          greetingText,
-          description,
-          aboutTitle,
-          aboutDescription,
+          name: sourceContent.name,
+          title: sourceContent.title,
+          greetingText: sourceContent.greetingText,
+          description: sourceContent.description,
+          aboutTitle: sourceContent.aboutTitle,
+          aboutDescription: sourceContent.aboutDescription,
         },
       });
 
@@ -120,19 +130,15 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       Object.entries(translations).forEach(([lang, content]: [string, any]) => {
         if (!content) return;
 
-        const setValue = (name: string, val: string) => {
-          const el = form.elements.namedItem(name) as
-            | HTMLInputElement
-            | HTMLTextAreaElement;
-          if (el) el.value = val;
-        };
-
-        setValue(`name_${lang}`, content.name);
-        setValue(`title_${lang}`, content.title);
-        setValue(`greetingText_${lang}`, content.greetingText);
-        setValue(`description_${lang}`, content.description);
-        setValue(`aboutTitle_${lang}`, content.aboutTitle);
-        setValue(`aboutDescription_${lang}`, content.aboutDescription);
+        setValue(`translations.${lang}.name`, content.name);
+        setValue(`translations.${lang}.title`, content.title);
+        setValue(`translations.${lang}.greetingText`, content.greetingText);
+        setValue(`translations.${lang}.description`, content.description);
+        setValue(`translations.${lang}.aboutTitle`, content.aboutTitle);
+        setValue(
+          `translations.${lang}.aboutDescription`,
+          content.aboutDescription,
+        );
       });
 
       alert("Çeviri tamamlandı!");
@@ -146,36 +152,37 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = async (data: ProfileFormValues) => {
     setLoading(true);
 
     try {
-      let finalAvatar = avatar?.url || "";
+      let finalAvatar = data.avatar || "";
+      // If a new file was selected (avatar state has file), upload it
       if (avatar?.file) {
         finalAvatar = await uploadSingleFile(avatar.file, "profile");
       }
 
-      const formData = new FormData(e.currentTarget);
-      const translations = Object.keys(languageNames).map((lang) => ({
-        language: lang as any,
-        name: formData.get(`name_${lang}`) as string,
-        title: formData.get(`title_${lang}`) as string,
-        greetingText: formData.get(`greetingText_${lang}`) as string,
-        description: formData.get(`description_${lang}`) as string,
-        aboutTitle: formData.get(`aboutTitle_${lang}`) as string,
-        aboutDescription: formData.get(`aboutDescription_${lang}`) as string,
-      }));
+      const translationsArray = Object.entries(data.translations)
+        .filter(([, t]) => t.name && t.name.trim() !== "")
+        .map(([lang, t]) => ({
+          language: lang as Language,
+          name: t.name,
+          title: t.title,
+          greetingText: t.greetingText,
+          description: t.description,
+          aboutTitle: t.aboutTitle,
+          aboutDescription: t.aboutDescription,
+        }));
 
-      const data = {
+      const submitData = {
         avatar: finalAvatar,
-        email: formData.get("email") as string,
-        github: formData.get("github") as string,
-        linkedin: formData.get("linkedin") as string,
-        translations: translations,
+        email: data.email,
+        github: data.github || "",
+        linkedin: data.linkedin || "",
+        translations: translationsArray,
       };
 
-      await updateProfileAction(data);
+      await updateProfileAction(submitData);
       alert("Profil başarıyla güncellendi");
       router.refresh();
     } catch (err) {
@@ -188,7 +195,10 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-8 max-w-4xl mx-auto pb-20"
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="space-y-2">
@@ -205,7 +215,10 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                   />
                   <button
                     type="button"
-                    onClick={() => setAvatar(null)}
+                    onClick={() => {
+                      setAvatar(null);
+                      setValue("avatar", "");
+                    }}
                     className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
                   >
                     <X size={12} />
@@ -231,19 +244,19 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
             <input
-              name="email"
-              defaultValue={initialData?.email}
-              required
+              {...register("email")}
               className="w-full p-2 bg-muted rounded border border-border"
               placeholder="hello@example.com"
             />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">GitHub URL</label>
             <input
-              name="github"
-              defaultValue={initialData?.github}
+              {...register("github")}
               className="w-full p-2 bg-muted rounded border border-border"
               placeholder="https://github.com/..."
             />
@@ -252,8 +265,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">LinkedIn URL</label>
             <input
-              name="linkedin"
-              defaultValue={initialData?.linkedin}
+              {...register("linkedin")}
               className="w-full p-2 bg-muted rounded border border-border"
               placeholder="https://linkedin.com/in/..."
             />
@@ -305,9 +317,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {Object.keys(languageNames).map((lang) => {
-          const translation = initialData?.translations?.find(
-            (t) => t.language === lang,
-          );
           return (
             <div
               key={lang}
@@ -332,69 +341,89 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                   İsim
                 </label>
                 <input
-                  name={`name_${lang}`}
-                  defaultValue={translation?.name}
-                  required={lang === sourceLang}
+                  {...register(`translations.${lang}.name` as const)}
                   className="w-full p-2 bg-muted rounded border border-border"
                 />
+                {errors.translations?.[lang]?.name && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.name?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">
                   Unvan
                 </label>
                 <input
-                  name={`title_${lang}`}
-                  defaultValue={translation?.title}
-                  required={lang === sourceLang}
+                  {...register(`translations.${lang}.title` as const)}
                   className="w-full p-2 bg-muted rounded border border-border"
                   placeholder="Full Stack Developer"
                 />
+                {errors.translations?.[lang]?.title && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.title?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">
                   Karşılama Metni
                 </label>
                 <input
-                  name={`greetingText_${lang}`}
-                  defaultValue={translation?.greetingText}
-                  required={lang === sourceLang}
+                  {...register(`translations.${lang}.greetingText` as const)}
                   className="w-full p-2 bg-muted rounded border border-border"
                   placeholder="Merhaba, ben"
                 />
+                {errors.translations?.[lang]?.greetingText && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.greetingText?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">
                   Hero Açıklama
                 </label>
                 <textarea
-                  name={`description_${lang}`}
-                  defaultValue={translation?.description}
-                  required={lang === sourceLang}
+                  {...register(`translations.${lang}.description` as const)}
                   className="w-full p-2 bg-muted rounded border border-border h-24"
                 />
+                {errors.translations?.[lang]?.description && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.description?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">
                   Hakkımda Başlık
                 </label>
                 <input
-                  name={`aboutTitle_${lang}`}
-                  defaultValue={translation?.aboutTitle}
-                  required={lang === sourceLang}
+                  {...register(`translations.${lang}.aboutTitle` as const)}
                   className="w-full p-2 bg-muted rounded border border-border"
                   placeholder="Hakkımda"
                 />
+                {errors.translations?.[lang]?.aboutTitle && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.aboutTitle?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">
                   Hakkımda Detay
                 </label>
                 <textarea
-                  name={`aboutDescription_${lang}`}
-                  defaultValue={translation?.aboutDescription}
-                  required={lang === sourceLang}
+                  {...register(
+                    `translations.${lang}.aboutDescription` as const,
+                  )}
                   className="w-full p-2 bg-muted rounded border border-border h-48"
                 />
+                {errors.translations?.[lang]?.aboutDescription && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.aboutDescription?.message}
+                  </p>
+                )}
               </div>
             </div>
           );

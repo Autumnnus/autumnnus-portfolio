@@ -2,36 +2,40 @@
 
 import {
   createBlogAction,
-  updateBlogAction, // turbo
+  updateBlogAction,
   uploadImageAction,
 } from "@/app/admin/actions";
 import { generateTranslationAction } from "@/app/admin/ai-actions";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
+import { BlogFormValues, BlogSchema } from "@/lib/validations";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { BlogPost, BlogPostTranslation, Language } from "@prisma/client";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
-interface BlogTranslation {
-  language: string;
-  title: string;
-  description: string;
-  content: string;
-  readTime: string;
-}
-
-interface BlogPost {
-  id?: string;
-  slug: string;
-  coverImage: string;
-  tags: string[];
-  featured: boolean;
-  translations: BlogTranslation[];
-}
+// Helper to update translations
+const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
+  const result: Record<
+    string,
+    { title: string; description: string; content: string; readTime: string }
+  > = {};
+  translations.forEach((t) => {
+    result[t.language] = {
+      title: t.title,
+      description: t.description,
+      content: t.content,
+      readTime: t.readTime,
+    };
+  });
+  return result;
+};
 
 interface BlogFormProps {
-  initialData?: BlogPost;
+  initialData?: BlogPost & { translations: BlogPostTranslation[] };
 }
 
 interface ImageData {
@@ -42,15 +46,34 @@ interface ImageData {
 export default function BlogForm({ initialData }: BlogFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [slug, setSlug] = useState(initialData?.slug || "");
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
-  const [tags, setTags] = useState<string>(initialData?.tags?.join(", ") || "");
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
   const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
+
+  const form = useForm<BlogFormValues>({
+    resolver: zodResolver(BlogSchema),
+    defaultValues: {
+      slug: initialData?.slug || "",
+      featured: initialData?.featured ?? false,
+      coverImage: initialData?.coverImage || "",
+      tags: initialData?.tags?.join(", ") || "",
+      translations: initialData?.translations
+        ? transformTranslationsToObject(initialData.translations)
+        : {},
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = form;
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,6 +81,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
     const previewUrl = URL.createObjectURL(file);
     setCoverImage({ url: previewUrl, file });
+    setValue("coverImage", previewUrl, { shouldDirty: true });
   };
 
   const uploadSingleFile = async (file: File, path: string) => {
@@ -70,63 +94,59 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert("Lütfen en least bir hedef dil seçiniz.");
+      alert("Lütfen en az bir hedef dil seçiniz.");
       return;
     }
 
     setIsTranslating(true);
     try {
-      const form = document.querySelector("form") as HTMLFormElement;
+      const currentValues = getValues();
+      const sourceContent =
+        currentValues.translations?.[
+          sourceLang as keyof typeof currentValues.translations
+        ];
 
-      const title = (
-        form.elements.namedItem(`title_${sourceLang}`) as HTMLInputElement
-      ).value;
-      const description = (
-        form.elements.namedItem(
-          `description_${sourceLang}`,
-        ) as HTMLTextAreaElement
-      ).value;
-      const content = (
-        form.elements.namedItem(`content_${sourceLang}`) as HTMLTextAreaElement
-      ).value;
-      const readTime = (
-        form.elements.namedItem(`readTime_${sourceLang}`) as HTMLInputElement
-      ).value;
-
-      if (!title || !description || !content) {
+      if (
+        !sourceContent ||
+        !sourceContent.title ||
+        !sourceContent.description ||
+        !sourceContent.content
+      ) {
         alert("Lütfen kaynak dildeki alanları doldurunuz.");
         setIsTranslating(false);
         return;
       }
 
-      const translations = await generateTranslationAction({
+      const translations = (await generateTranslationAction({
         type: "blog",
         sourceLang,
         targetLangs,
-        content: { title, description, content, readTime },
-      });
+        content: {
+          title: sourceContent.title,
+          description: sourceContent.description,
+          content: sourceContent.content,
+          readTime: sourceContent.readTime || "5 min read",
+        },
+      })) as Record<
+        string,
+        {
+          title: string;
+          description: string;
+          content: string;
+          readTime: string;
+        }
+      >;
 
       // Update target inputs
-      Object.entries(translations).forEach(([lang, content]: [string, any]) => {
+      Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
-        const titleInput = form.elements.namedItem(
-          `title_${lang}`,
-        ) as HTMLInputElement;
-        const descInput = form.elements.namedItem(
-          `description_${lang}`,
-        ) as HTMLTextAreaElement;
-        const contentInput = form.elements.namedItem(
-          `content_${lang}`,
-        ) as HTMLTextAreaElement;
-        const readTimeInput = form.elements.namedItem(
-          `readTime_${lang}`,
-        ) as HTMLInputElement;
-
-        if (titleInput) titleInput.value = content.title;
-        if (descInput) descInput.value = content.description;
-        if (contentInput) contentInput.value = content.content;
-        if (readTimeInput && content.readTime)
-          readTimeInput.value = content.readTime;
+        setValue(`translations.${lang}.title` as const, content.title);
+        setValue(
+          `translations.${lang}.description` as const,
+          content.description,
+        );
+        setValue(`translations.${lang}.content` as const, content.content);
+        setValue(`translations.${lang}.readTime` as const, content.readTime);
       });
 
       alert("Çeviri tamamlandı!");
@@ -140,54 +160,49 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit: SubmitHandler<BlogFormValues> = async (data) => {
     setLoading(true);
 
     try {
       // Upload cover image if it's new
-      let finalCoverImage = coverImage?.url || "";
+      let finalCoverImage = data.coverImage || "";
       if (coverImage?.file) {
         finalCoverImage = await uploadSingleFile(
           coverImage.file,
-          `blog/${slug}`,
+          `blog/${data.slug}`,
         );
       }
 
-      const formElements = e.currentTarget.elements;
+      const translationsArray = Object.entries(data.translations)
+        .filter(([, t]) => t.title && t.title.trim() !== "")
+        .map(([lang, t]) => ({
+          language: lang as Language,
+          title: t.title,
+          description: t.description,
+          content: t.content,
+          readTime: t.readTime,
+          date: new Date().toLocaleDateString(
+            lang === "tr" ? "tr-TR" : "en-US",
+          ), // Keep existing logic for now
+        }));
 
-      const translations = Object.keys(languageNames).map((lang) => ({
-        language: lang as any,
-        title: (formElements.namedItem(`title_${lang}`) as HTMLInputElement)
-          .value,
-        description: (
-          formElements.namedItem(`description_${lang}`) as HTMLTextAreaElement
-        ).value,
-        content: (
-          formElements.namedItem(`content_${lang}`) as HTMLTextAreaElement
-        ).value,
-        readTime: (
-          formElements.namedItem(`readTime_${lang}`) as HTMLInputElement
-        ).value,
-        date: new Date().toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US"), // Fallback to en-US for others or ideally use dynamic locale
-      }));
-
-      const data = {
-        slug,
+      const submitData = {
+        slug: data.slug,
         coverImage: finalCoverImage,
-        tags: tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter((t) => t !== ""),
-        featured: (formElements.namedItem("featured") as HTMLInputElement)
-          .checked,
-        translations: translations,
+        tags: data.tags
+          ? data.tags
+              .split(",")
+              .map((t) => t.trim())
+              .filter((t) => t !== "")
+          : [],
+        featured: data.featured,
+        translations: translationsArray,
       };
 
       if (initialData?.id) {
-        await updateBlogAction(initialData.id, data);
+        await updateBlogAction(initialData.id, submitData);
       } else {
-        await createBlogAction(data);
+        await createBlogAction(submitData);
       }
       router.push("/admin/blog");
       router.refresh();
@@ -201,19 +216,27 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+    <form
+      onSubmit={
+        handleSubmit(
+          onSubmit,
+        ) as unknown as React.FormEventHandler<HTMLFormElement>
+      }
+      className="space-y-8 max-w-4xl mx-auto pb-20"
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Slug (URL)</label>
             <input
-              name="slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
+              {...register("slug")}
               required
               className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
               placeholder="my-blog-post"
             />
+            {errors.slug && (
+              <p className="text-xs text-red-500">{errors.slug.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -221,8 +244,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
               Etiketler (Virgülle ayırın)
             </label>
             <input
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
+              {...register("tags")}
               className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
               placeholder="Next.js, React, Tailwind"
             />
@@ -231,9 +253,8 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              name="featured"
               id="featured"
-              defaultChecked={initialData?.featured}
+              {...register("featured")}
               className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
             />
             <label htmlFor="featured" className="text-sm font-medium">
@@ -256,7 +277,10 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => setCoverImage(null)}
+                  onClick={() => {
+                    setCoverImage(null);
+                    setValue("coverImage", "");
+                  }}
                   className="absolute top-2 right-2 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
                 >
                   <X size={16} />
@@ -337,9 +361,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {Object.keys(languageNames).map((lang) => {
-          const translation = initialData?.translations?.find(
-            (t) => t.language === lang,
-          );
           return (
             <div
               key={lang}
@@ -364,44 +385,57 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                   Başlık
                 </label>
                 <input
-                  name={`title_${lang}`}
-                  defaultValue={translation?.title}
-                  required={lang === sourceLang} // Only require source lang initially, or let submit handle validation if needed
+                  {...register(`translations.${lang}.title` as const)}
                   className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
                 />
+                {errors.translations?.[lang]?.title && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.title?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Okuma Süresi
                 </label>
                 <input
-                  name={`readTime_${lang}`}
-                  defaultValue={translation?.readTime}
+                  {...register(`translations.${lang}.readTime` as const)}
                   placeholder="5 dk okuma"
                   className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
                 />
+                {errors.translations?.[lang]?.readTime && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.readTime?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Kısa Açıklama
                 </label>
                 <textarea
-                  name={`description_${lang}`}
-                  defaultValue={translation?.description}
-                  required={lang === sourceLang}
+                  {...register(`translations.${lang}.description` as const)}
                   className="w-full p-2 bg-muted rounded border border-border h-24 focus:border-primary outline-hidden transition-all"
                 />
+                {errors.translations?.[lang]?.description && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.description?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   İçerik (Markdown)
                 </label>
                 <textarea
-                  name={`content_${lang}`}
-                  defaultValue={translation?.content}
-                  required={lang === sourceLang}
+                  {...register(`translations.${lang}.content` as const)}
                   className="w-full p-2 bg-muted rounded border border-border h-64 focus:border-primary outline-hidden transition-all"
                 />
+                {errors.translations?.[lang]?.content && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.content?.message}
+                  </p>
+                )}
               </div>
             </div>
           );

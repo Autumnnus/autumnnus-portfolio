@@ -9,29 +9,39 @@ import { generateTranslationAction } from "@/app/admin/ai-actions";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { Input } from "@/components/ui/Input";
 import { languageNames } from "@/i18n/routing";
+import { ExperienceFormValues, ExperienceSchema } from "@/lib/validations";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Language,
+  WorkExperience,
+  WorkExperienceTranslation,
+} from "@prisma/client";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
-export interface ExperienceTranslation {
-  language: string;
-  role: string;
-  description: string;
-  locationType: string;
-}
-
-export interface Experience {
-  id?: string;
-  company: string;
-  logo: string;
-  startDate?: string | Date | null;
-  endDate?: string | Date | null;
-  translations: ExperienceTranslation[];
-}
+// Helper to update translations
+const transformTranslationsToObject = (
+  translations: WorkExperienceTranslation[],
+) => {
+  const result: Record<
+    string,
+    { role: string; description: string; locationType: string }
+  > = {};
+  translations.forEach((t) => {
+    result[t.language] = {
+      role: t.role,
+      description: t.description,
+      locationType: t.locationType,
+    };
+  });
+  return result;
+};
 
 interface ExperienceFormProps {
-  initialData?: Experience;
+  initialData?: WorkExperience & { translations: WorkExperienceTranslation[] };
 }
 
 interface ImageData {
@@ -56,12 +66,34 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     initialData?.logo ? { url: initialData.logo } : null,
   );
 
+  const form = useForm<ExperienceFormValues>({
+    resolver: zodResolver(ExperienceSchema),
+    defaultValues: {
+      company: initialData?.company || "",
+      logo: initialData?.logo || "",
+      startDate: formatDateForInput(initialData?.startDate),
+      endDate: formatDateForInput(initialData?.endDate),
+      translations: initialData?.translations
+        ? transformTranslationsToObject(initialData.translations)
+        : {},
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = form;
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const previewUrl = URL.createObjectURL(file);
     setLogo({ url: previewUrl, file });
+    setValue("logo", previewUrl, { shouldDirty: true });
   };
 
   const uploadSingleFile = async (file: File, path: string) => {
@@ -80,51 +112,49 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
     setIsTranslating(true);
     try {
-      const form = document.querySelector("form") as HTMLFormElement;
+      const currentValues = getValues();
+      const sourceContent =
+        currentValues.translations?.[
+          sourceLang as keyof typeof currentValues.translations
+        ];
 
-      const role = (
-        form.elements.namedItem(`role_${sourceLang}`) as HTMLInputElement
-      ).value;
-      const description = (
-        form.elements.namedItem(
-          `description_${sourceLang}`,
-        ) as HTMLTextAreaElement
-      ).value;
-      const locationType = (
-        form.elements.namedItem(
-          `locationType_${sourceLang}`,
-        ) as HTMLInputElement
-      ).value;
-
-      if (!role || !description || !locationType) {
+      if (
+        !sourceContent ||
+        !sourceContent.role ||
+        !sourceContent.description ||
+        !sourceContent.locationType
+      ) {
         alert("Lütfen kaynak dildeki alanları doldurunuz.");
         setIsTranslating(false);
         return;
       }
 
-      const translations = await generateTranslationAction({
+      const translations = (await generateTranslationAction({
         type: "experience",
         sourceLang,
         targetLangs,
-        content: { role, description, locationType },
-      });
+        content: {
+          role: sourceContent.role,
+          description: sourceContent.description,
+          locationType: sourceContent.locationType,
+        },
+      })) as Record<
+        string,
+        { role: string; description: string; locationType: string }
+      >;
 
       // Update target inputs
-      Object.entries(translations).forEach(([lang, content]: [string, any]) => {
+      Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
-        const roleInput = form.elements.namedItem(
-          `role_${lang}`,
-        ) as HTMLInputElement;
-        const descInput = form.elements.namedItem(
-          `description_${lang}`,
-        ) as HTMLTextAreaElement;
-        const locationTypeInput = form.elements.namedItem(
-          `locationType_${lang}`,
-        ) as HTMLInputElement;
-
-        if (roleInput) roleInput.value = content.role;
-        if (descInput) descInput.value = content.description;
-        if (locationTypeInput) locationTypeInput.value = content.locationType;
+        setValue(`translations.${lang}.role` as const, content.role);
+        setValue(
+          `translations.${lang}.description` as const,
+          content.description,
+        );
+        setValue(
+          `translations.${lang}.locationType` as const,
+          content.locationType,
+        );
       });
 
       alert("Çeviri tamamlandı!");
@@ -138,39 +168,36 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit: SubmitHandler<ExperienceFormValues> = async (data) => {
     setLoading(true);
 
     try {
-      let finalLogo = logo?.url || "";
+      let finalLogo = data.logo || "";
       if (logo?.file) {
         finalLogo = await uploadSingleFile(logo.file, "experience");
       }
 
-      const formData = new FormData(e.currentTarget);
-      const startDateStr = formData.get("startDate") as string;
-      const endDateStr = formData.get("endDate") as string;
+      const translationsArray = Object.entries(data.translations)
+        .filter(([, t]) => t.role && t.role.trim() !== "")
+        .map(([lang, t]) => ({
+          language: lang as Language,
+          role: t.role,
+          description: t.description,
+          locationType: t.locationType,
+        }));
 
-      const translations = Object.keys(languageNames).map((lang) => ({
-        language: lang as any,
-        role: formData.get(`role_${lang}`) as string,
-        description: formData.get(`description_${lang}`) as string,
-        locationType: formData.get(`locationType_${lang}`) as string,
-      }));
-
-      const data = {
-        company: formData.get("company") as string,
+      const submitData = {
+        company: data.company,
         logo: finalLogo,
-        startDate: startDateStr ? new Date(startDateStr) : null,
-        endDate: endDateStr ? new Date(endDateStr) : null,
-        translations: translations,
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        endDate: data.endDate ? new Date(data.endDate) : null,
+        translations: translationsArray,
       };
 
       if (initialData?.id) {
-        await updateExperienceAction(initialData.id, data);
+        await updateExperienceAction(initialData.id, submitData);
       } else {
-        await createExperienceAction(data);
+        await createExperienceAction(submitData);
       }
 
       router.push("/admin/experience");
@@ -185,7 +212,10 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-8 max-w-4xl mx-auto pb-20"
+    >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         <div className="space-y-2">
           <label className="text-sm font-medium">Şirket Logosu</label>
@@ -201,7 +231,10 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => setLogo(null)}
+                  onClick={() => {
+                    setLogo(null);
+                    setValue("logo", "");
+                  }}
                   className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity transform hover:scale-110"
                 >
                   <X size={16} />
@@ -226,30 +259,24 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">Şirket Adı</label>
             <Input
-              name="company"
-              defaultValue={initialData?.company}
+              {...register("company")}
               required
               placeholder="Örn: Google, Amazon"
             />
+            {errors.company && (
+              <p className="text-xs text-red-500">{errors.company.message}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Başlangıç Tarihi</label>
-              <Input
-                type="date"
-                name="startDate"
-                defaultValue={formatDateForInput(initialData?.startDate)}
-              />
+              <Input type="date" {...register("startDate")} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Bitiş Tarihi</label>
               <div className="relative">
-                <Input
-                  type="date"
-                  name="endDate"
-                  defaultValue={formatDateForInput(initialData?.endDate)}
-                />
+                <Input type="date" {...register("endDate")} />
                 <span className="text-[10px] text-muted-foreground absolute -bottom-5 left-0">
                   Devam ediyorsa boş bırakın
                 </span>
@@ -292,7 +319,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         <button
           type="button"
           onClick={handleAutoTranslate}
-          disabled={isTranslating}
+          disabled={isTranslating || targetLangs.length === 0}
           className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
         >
           {isTranslating ? (
@@ -306,9 +333,6 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {Object.keys(languageNames).map((lang) => {
-          const translation = initialData?.translations?.find(
-            (t) => t.language === lang,
-          );
           return (
             <div
               key={lang}
@@ -333,32 +357,44 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
                   Pozisyon
                 </label>
                 <Input
-                  name={`role_${lang}`}
-                  defaultValue={translation?.role}
+                  {...register(`translations.${lang}.role` as const)}
                   required={lang === sourceLang}
                 />
+                {errors.translations?.[lang]?.role && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.role?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Çalışma Şekli
                 </label>
                 <Input
-                  name={`locationType_${lang}`}
-                  defaultValue={translation?.locationType}
+                  {...register(`translations.${lang}.locationType` as const)}
                   required={lang === sourceLang}
                   placeholder="Hibrit, Uzaktan / Hybrid, Remote"
                 />
+                {errors.translations?.[lang]?.locationType && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.locationType?.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
                   Açıklama (Markdown)
                 </label>
                 <textarea
-                  name={`description_${lang}`}
-                  defaultValue={translation?.description}
+                  {...register(`translations.${lang}.description` as const)}
                   required={lang === sourceLang}
                   className="w-full p-3 bg-background rounded-md border border-input min-h-[200px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm resize-y"
                 />
+                {errors.translations?.[lang]?.description && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.description?.message}
+                  </p>
+                )}
               </div>
             </div>
           );
