@@ -55,8 +55,6 @@ export async function uploadFile(
     "Content-Type": contentType,
   });
 
-  // Return public URL (assuming MinIO is accessible publicly)
-  // For Docker local: http://localhost:9000/bucket/file
   const protocol = process.env.MINIO_USE_SSL === "true" ? "https" : "http";
   return `${protocol}://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}/${BUCKET_NAME}/${filename}`;
 }
@@ -77,6 +75,42 @@ export async function deleteFolder(prefix: string) {
   if (objectsList.length > 0) {
     await minioClient.removeObjects(BUCKET_NAME, objectsList);
   }
+}
+
+export async function getFile(filename: string): Promise<Buffer> {
+  let objectName = filename;
+  if (filename.startsWith("http")) {
+    const urlParts = filename.split(`/${BUCKET_NAME}/`);
+    if (urlParts.length > 1) {
+      objectName = urlParts[1];
+    } else {
+      console.warn("External URL or unparseable MinIO URL:", filename);
+      try {
+        const response = await fetch(filename);
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      } catch (e) {
+        console.error("Failed to fetch external URL:", e);
+        throw new Error(`Failed to fetch file: ${filename}`);
+      }
+    }
+  }
+
+  try {
+    const stream = await minioClient.getObject(BUCKET_NAME, objectName);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  } catch (error) {
+    console.error(`Failed to get object ${objectName} from MinIO:`, error);
+    throw error;
+  }
+}
+
+export function getBucketName() {
+  return BUCKET_NAME;
 }
 
 export { minioClient };

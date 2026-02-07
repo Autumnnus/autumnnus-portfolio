@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import DatabaseManagement from "@/components/admin/DatabaseManagement";
 import Container from "@/components/common/Container";
 import { FileText, Folder, Plus } from "lucide-react";
 import Link from "next/link";
@@ -119,6 +120,9 @@ export default async function AdminDashboard() {
             </Link>
           </div>
         </div>
+
+        {/* Veritabanı Yönetimi */}
+        <DatabaseManagement />
       </div>
     </Container>
   );

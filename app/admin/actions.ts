@@ -79,7 +79,7 @@ export async function uploadImageAction(formData: FormData) {
   }
 
   const file = formData.get("file") as File;
-  const customPath = formData.get("path") as string; // e.g., "projects/my-slug" or "skills"
+  const customPath = formData.get("path") as string;
 
   if (!file) throw new Error("No file provided");
 
@@ -101,7 +101,6 @@ export async function createProjectAction(data: ProjectData) {
 
   const { translations, technologies, images, ...projectData } = data;
 
-  // Check if slug already exists
   const existingProject = await prisma.project.findUnique({
     where: { slug: projectData.slug },
   });
@@ -134,7 +133,6 @@ export async function updateProjectAction(id: string, data: ProjectData) {
 
   const { translations, technologies, images, ...projectData } = data;
 
-  // Check if slug exists in another project
   const existingProject = await prisma.project.findFirst({
     where: {
       slug: projectData.slug,
@@ -148,8 +146,6 @@ export async function updateProjectAction(id: string, data: ProjectData) {
     );
   }
 
-  // Update logic: simpler to delete translations and recreate or update specifically
-  // For simplicity here, we update translations one by one or delete/create
   await prisma.projectTranslation.deleteMany({ where: { projectId: id } });
 
   return await prisma.project.update({
@@ -187,7 +183,6 @@ export async function deleteProjectAction(id: string) {
   });
 }
 
-// Blog Actions
 export async function createBlogAction(data: BlogData) {
   const session = await auth();
   if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
@@ -196,7 +191,6 @@ export async function createBlogAction(data: BlogData) {
 
   const { translations, ...blogData } = data;
 
-  // Check if slug already exists
   const existingBlog = await prisma.blogPost.findUnique({
     where: { slug: blogData.slug },
   });
@@ -225,7 +219,6 @@ export async function updateBlogAction(id: string, data: BlogData) {
 
   const { translations, ...blogData } = data;
 
-  // Check if slug exists in another blog post
   const existingBlog = await prisma.blogPost.findFirst({
     where: {
       slug: blogData.slug,
@@ -272,7 +265,6 @@ export async function deleteBlogAction(id: string) {
   });
 }
 
-// Skill Actions
 export async function createSkillAction(data: { name: string; icon: string }) {
   const session = await auth();
   if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
@@ -289,7 +281,6 @@ export async function createSkillAction(data: { name: string; icon: string }) {
     },
   });
 }
-// Profile Actions
 export async function updateProfileAction(data: ProfileData) {
   const session = await auth();
   if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
@@ -376,4 +367,173 @@ export async function deleteExperienceAction(id: string) {
   return await prisma.workExperience.delete({
     where: { id },
   });
+}
+
+export async function exportDatabaseAction() {
+  const session = await auth();
+  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+    throw new Error("Unauthorized");
+  }
+
+  const [projects, blogs, profile, experiences, skills] = await Promise.all([
+    prisma.project.findMany({
+      include: { translations: true, technologies: true },
+    }),
+    prisma.blogPost.findMany({
+      include: { translations: true },
+    }),
+    prisma.profile.findFirst({
+      include: { translations: true },
+    }),
+    prisma.workExperience.findMany({
+      include: { translations: true },
+    }),
+    prisma.skill.findMany(),
+  ]);
+
+  return {
+    timestamp: new Date().toISOString(),
+    data: {
+      projects,
+      blogs,
+      profile,
+      experiences,
+      skills,
+    },
+  };
+}
+
+export async function importDatabaseAction(jsonData: string) {
+  const session = await auth();
+  if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+    throw new Error("Unauthorized");
+  }
+
+  const { data } = JSON.parse(jsonData);
+  const { projects, blogs, profile, experiences, skills } = data;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.projectTranslation.deleteMany();
+      await tx.project.deleteMany();
+      await tx.blogPostTranslation.deleteMany();
+      await tx.blogPost.deleteMany();
+      await tx.workExperienceTranslation.deleteMany();
+      await tx.workExperience.deleteMany();
+      await tx.profileTranslation.deleteMany();
+      await tx.profile.deleteMany();
+      await tx.skill.deleteMany();
+
+      if (skills && skills.length > 0) {
+        await tx.skill.createMany({
+          data: skills.map((s: any) => ({
+            id: s.id,
+            key: s.key,
+            name: s.name,
+            icon: s.icon,
+          })),
+        });
+      }
+      if (profile) {
+        await tx.profile.create({
+          data: {
+            avatar: profile.avatar,
+            email: profile.email,
+            github: profile.github,
+            linkedin: profile.linkedin,
+            translations: {
+              create: profile.translations.map((t: any) => ({
+                language: t.language,
+                name: t.name,
+                title: t.title,
+                greetingText: t.greetingText,
+                description: t.description,
+                aboutTitle: t.aboutTitle,
+                aboutDescription: t.aboutDescription,
+              })),
+            },
+          },
+        });
+      }
+
+      if (experiences && experiences.length > 0) {
+        for (const exp of experiences) {
+          await tx.workExperience.create({
+            data: {
+              company: exp.company,
+              logo: exp.logo,
+              startDate: exp.startDate,
+              endDate: exp.endDate,
+              translations: {
+                create: exp.translations.map((t: any) => ({
+                  language: t.language,
+                  role: t.role,
+                  description: t.description,
+                  locationType: t.locationType,
+                })),
+              },
+            },
+          });
+        }
+      }
+
+      if (blogs && blogs.length > 0) {
+        for (const blog of blogs) {
+          await tx.blogPost.create({
+            data: {
+              slug: blog.slug,
+              coverImage: blog.coverImage,
+              featured: blog.featured,
+              tags: blog.tags,
+              date: blog.date,
+              readTime: blog.readTime,
+              translations: {
+                create: blog.translations.map((t: any) => ({
+                  language: t.language,
+                  title: t.title,
+                  description: t.description,
+                  content: t.content,
+                })),
+              },
+            },
+          });
+        }
+      }
+
+      if (projects && projects.length > 0) {
+        for (const project of projects) {
+          await tx.project.create({
+            data: {
+              slug: project.slug,
+              status: project.status,
+              category: project.category,
+              github: project.github,
+              liveDemo: project.liveDemo,
+              featured: project.featured,
+              coverImage: project.coverImage,
+              images: project.images,
+              technologies: {
+                connect: project.technologies.map((tech: any) => ({
+                  id: tech.id, // Connect by ID since we restored skills with IDs
+                })),
+              },
+              translations: {
+                create: project.translations.map((t: any) => ({
+                  language: t.language,
+                  title: t.title,
+                  shortDescription: t.shortDescription,
+                  fullDescription: t.fullDescription,
+                })),
+              },
+            },
+          });
+        }
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Import error:", error);
+    throw new Error("Import failed: " + (error as Error).message);
+  }
 }
