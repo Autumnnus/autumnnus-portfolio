@@ -13,6 +13,9 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 
+import CommentSection from "@/components/interactive/CommentSection";
+import LikeButton from "@/components/interactive/LikeButton";
+import ViewCounter from "@/components/interactive/ViewCounter";
 import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
 
 export default function ProjectDetailView({
@@ -158,6 +161,9 @@ export default function ProjectDetailView({
           {remainingCount > 0 && (
             <Badge variant="outline">+{remainingCount} more</Badge>
           )}
+          <div className="ml-auto">
+            <ViewCounter itemId={project.id} itemType="project" />
+          </div>
         </div>
       </FadeIn>
       {/* Title and Short Description */}
@@ -260,6 +266,7 @@ export default function ProjectDetailView({
               {t("sourceCode")}
             </a>
           )}
+          <LikeButton itemId={project.id} itemType="project" />
         </div>
       </FadeIn>
       {/* Full Description */}
@@ -310,8 +317,13 @@ export default function ProjectDetailView({
           </div>
         </FadeIn>
       )}
-      {/* View All Projects Button */}
+      {/* Comments Section */}
       <FadeIn delay={1.0}>
+        <CommentSection itemId={project.id} itemType="project" />
+      </FadeIn>
+
+      {/* View All Projects Button */}
+      <FadeIn delay={1.1}>
         <div className="text-center pt-8">
           <Link
             href="/projects"

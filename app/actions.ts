@@ -439,30 +439,85 @@ export async function getAboutStats() {
 
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
-export async function createCommentAction(blogPostId: string, content: string) {
+async function getIpIdentifier() {
+  const headersList = await headers();
+  const forwardedFor = headersList.get("x-forwarded-for");
+  const realIp = headersList.get("x-real-ip");
+
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  if (realIp) {
+    return realIp.trim();
+  }
+
+  return "0.0.0.0";
+}
+
+export type CommentItemType = "blog" | "project";
+
+export async function createComment(
+  itemId: string,
+  itemType: CommentItemType,
+  content: string,
+  authorName: string,
+  authorEmail: string,
+) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      throw new Error("Unauthorized");
-    }
-
     if (!content || content.trim().length === 0) {
       throw new Error("Comment content is required");
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        blogPostId,
-        content,
-        authorName: session.user.name || "Anonymous",
-        authorEmail: session.user.email,
-        authorImage: session.user.image,
-        approved: true,
+    if (!authorName || authorName.trim().length === 0) {
+      throw new Error("Name is required");
+    }
+
+    if (!authorEmail || authorEmail.trim().length === 0) {
+      throw new Error("Email is required");
+    }
+
+    const ipAddress = await getIpIdentifier();
+
+    // Rate limiting: Check if IP has posted recently
+    const recentComments = await prisma.comment.count({
+      where: {
+        ipAddress,
+        createdAt: {
+          gte: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes
+        },
       },
     });
 
-    revalidatePath("/[locale]/blog/[slug]", "page");
+    if (recentComments >= 3) {
+      throw new Error("You are commenting too fast. Please try again later.");
+    }
+
+    const data: any = {
+      content,
+      authorName,
+      authorEmail,
+      ipAddress,
+      approved: true,
+    };
+
+    if (itemType === "blog") {
+      data.blogPostId = itemId;
+    } else {
+      data.projectId = itemId;
+    }
+
+    const comment = await prisma.comment.create({
+      data,
+    });
+
+    const path =
+      itemType === "blog"
+        ? "/[locale]/blog/[slug]"
+        : "/[locale]/projects/[slug]";
+    revalidatePath(path, "layout");
 
     return { success: true, comment };
   } catch (error) {
@@ -471,30 +526,47 @@ export async function createCommentAction(blogPostId: string, content: string) {
   }
 }
 
-export async function getCommentsAction(
-  blogPostId: string,
+// Deprecated: kept for backward compatibility if needed, but redirects to new logic
+export async function createCommentAction(blogPostId: string, content: string) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    throw new Error("Unauthorized");
+  }
+  return createComment(
+    blogPostId,
+    "blog",
+    content,
+    session.user.name || "Anonymous",
+    session.user.email,
+  );
+}
+
+export async function getComments(
+  itemId: string,
+  itemType: CommentItemType,
   page: number = 1,
   limit: number = 20,
 ) {
   try {
     const skip = (page - 1) * limit;
+    const where: any = {
+      approved: true,
+    };
+
+    if (itemType === "blog") {
+      where.blogPostId = itemId;
+    } else {
+      where.projectId = itemId;
+    }
 
     const [comments, total] = await Promise.all([
       prisma.comment.findMany({
-        where: {
-          blogPostId,
-          approved: true,
-        },
+        where,
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.comment.count({
-        where: {
-          blogPostId,
-          approved: true,
-        },
-      }),
+      prisma.comment.count({ where }),
     ]);
 
     return {
@@ -513,5 +585,162 @@ export async function getCommentsAction(
       limit,
       totalPages: 0,
     };
+  }
+}
+
+export async function getCommentsAction(
+  blogPostId: string,
+  page: number = 1,
+  limit: number = 20,
+) {
+  return getComments(blogPostId, "blog", page, limit);
+}
+
+export async function toggleLike(itemId: string, itemType: CommentItemType) {
+  try {
+    const ipAddress = await getIpIdentifier();
+
+    const where: any = {
+      ipAddress,
+    };
+
+    if (itemType === "blog") {
+      where.blogPostId = itemId;
+    } else {
+      where.projectId = itemId;
+    }
+
+    const existingLike = await prisma.like.findFirst({
+      where,
+    });
+
+    if (existingLike) {
+      await prisma.like.delete({
+        where: { id: existingLike.id },
+      });
+    } else {
+      await prisma.like.create({
+        data: where,
+      });
+    }
+
+    // Get updated count
+    const countWhere: any = {};
+    if (itemType === "blog") {
+      countWhere.blogPostId = itemId;
+    } else {
+      countWhere.projectId = itemId;
+    }
+
+    const count = await prisma.like.count({ where: countWhere });
+
+    const path =
+      itemType === "blog"
+        ? "/[locale]/blog/[slug]"
+        : "/[locale]/projects/[slug]";
+    revalidatePath(path, "layout");
+
+    return { success: true, liked: !existingLike, count };
+  } catch (error) {
+    console.error("Failed to toggle like:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function getLikeStatus(itemId: string, itemType: CommentItemType) {
+  try {
+    const ipAddress = await getIpIdentifier();
+    const where: any = {
+      ipAddress,
+    };
+
+    if (itemType === "blog") {
+      where.blogPostId = itemId;
+    } else {
+      where.projectId = itemId;
+    }
+
+    const like = await prisma.like.findFirst({ where });
+    const countWhere: any = {};
+    if (itemType === "blog") {
+      countWhere.blogPostId = itemId;
+    } else {
+      countWhere.projectId = itemId;
+    }
+    const count = await prisma.like.count({ where: countWhere });
+
+    return { liked: !!like, count };
+  } catch (error) {
+    console.error("Failed to get like status:", error);
+    return { liked: false, count: 0 };
+  }
+}
+
+export async function incrementView(itemId: string, itemType: CommentItemType) {
+  try {
+    const ipAddress = await getIpIdentifier();
+
+    // Check if view already exists for this IP in the last 24 hours maybe?
+    // Or just record every view but unique by session?
+    // Requirements said: "ip bazlı proje ve blog kaç kere görüntülenmiş onu da tutalım"
+    // Let's just create a view if not exists for this IP? Or generic increment?
+    // "kaç kere görüntülenmiş" implies total views.
+    // "ip bazlı" implies we track WHO viewed.
+    // Let's just insert a record. Unique constraint is NOT on (ip, itemId) for Views in schema,
+    // but typically valid views are once per session or day.
+    // For simplicity and to avoid massive spam, let's limit 1 view per IP per hour or just checks existence?
+    // Let's just Add it.
+
+    // Check if viewed recently to avoid F5 spam
+    const existingView = await prisma.view.findFirst({
+      where: {
+        ipAddress,
+        ...(itemType === "blog"
+          ? { blogPostId: itemId }
+          : { projectId: itemId }),
+        createdAt: {
+          gte: new Date(Date.now() - 60 * 60 * 1000), // 1 hour
+        },
+      },
+    });
+
+    if (!existingView) {
+      const data: any = {
+        ipAddress,
+      };
+      if (itemType === "blog") {
+        data.blogPostId = itemId;
+      } else {
+        data.projectId = itemId;
+      }
+      await prisma.view.create({ data });
+    }
+
+    const countWhere: any = {};
+    if (itemType === "blog") {
+      countWhere.blogPostId = itemId;
+    } else {
+      countWhere.projectId = itemId;
+    }
+    const count = await prisma.view.count({ where: countWhere });
+
+    return { success: true, count };
+  } catch (error) {
+    console.error("Failed to increment view:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function getViewCount(itemId: string, itemType: CommentItemType) {
+  try {
+    const countWhere: any = {};
+    if (itemType === "blog") {
+      countWhere.blogPostId = itemId;
+    } else {
+      countWhere.projectId = itemId;
+    }
+    return await prisma.view.count({ where: countWhere });
+  } catch (error) {
+    return 0;
   }
 }

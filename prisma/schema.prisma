@@ -41,6 +41,10 @@ model Project {
   images       String[] // URLs from MinIO
 
   technologies Skill[]
+  
+  comments     Comment[]
+  likes        Like[]
+  views        View[]
 
   translations ProjectTranslation[]
 
@@ -72,6 +76,8 @@ model BlogPost {
 
   translations BlogPostTranslation[]
   comments     Comment[]
+  likes        Like[]
+  views        View[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -97,14 +103,45 @@ model Comment {
   content     String
   authorName  String
   authorEmail String
-  authorImage String?
+  // authorImage removed or made optional/null if not used from session
+  ipAddress   String   @default("0.0.0.0")
   
   approved    Boolean  @default(true)
 
-  blogPostId String
-  blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  blogPostId  String?
+  blogPost    BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
+  createdAt   DateTime @default(now())
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  ipAddress String
   createdAt DateTime @default(now())
+
+  blogPostId String?
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([ipAddress, blogPostId])
+  @@unique([ipAddress, projectId])
+}
+
+model View {
+  id        String   @id @default(uuid())
+  ipAddress String
+  createdAt DateTime @default(now())
+
+  blogPostId String?
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model WorkExperience {

@@ -67,6 +67,7 @@ export interface AboutSection {
 export type ProjectStatus = "Working" | "Building" | "Completed" | "Archived";
 
 export interface Project {
+  id: string;
   slug: string;
   title: string;
   shortDescription: string;
@@ -82,6 +83,7 @@ export interface Project {
 }
 
 export interface BlogPost {
+  id: string;
   slug: string;
   title: string;
   description: string;

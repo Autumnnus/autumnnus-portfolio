@@ -1,9 +1,11 @@
 "use client";
 
-import CommentSection from "@/components/blog/CommentSection";
 import Container from "@/components/common/Container";
 import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
+import CommentSection from "@/components/interactive/CommentSection";
+import LikeButton from "@/components/interactive/LikeButton";
+import ViewCounter from "@/components/interactive/ViewCounter";
 import { Badge } from "@/components/ui/Badge";
 import { BlogPost } from "@/types/contents";
 import { ArrowLeft, Calendar } from "lucide-react";
@@ -13,7 +15,6 @@ import Link from "next/link";
 
 export default function BlogPostView({ post }: { post: BlogPost }) {
   const t = useTranslations("Blog");
-  const slug = post.slug;
 
   if (!post) {
     return null;
@@ -85,8 +86,11 @@ export default function BlogPostView({ post }: { post: BlogPost }) {
             <time dateTime={post.date}>{post.date}</time>
           </div>
 
-          <div className="text-sm text-muted-foreground ml-auto">
-            {post.readTime}
+          <div className="text-sm text-muted-foreground">{post.readTime}</div>
+
+          <div className="ml-auto flex items-center gap-4">
+            <ViewCounter itemId={post.id} itemType="blog" />
+            <LikeButton itemId={post.id} itemType="blog" />
           </div>
         </div>
       </FadeIn>
@@ -98,9 +102,16 @@ export default function BlogPostView({ post }: { post: BlogPost }) {
         </article>
       </FadeIn>
 
+      {/* Footer Likes */}
+      <FadeIn delay={0.65}>
+        <div className="flex justify-center mb-12">
+          <LikeButton itemId={post.id} itemType="blog" />
+        </div>
+      </FadeIn>
+
       {/* Comments Section */}
       <FadeIn delay={0.7}>
-        <CommentSection postSlug={slug} />
+        <CommentSection itemId={post.id} itemType="blog" />
       </FadeIn>
     </Container>
   );
