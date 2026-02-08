@@ -244,8 +244,8 @@ export default function CommentSection({
         <Avatar>
           <AvatarImage
             src={
-              comment.isAdmin
-                ? adminAvatar || "/assets/admin-avatar.png"
+              comment.isAdmin && adminAvatar
+                ? adminAvatar
                 : `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(comment.authorEmail)}`
             }
           />

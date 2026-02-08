@@ -14,7 +14,7 @@ import { Language, Profile, ProfileTranslation } from "@prisma/client";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 // Helper to transform array translations to object keyed by language
@@ -66,6 +66,17 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         : {},
     },
   });
+
+  // Sync state with initialData when it changes (after router.refresh())
+  useEffect(() => {
+    if (initialData?.avatar) {
+      setAvatar({ url: initialData.avatar });
+      form.setValue("avatar", initialData.avatar);
+    } else {
+      setAvatar(null);
+      form.setValue("avatar", "");
+    }
+  }, [initialData, form]);
 
   const {
     register,
@@ -204,74 +215,114 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Avatar</label>
-            <div className="relative w-32 h-32 bg-muted rounded-full border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors">
-              {avatar ? (
-                <>
-                  <Image
-                    src={avatar.url}
-                    alt="Avatar"
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAvatar(null);
-                      setValue("avatar", "");
-                    }}
-                    className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
-                  >
-                    <X size={12} />
-                  </button>
-                </>
-              ) : (
-                <label className="cursor-pointer flex flex-col items-center gap-1 w-full h-full justify-center">
-                  <ImagePlus size={24} className="text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground font-medium">
-                    Yükle
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                  />
-                </label>
+          <div className="flex flex-col items-center sm:items-start gap-6 mb-8 group">
+            <div className="relative">
+              <input type="hidden" {...register("avatar")} />
+              <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-background shadow-2xl transition-all duration-300 group-hover:ring-primary/20 bg-muted">
+                {avatar ? (
+                  <>
+                    <Image
+                      src={avatar.url}
+                      alt="Avatar"
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      unoptimized
+                    />
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
+                      <label className="cursor-pointer p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-colors">
+                        <ImagePlus size={20} className="text-white" />
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          accept="image/*"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAvatar(null);
+                          setValue("avatar", "", { shouldDirty: true });
+                        }}
+                        className="p-2 bg-red-500/40 backdrop-blur-md rounded-full hover:bg-red-500/60 transition-colors"
+                      >
+                        <X size={20} className="text-white" />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full hover:bg-muted/80 transition-colors gap-2">
+                    <div className="p-4 bg-primary/10 rounded-full text-primary">
+                      <ImagePlus size={32} />
+                    </div>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Profil Resmi Yükle
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      accept="image/*"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Badge Effect */}
+              {avatar && (
+                <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground p-2 rounded-full shadow-lg">
+                  <Sparkles size={16} className="animate-pulse" />
+                </div>
               )}
+            </div>
+
+            <div className="space-y-1 text-center sm:text-left">
+              <h3 className="text-xl font-bold">Profil Fotoğrafı</h3>
+              <p className="text-sm text-muted-foreground">
+                İmajınızı yönetin. Önerilen boyut 400x400px.
+              </p>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
-            <input
-              {...register("email")}
-              className="w-full p-2 bg-muted rounded border border-border"
-              placeholder="hello@example.com"
-            />
-            {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
-            )}
-          </div>
+          <div className="grid grid-cols-1 gap-4 bg-muted/20 p-6 rounded-2xl border border-border/50">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
+                Email Adresi
+              </label>
+              <input
+                {...register("email")}
+                className="w-full p-3 bg-background/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                placeholder="hello@example.com"
+              />
+              {errors.email && (
+                <p className="text-xs text-red-500 font-medium">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">GitHub URL</label>
-            <input
-              {...register("github")}
-              className="w-full p-2 bg-muted rounded border border-border"
-              placeholder="https://github.com/..."
-            />
-          </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
+                GitHub Profili
+              </label>
+              <input
+                {...register("github")}
+                className="w-full p-3 bg-background/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                placeholder="https://github.com/..."
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">LinkedIn URL</label>
-            <input
-              {...register("linkedin")}
-              className="w-full p-2 bg-muted rounded border border-border"
-              placeholder="https://linkedin.com/in/..."
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
+                LinkedIn Profili
+              </label>
+              <input
+                {...register("linkedin")}
+                className="w-full p-3 bg-background/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                placeholder="https://linkedin.com/in/..."
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -433,14 +484,18 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         })}
       </div>
 
-      <div className="flex justify-end gap-4 border-t border-border pt-8">
+      <div className="sticky bottom-8 z-20 flex justify-end gap-4 border-t border-border/50 bg-background/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border">
         <button
           type="submit"
           disabled={loading}
-          className="px-12 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
+          className="px-16 py-4 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-3 transition-all shadow-xl shadow-primary/20 group"
         >
-          {loading && <Loader2 className="animate-spin w-4 h-4" />} Profili
-          Kaydet
+          {loading ? (
+            <Loader2 className="animate-spin w-5 h-5" />
+          ) : (
+            <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+          )}
+          Değişiklikleri Yayınla
         </button>
       </div>
     </form>
