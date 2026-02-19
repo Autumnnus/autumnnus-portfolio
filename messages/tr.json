@@ -76,6 +76,27 @@
   },
   "Footer": {
     "rights": "© 2026 Kadir. Tüm hakları saklıdır.",
-    "visitorStats": "{count} Eşsiz Ziyaretçi"
+    "visitorStats": "{count} Eşsiz Ziyaretçi",
+    "visitorLabel": "Eşsiz Ziyaretçi",
+    "milestonesTitle": "Dönüm Noktaları",
+    "locked": "Kilitli",
+    "tiers": {
+      "FallenLeaf": "Düşen Yaprak",
+      "Amber": "Kehribar",
+      "HarvestWind": "Hasat Rüzgarı",
+      "GoldenOak": "Altın Meşe",
+      "CrimsonForest": "Kızıl Orman",
+      "AutumnStorm": "Sonbahar Fırtınası",
+      "Phoenix": "Anka Kuşu",
+      "SeasonLord": "Mevsim Efendisi",
+      "FirstFrost": "İlk Ayaz",
+      "FrozenTrail": "Buzlu Patika",
+      "Blizzard": "Kar Fırtınası",
+      "IceCrystal": "Buz Kristali",
+      "Aurora": "Kuzey Işığı",
+      "Glacier": "Buzul",
+      "PolarStar": "Kutup Yıldızı",
+      "EternalWinter": "Sonsuz Kış"
+    }
   }
 }

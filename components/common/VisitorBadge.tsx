@@ -1,19 +1,42 @@
-import { getAboutStats } from "@/app/actions";
-import { Users } from "lucide-react";
+import { getAboutStats, getVisitorMilestones } from "@/app/actions";
 import { getTranslations } from "next-intl/server";
+import VisitorBadgeClient from "./VisitorBadgeClient";
 
-export default async function VisitorBadge() {
-  const t = await getTranslations("Footer");
+export default async function VisitorBadge({ locale }: { locale: string }) {
+  const t = await getTranslations({ locale, namespace: "Footer" });
   const stats = await getAboutStats();
-
+  const milestones = await getVisitorMilestones();
   return (
-    <div className="flex items-center gap-2 px-4 py-1.5 bg-secondary/30 border-2 border-border rounded-lg group hover:border-primary/50 transition-colors cursor-default">
-      <div className="p-1 bg-primary/10 rounded group-hover:bg-primary/20 transition-colors">
-        <Users className="w-3.5 h-3.5 text-primary" suppressHydrationWarning />
-      </div>
-      <span className="text-[10px] font-pixel uppercase tracking-tighter text-muted-foreground group-hover:text-foreground transition-colors">
-        {t("visitorStats", { count: stats.visitorCount })}
-      </span>
-    </div>
+    <VisitorBadgeClient
+      count={stats.visitorCount}
+      locale={locale}
+      label={t("visitorLabel")}
+      milestonesTitle={t("milestonesTitle")}
+      lockedLabel={t("locked")}
+      milestones={milestones
+        .filter((c) => c.count <= stats.visitorCount)
+        .map((c) => ({
+          ...c,
+          reachedAt: c.reachedAt.toISOString(),
+        }))}
+      tierNames={{
+        FallenLeaf: t("tiers.FallenLeaf"),
+        Amber: t("tiers.Amber"),
+        HarvestWind: t("tiers.HarvestWind"),
+        GoldenOak: t("tiers.GoldenOak"),
+        CrimsonForest: t("tiers.CrimsonForest"),
+        AutumnStorm: t("tiers.AutumnStorm"),
+        Phoenix: t("tiers.Phoenix"),
+        SeasonLord: t("tiers.SeasonLord"),
+        FirstFrost: t("tiers.FirstFrost"),
+        FrozenTrail: t("tiers.FrozenTrail"),
+        Blizzard: t("tiers.Blizzard"),
+        IceCrystal: t("tiers.IceCrystal"),
+        Aurora: t("tiers.Aurora"),
+        Glacier: t("tiers.Glacier"),
+        PolarStar: t("tiers.PolarStar"),
+        EternalWinter: t("tiers.EternalWinter"),
+      }}
+    />
   );
 }

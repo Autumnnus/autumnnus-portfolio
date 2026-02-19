@@ -197,6 +197,12 @@ model UniqueVisitor {
   createdAt DateTime @default(now())
 }
 
+model VisitorMilestone {
+  id        String   @id @default(uuid())
+  count     Int      @unique
+  reachedAt DateTime @default(now())
+}
+
 enum Language {
   tr
   en

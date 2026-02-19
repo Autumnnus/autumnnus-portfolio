@@ -1138,8 +1138,20 @@ export async function trackVisitor() {
           milestone: totalUniqueVisitors,
           ipAddress,
         });
+
+        // Record the first time this milestone was reached in the dedicated table
+        try {
+          await prisma.visitorMilestone.upsert({
+            where: { count: totalUniqueVisitors },
+            update: {}, // Don't update if already reached
+            create: { count: totalUniqueVisitors },
+          });
+        } catch (e) {
+          console.error("Failed to record visitor milestone:", e);
+        }
       }
 
+      revalidatePath("/", "layout");
       return { success: true, count: totalUniqueVisitors, isNew: true };
     }
 
@@ -1147,5 +1159,16 @@ export async function trackVisitor() {
   } catch (error) {
     console.error("Failed to track visitor:", error);
     return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function getVisitorMilestones() {
+  try {
+    return await prisma.visitorMilestone.findMany({
+      orderBy: { count: "asc" },
+    });
+  } catch (error) {
+    console.error("Failed to fetch visitor milestones:", error);
+    return [];
   }
 }

@@ -76,6 +76,27 @@
   },
   "Footer": {
     "rights": "© 2026 Kadir. All rights reserved.",
-    "visitorStats": "{count} Unique Visitors"
+    "visitorStats": "{count} Unique Visitors",
+    "visitorLabel": "Unique Visitors",
+    "milestonesTitle": "Milestones",
+    "locked": "Locked",
+    "tiers": {
+      "FallenLeaf": "Fallen Leaf",
+      "Amber": "Amber",
+      "HarvestWind": "Harvest Wind",
+      "GoldenOak": "Golden Oak",
+      "CrimsonForest": "Crimson Forest",
+      "AutumnStorm": "Autumn Storm",
+      "Phoenix": "Phoenix",
+      "SeasonLord": "Season Lord",
+      "FirstFrost": "First Frost",
+      "FrozenTrail": "Frozen Trail",
+      "Blizzard": "Blizzard",
+      "IceCrystal": "Ice Crystal",
+      "Aurora": "Aurora",
+      "Glacier": "Glacier",
+      "PolarStar": "Polar Star",
+      "EternalWinter": "Eternal Winter"
+    }
   }
 }
