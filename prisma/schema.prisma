@@ -6,6 +6,197 @@ datasource db {
   provider = "postgresql"
 }
 
+model Skill {
+  id       String    @id @default(uuid())
+  key      String    @unique
+  name     String
+  icon     String
+  projects Project[] @relation("ProjectToSkill")
+}
+
+model Project {
+  id           String               @id @default(uuid())
+  slug         String               @unique
+  status       String
+  category     String
+  github       String?
+  liveDemo     String?
+  featured     Boolean              @default(false)
+  coverImage   String?
+  images       String[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  imageAlt     String?
+  comments     Comment[]
+  likes        Like[]
+  translations ProjectTranslation[]
+  views        View[]
+  technologies Skill[]              @relation("ProjectToSkill")
+}
+
+model ProjectTranslation {
+  id               String   @id @default(uuid())
+  language         Language
+  title            String
+  shortDescription String
+  fullDescription  String
+  projectId        String
+  keywords         String[] @default([])
+  metaDescription  String?
+  metaTitle        String?
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, language])
+}
+
+model BlogPost {
+  id              String                @id @default(uuid())
+  slug            String                @unique
+  coverImage      String?
+  featured        Boolean               @default(false)
+  tags            String[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  category        String?
+  commentsEnabled Boolean               @default(true)
+  imageAlt        String?
+  publishedAt     DateTime?
+  status          String                @default("draft")
+  translations    BlogPostTranslation[]
+  comments        Comment[]
+  likes           Like[]
+  views           View[]
+}
+
+model BlogPostTranslation {
+  id              String   @id @default(uuid())
+  language        Language
+  title           String
+  description     String
+  content         String
+  readTime        String
+  date            String
+  blogPostId      String
+  excerpt         String?
+  keywords        String[] @default([])
+  metaDescription String?
+  metaTitle       String?
+  blogPost        BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, language])
+}
+
+model Comment {
+  id          String    @id @default(uuid())
+  content     String
+  authorName  String
+  authorEmail String
+  approved    Boolean   @default(true)
+  blogPostId  String?
+  createdAt   DateTime  @default(now())
+  ipAddress   String    @default("0.0.0.0")
+  projectId   String?
+  isAdmin     Boolean   @default(false)
+  parentId    String?
+  blogPost    BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id         String    @id @default(uuid())
+  ipAddress  String
+  createdAt  DateTime  @default(now())
+  blogPostId String?
+  projectId  String?
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([ipAddress, blogPostId])
+  @@unique([ipAddress, projectId])
+}
+
+model View {
+  id         String    @id @default(uuid())
+  ipAddress  String
+  createdAt  DateTime  @default(now())
+  blogPostId String?
+  projectId  String?
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model WorkExperience {
+  id           String                      @id @default(uuid())
+  company      String
+  logo         String
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
+  startDate    DateTime?
+  endDate      DateTime?
+  translations WorkExperienceTranslation[]
+}
+
+model WorkExperienceTranslation {
+  id               String         @id @default(uuid())
+  language         Language
+  role             String
+  description      String
+  locationType     String
+  workExperienceId String
+  workExperience   WorkExperience @relation(fields: [workExperienceId], references: [id], onDelete: Cascade)
+
+  @@unique([workExperienceId, language])
+}
+
+model SocialLink {
+  id   String @id @default(uuid())
+  key  String @unique
+  name String
+  href String
+  icon String
+}
+
+model Profile {
+  id           String               @id @default(uuid())
+  avatar       String
+  email        String
+  github       String
+  linkedin     String
+  translations ProfileTranslation[]
+}
+
+model ProfileTranslation {
+  id               String   @id @default(uuid())
+  language         Language
+  name             String
+  title            String
+  greetingText     String
+  description      String
+  aboutTitle       String
+  aboutDescription String
+  profileId        String
+  profile          Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, language])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+}
+
+model UniqueVisitor {
+  id        String   @id @default(uuid())
+  ipAddress String   @unique
+  createdAt DateTime @default(now())
+}
+
 enum Language {
   tr
   en
@@ -20,213 +211,3 @@ enum Language {
   ar
   zh
 }
-
-model Skill {
-  id       String    @id @default(uuid())
-  key      String    @unique // e.g. TYPESCRIPT
-  name     String
-  icon     String
-  projects Project[]
-}
-
-model Project {
-  id           String   @id @default(uuid())
-  slug         String   @unique
-  status       String
-  category     String
-  github       String?
-  liveDemo     String?
-  featured     Boolean  @default(false)
-  coverImage   String? // URL from MinIO
-  imageAlt     String? // SEO alt text
-  images       String[] // URLs from MinIO
-
-  technologies Skill[]
-  
-  comments     Comment[]
-  likes        Like[]
-  views        View[]
-
-  translations ProjectTranslation[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model ProjectTranslation {
-  id               String   @id @default(uuid())
-  language         Language
-  title            String
-  shortDescription String
-  fullDescription  String
-  
-  // SEO Fields
-  metaTitle       String?
-  metaDescription String?
-  keywords        String[] @default([])
-
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, language])
-}
-
-model BlogPost {
-  id              String   @id @default(uuid())
-  slug            String   @unique
-  coverImage      String?  // Minio URL
-  imageAlt        String?  // SEO: Alt text for cover image
-  featured        Boolean  @default(false)
-  tags            String[]
-  category        String?  // Category for the post
-  status          String   @default("draft") // draft | published
-  publishedAt     DateTime? // When the post was published
-  commentsEnabled Boolean  @default(true)
-
-  translations BlogPostTranslation[]
-  comments     Comment[]
-  likes        Like[]
-  views        View[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model BlogPostTranslation {
-  id              String   @id @default(uuid())
-  language        Language
-  title           String
-  description     String   // Short description
-  content         String   // HTML content from TipTap
-  readTime        String
-  date            String
-  excerpt         String?  // Short excerpt for SEO and previews
-  metaTitle       String?  // SEO meta title (override)
-  metaDescription String?  // SEO meta description (override)
-  keywords        String[] @default([]) // SEO keywords
-
-  blogPostId String
-  blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
-
-  @@unique([blogPostId, language])
-}
-
-model Comment {
-  id          String   @id @default(uuid())
-  content     String
-  authorName  String
-  authorEmail String
-  ipAddress   String   @default("0.0.0.0")
-  isAdmin     Boolean  @default(false)
-  
-  approved    Boolean  @default(true)
-
-  parentId    String?
-  parent      Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies     Comment[] @relation("CommentReplies")
-
-  blogPostId  String?
-  blogPost    BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
-
-  projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-}
-
-model Like {
-  id        String   @id @default(uuid())
-  ipAddress String
-  createdAt DateTime @default(now())
-
-  blogPostId String?
-  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
-
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([ipAddress, blogPostId])
-  @@unique([ipAddress, projectId])
-}
-
-model View {
-  id        String   @id @default(uuid())
-  ipAddress String
-  createdAt DateTime @default(now())
-
-  blogPostId String?
-  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
-
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-}
-
-model WorkExperience {
-  id      String @id @default(uuid())
-  company String
-  logo    String
-
-  translations WorkExperienceTranslation[]
-
-  startDate DateTime?
-  endDate   DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model WorkExperienceTranslation {
-  id           String   @id @default(uuid())
-  language     Language
-  role         String
-  description  String
-  locationType String
-
-  workExperienceId String
-  workExperience   WorkExperience @relation(fields: [workExperienceId], references: [id], onDelete: Cascade)
-
-  @@unique([workExperienceId, language])
-}
-
-model SocialLink {
-  id   String @id @default(uuid())
-  key  String @unique // GITHUB, LINKEDIN
-  name String
-  href String
-  icon String
-}
-
-model Profile {
-  id     String @id @default(uuid())
-  avatar String // URL from MinIO
-  email  String
-  github String
-  linkedin String
-  
-  translations ProfileTranslation[]
-}
-
-model ProfileTranslation {
-  id           String   @id @default(uuid())
-  language     Language
-  name         String
-  title        String
-  greetingText String
-  description  String // Hero description
-  aboutTitle   String
-  aboutDescription String // About description
-  
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@unique([profileId, language])
-}
-
-model AuditLog {
-  id          String   @id @default(uuid())
-  action      String   // e.g., "COMMENT_CREATED", "LIKE_TOGGLED", "VIEW_MILESTONE"
-  entityType  String   // e.g., "BLOG", "PROJECT"
-  entityId    String
-  details     Json?    // Additional info like IP, author, milestone value
-  createdAt   DateTime @default(now())
-}
-

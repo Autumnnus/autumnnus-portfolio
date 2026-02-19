@@ -9,10 +9,13 @@ const adapter = new PrismaPg(pool);
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    adapter,
-  });
+// Check if the global instance has the latest models (like uniqueVisitor)
+const shouldCreateNew =
+  !globalForPrisma.prisma ||
+  !(globalForPrisma.prisma as unknown as Record<string, unknown>).uniqueVisitor;
+
+export const prisma = shouldCreateNew
+  ? new PrismaClient({ adapter })
+  : globalForPrisma.prisma;
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

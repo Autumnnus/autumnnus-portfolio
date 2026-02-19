@@ -28,9 +28,40 @@ export async function generateMetadata({
     };
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com";
+  const url = `${baseUrl}/${locale}/projects/${slug}`;
+  const ogImage = project.coverImage
+    ? [{ url: project.coverImage, alt: project.title }]
+    : [];
+
   return {
-    title: `${project.title} | Autumnnus Projects`,
-    description: project.shortDescription,
+    title: {
+      default: project.metaTitle || project.title,
+      template: `%s | Autumnnus Projects`,
+    },
+    description: project.metaDescription || project.shortDescription,
+    keywords: project.keywords || [],
+    openGraph: {
+      type: "website", // Projects are more like products/portfolios than articles
+      locale: locale,
+      url: url,
+      title: project.metaTitle || project.title,
+      description: project.metaDescription || project.shortDescription,
+      siteName: "Autumnnus",
+      images: ogImage,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: project.metaTitle || project.title,
+      description: project.metaDescription || project.shortDescription,
+      images: ogImage,
+    },
+    alternates: {
+      canonical: url,
+      languages: {
+        [locale]: url,
+      },
+    },
   };
 }
 

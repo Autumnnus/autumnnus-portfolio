@@ -20,6 +20,8 @@
     "experienceLabel": "Deneyim",
     "projectCount": "{count}+ Proje",
     "projectLabel": "Proje",
+    "visitorCount": "{count}+ Ziyaretçi",
+    "visitorLabel": "Ziyaretçi",
     "githubActivityTitle": "Kodlama Aktivitesi"
   },
   "GitHub": {
@@ -73,6 +75,7 @@
     "present": "Günümüz"
   },
   "Footer": {
-    "rights": "© 2026 Kadir. Tüm hakları saklıdır."
+    "rights": "© 2026 Kadir. Tüm hakları saklıdır.",
+    "visitorStats": "{count} Eşsiz Ziyaretçi"
   }
 }

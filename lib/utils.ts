@@ -39,3 +39,12 @@ export function getRelativeTime(dateString: string): string {
   const years = Math.floor(diffInSeconds / 31536000);
   return `about ${years} year${years > 1 ? "s" : ""} ago`;
 }
+
+export function shouldNotify(n: number): boolean {
+  if (n <= 0) return false;
+  if (n === 1) return true;
+  const log = Math.floor(Math.log10(n));
+  const base = 10 ** log;
+  const normalized = n / base;
+  return normalized === 1 || normalized === 2.5 || normalized === 5;
+}

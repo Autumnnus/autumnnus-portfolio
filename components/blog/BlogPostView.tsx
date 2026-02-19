@@ -6,6 +6,7 @@ import FadeIn from "@/components/common/FadeIn";
 import CommentSection from "@/components/interactive/CommentSection";
 import LikeButton from "@/components/interactive/LikeButton";
 import ViewCounter from "@/components/interactive/ViewCounter";
+import JsonLd from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/Badge";
 import { BlogPost } from "@/types/contents";
 import { ArrowLeft, Calendar } from "lucide-react";
@@ -102,17 +103,26 @@ export default function BlogPostView({ post }: { post: BlogPost }) {
         </article>
       </FadeIn>
 
-      {/* Footer Likes */}
-      <FadeIn delay={0.65}>
-        <div className="flex justify-center mb-12">
-          <LikeButton itemId={post.id} itemType="blog" />
-        </div>
-      </FadeIn>
-
       {/* Comments Section */}
       <FadeIn delay={0.7}>
         <CommentSection itemId={post.id} itemType="blog" />
       </FadeIn>
+
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: post.title,
+          description: post.description,
+          image: post.coverImage ? [post.coverImage] : [],
+          datePublished: post.date,
+          author: {
+            "@type": "Person",
+            name: "Autumnnus",
+            url: "https://autumnnus.com",
+          },
+        }}
+      />
     </Container>
   );
 }

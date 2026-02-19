@@ -28,9 +28,42 @@ export async function generateMetadata({
     };
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com";
+  const url = `${baseUrl}/${locale}/blog/${slug}`;
+  const ogImage = post.coverImage
+    ? [{ url: post.coverImage, alt: post.title }]
+    : [];
+
   return {
-    title: `${post.title} | Autumnnus Blog`,
-    description: post.description,
+    title: {
+      default: post.metaTitle || post.title,
+      template: `%s | Autumnnus Blog`,
+    },
+    description: post.metaDescription || post.description,
+    keywords: post.keywords || post.tags,
+    openGraph: {
+      type: "article",
+      locale: locale,
+      url: url,
+      title: post.metaTitle || post.title,
+      description: post.metaDescription || post.description,
+      siteName: "Autumnnus",
+      images: ogImage,
+      publishedTime: post.date,
+      authors: ["Autumnnus"],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.metaTitle || post.title,
+      description: post.metaDescription || post.description,
+      images: ogImage,
+    },
+    alternates: {
+      canonical: url,
+      languages: {
+        [locale]: url,
+      },
+    },
   };
 }
 

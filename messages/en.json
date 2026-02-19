@@ -20,6 +20,8 @@
     "experienceLabel": "Experience",
     "projectCount": "{count}+ Projects",
     "projectLabel": "Projects",
+    "visitorCount": "{count}+ Visitors",
+    "visitorLabel": "Visitors",
     "githubActivityTitle": "Coding Activity"
   },
   "GitHub": {
@@ -73,6 +75,7 @@
     "present": "Present"
   },
   "Footer": {
-    "rights": "© 2026 Kadir. All rights reserved."
+    "rights": "© 2026 Kadir. All rights reserved.",
+    "visitorStats": "{count} Unique Visitors"
   }
 }

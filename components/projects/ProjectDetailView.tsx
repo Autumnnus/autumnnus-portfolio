@@ -17,6 +17,7 @@ import CommentSection from "@/components/interactive/CommentSection";
 import LikeButton from "@/components/interactive/LikeButton";
 import ViewCounter from "@/components/interactive/ViewCounter";
 import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
+import JsonLd from "@/components/seo/JsonLd";
 
 export default function ProjectDetailView({
   project,
@@ -321,6 +322,26 @@ export default function ProjectDetailView({
       <FadeIn delay={1.0}>
         <CommentSection itemId={project.id} itemType="project" />
       </FadeIn>
+
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: project.title,
+          description: project.shortDescription,
+          applicationCategory: project.category,
+          operatingSystem: "Web",
+          author: {
+            "@type": "Person",
+            name: "Autumnnus",
+            url: "https://autumnnus.com",
+          },
+          ...(project.coverImage
+            ? { image: [project.coverImage] } // Simplified request
+            : {}),
+          ...(project.liveDemo ? { url: project.liveDemo } : {}),
+        }}
+      />
 
       {/* View All Projects Button */}
       <FadeIn delay={1.1}>

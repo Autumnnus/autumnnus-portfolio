@@ -1,6 +1,7 @@
-"use server";
+﻿"use server";
 
 import { prisma } from "@/lib/prisma";
+import { shouldNotify } from "@/lib/utils";
 import { Language, Prisma } from "@prisma/client";
 
 export interface GetProjectsOptions {
@@ -150,6 +151,9 @@ export async function getProjectBySlug(slug: string, lang: Language) {
       title: translation.title || project.slug,
       shortDescription: translation.shortDescription || "",
       fullDescription: translation.fullDescription || "",
+      metaTitle: translation.metaTitle,
+      metaDescription: translation.metaDescription,
+      keywords: translation.keywords || [],
     };
   } catch (error) {
     console.error(`Failed to fetch project by slug ${slug}:`, error);
@@ -322,6 +326,9 @@ export async function getBlogPostBySlug(slug: string, lang: Language) {
       content: translation.content || "",
       readTime: translation.readTime || "",
       date: translation.date || "",
+      metaTitle: translation.metaTitle,
+      metaDescription: translation.metaDescription,
+      keywords: translation.keywords || [],
     };
   } catch (error) {
     console.error(`Failed to fetch blog post by slug ${slug}:`, error);
@@ -423,9 +430,12 @@ export async function getAboutStats() {
       experienceYears = new Date().getFullYear() - 2022;
     }
 
+    const visitorCount = await prisma.uniqueVisitor.count();
+
     return {
       projectCount,
       experienceYears,
+      visitorCount,
     };
   } catch (error) {
     console.error("Failed to fetch about stats:", error);
@@ -433,6 +443,7 @@ export async function getAboutStats() {
     return {
       projectCount: 0,
       experienceYears: new Date().getFullYear() - 2022,
+      visitorCount: 0,
     };
   }
 }
@@ -572,7 +583,7 @@ export async function createComment(
 
     // If Admin, use admin details if not provided or override
     // But user form provides name/email. Let's trust the form for name, but use isAdmin flag.
-    // Actually user requirement: "admin comment attığında admin bilgileri ile atsın"
+    // Actually user requirement: "admin comment attÄ±ÄŸÄ±nda admin bilgileri ile atsÄ±n"
     // So if isAdmin, we might enforce specific name/email or just tag it.
     // Let's use the session name/email if authenticated as valid admin?
     // Or just trust the submitted form but mark as admin if the session email matches?
@@ -583,15 +594,14 @@ export async function createComment(
     // Rate limiting: Check if IP has posted recently
     // Skip rate limiting for Admin
     if (!isAdmin) {
-      const recentComments = await prisma.comment.count({
-        where: {
-          ipAddress,
-          createdAt: {
-            gte: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes
-          },
-        },
-      });
-
+      // const recentComments = await prisma.comment.count({
+      //   where: {
+      //     ipAddress,
+      //     createdAt: {
+      //       gte: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes
+      //     },
+      //   },
+      // });
       // if (recentComments >= 3) {
       //   throw new Error("You are commenting too fast. Please try again later.");
       // }
@@ -642,20 +652,50 @@ export async function createComment(
           where: { id: parentId },
         });
         if (parent) {
-          parentCommentText = `\n\n↩️ <b>Replying to:</b> <i>"${escapeHtml(parent.authorName)}: ${escapeHtml(parent.content.substring(0, 50))}${parent.content.length > 50 ? "..." : ""}"</i>`;
+          parentCommentText = `\n\nâ†©ï¸ <b>Replying to:</b> <i>"${escapeHtml(parent.authorName)}: ${escapeHtml(parent.content.substring(0, 50))}${parent.content.length > 50 ? "..." : ""}"</i>`;
         }
       }
 
       const telegramMessage =
-        `<b>💬 New Comment on ${itemType === "blog" ? "Blog" : "Project"}</b>\n\n` +
-        `📝 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
-        `👤 <b>Author:</b> ${escapeHtml(authorName)}\n` +
-        `📧 <b>Email:</b> ${escapeHtml(authorEmail)}\n` +
-        `💬 <b>Comment:</b>\n<i>"${escapeHtml(content)}"</i>` +
+        `<b>ğŸ’¬ New Comment on ${itemType === "blog" ? "Blog" : "Project"}</b>\n\n` +
+        `ğŸ“ <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
+        `ğŸ‘¤ <b>Author:</b> ${escapeHtml(authorName)}\n` +
+        `ğŸ“§ <b>Email:</b> ${escapeHtml(authorEmail)}\n` +
+        `ğŸ’¬ <b>Comment:</b>\n<i>"${escapeHtml(content)}"</i>` +
         parentCommentText +
-        `\n\n🔗 <a href="${itemLink}">View on Website</a>`;
+        `\n\nğŸ”— <a href="${itemLink}">View on Website</a>`;
 
       await sendTelegramNotification(telegramMessage, coverImage);
+
+      // Comment Milestone Notification
+      const commentCountWhere: Prisma.CommentWhereInput = {};
+      if (itemType === "blog") {
+        commentCountWhere.blogPostId = itemId;
+      } else {
+        commentCountWhere.projectId = itemId;
+      }
+      const totalComments = await prisma.comment.count({
+        where: commentCountWhere,
+      });
+
+      if (shouldNotify(totalComments) && totalComments > 1) {
+        await sendTelegramNotification(
+          `💬 <b>Comment Milestone Reached!</b>\n\n` +
+            `🚀 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
+            `📊 <b>Total Comments:</b> <code>${totalComments}</code>\n\n` +
+            `🔗 <a href="${itemLink}">View Item</a>`,
+          coverImage,
+        );
+
+        await createAuditLog(
+          "COMMENT_MILESTONE",
+          itemType.toUpperCase(),
+          itemId,
+          {
+            milestone: totalComments,
+          },
+        );
+      }
     }
 
     return { success: true, comment };
@@ -818,39 +858,29 @@ export async function toggleLike(itemId: string, itemType: CommentItemType) {
     revalidatePath(path, "layout");
 
     if (!existingLike) {
-      // Check if we've already notified for this like (to prevent spam on toggle)
-      // Check if we've notified this IP before for this item
-      const auditLogs = await prisma.auditLog.findMany({
-        where: {
-          action: "LIKE_TOGGLED",
-          entityId: itemId,
-          entityType: itemType.toUpperCase(),
-        },
-      });
-
-      const hasNotified = auditLogs.some((log) => {
-        const details = log.details as Record<string, unknown> | null;
-        return details?.ipAddress === ipAddress;
-      });
-
-      if (!hasNotified) {
+      if (shouldNotify(count)) {
         const { itemTitle, itemLink, coverImage } =
           await getNotificationDetails(itemId, itemType);
 
         await sendTelegramNotification(
-          `❤️ <b>New Like on ${itemType === "blog" ? "Blog" : "Project"}</b>\n\n` +
-            `📝 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
-            `📍 <b>IP:</b> ${escapeHtml(ipAddress)}\n\n` +
+          `❤️ <b>Like Milestone Reached!</b>\n\n` +
+            `🚀 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
+            `📊 <b>Total Likes:</b> <code>${count}</code>\n\n` +
             `🔗 <a href="${itemLink}">View Item</a>`,
           coverImage,
         );
-      }
 
-      await createAuditLog("LIKE_TOGGLED", itemType.toUpperCase(), itemId, {
-        ipAddress,
-        liked: true,
-      });
+        await createAuditLog("LIKE_MILESTONE", itemType.toUpperCase(), itemId, {
+          milestone: count,
+          ipAddress,
+        });
+      }
     }
+
+    await createAuditLog("LIKE_TOGGLED", itemType.toUpperCase(), itemId, {
+      ipAddress,
+      liked: !existingLike,
+    });
 
     return { success: true, liked: !existingLike, count };
   } catch (error) {
@@ -923,9 +953,7 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
 
       // Only check milestones when a NEW view is registered
       const count = await prisma.view.count({ where: countWhere });
-      const milestones = [1, 5, 10, 50, 100, 500, 1000, 5000, 10000];
-
-      if (milestones.includes(count)) {
+      if (shouldNotify(count)) {
         // Check if we already notified for this specific milestone
         const auditLogs = await prisma.auditLog.findMany({
           where: {
@@ -1074,5 +1102,50 @@ async function createAuditLog(
     });
   } catch (error) {
     console.error("Audit log failed:", error);
+  }
+}
+
+export async function trackVisitor() {
+  try {
+    const ipAddress = await getIpIdentifier();
+
+    // Check if it's really the "0.0.0.0" fallback or a valid IP
+    if (ipAddress === "0.0.0.0") return { success: false };
+
+    // Try to create or find existing (since IP is unique, create will fail if exists)
+    // Actually simpler to just check existence first or use upsert
+    const existing = await prisma.uniqueVisitor.findUnique({
+      where: { ipAddress },
+    });
+
+    if (!existing) {
+      await prisma.uniqueVisitor.create({
+        data: { ipAddress },
+      });
+
+      const totalUniqueVisitors = await prisma.uniqueVisitor.count();
+
+      if (shouldNotify(totalUniqueVisitors)) {
+        const baseUrl = getBaseUrl();
+        await sendTelegramNotification(
+          `🎉 <b>New Visitor Milestone!</b>\n\n` +
+            `👋 <b>Unique Visitor Count:</b> <code>${totalUniqueVisitors}</code>\n` +
+            `📍 <b>Last IP:</b> ${escapeHtml(ipAddress)}\n\n` +
+            `🔗 <a href="${baseUrl}">Autumnnus Portfolio</a>`,
+        );
+
+        await createAuditLog("VISITOR_MILESTONE", "SYSTEM", "GLOBAL", {
+          milestone: totalUniqueVisitors,
+          ipAddress,
+        });
+      }
+
+      return { success: true, count: totalUniqueVisitors, isNew: true };
+    }
+
+    return { success: true, isNew: false };
+  } catch (error) {
+    console.error("Failed to track visitor:", error);
+    return { success: false, error: (error as Error).message };
   }
 }
