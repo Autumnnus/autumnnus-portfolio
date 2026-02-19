@@ -98,5 +98,12 @@
       "PolarStar": "Kutup Yıldızı",
       "EternalWinter": "Sonsuz Kış"
     }
+  },
+  "Chat": {
+    "title": "AutumnAI",
+    "greeting": "Merhaba! Ben AutumnAI. Kadir'in çalışmaları hakkında size nasıl yardımcı olabilirim?",
+    "placeholder": "Bir soru sorun...",
+    "rateLimitMessage": "Günlük mesaj limitine ulaşıldı. Lütfen yarın tekrar deneyin.",
+    "errorMessage": "Bir hata oluştu. Lütfen tekrar deneyin."
   }
 }

@@ -217,3 +217,27 @@ enum Language {
   ar
   zh
 }
+
+model Embedding {
+  id         String   @id @default(uuid())
+  sourceType String   // blog, project, profile, experience
+  sourceId   String
+  language   String   // tr, en (others fallback to en)
+  chunkText  String
+  chunkIndex Int
+  embedding  Unsupported("vector(768)")?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([sourceType, sourceId, language, chunkIndex])
+}
+
+model ChatRateLimit {
+  id           String   @id @default(uuid())
+  ipAddress    String
+  date         DateTime // YYYY-MM-DD set to midnight
+  requestCount Int      @default(0)
+
+  @@unique([ipAddress, date])
+}

@@ -98,5 +98,12 @@
       "PolarStar": "Polar Star",
       "EternalWinter": "Eternal Winter"
     }
+  },
+  "Chat": {
+    "title": "AutumnAI",
+    "greeting": "Hello! I'm AutumnAI. How can I assist you today about Kadir's work?",
+    "placeholder": "Ask a question...",
+    "rateLimitMessage": "Daily message limit reached. Please try again tomorrow.",
+    "errorMessage": "An error occurred. Please try again."
   }
 }

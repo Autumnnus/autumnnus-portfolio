@@ -23,6 +23,39 @@ export default function AdminHeader() {
           </span>
         </div>
 
+        <nav className="flex items-center gap-6 mr-6">
+          <Link
+            href="/admin/projects"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Projects
+          </Link>
+          <Link
+            href="/admin/blog"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Blog
+          </Link>
+          <Link
+            href="/admin/experience"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Experience
+          </Link>
+          <Link
+            href="/admin/profile"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Profile
+          </Link>
+          <Link
+            href="/admin/embeddings"
+            className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1"
+          >
+            Embeddings
+          </Link>
+        </nav>
+
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <button

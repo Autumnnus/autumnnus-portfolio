@@ -1,3 +1,4 @@
+import LiveChat from "@/components/chat/LiveChat";
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
@@ -81,6 +82,7 @@ export default async function LocaleLayout({
                   <main className="flex-1 flex flex-col">
                     <PageTransition>{children}</PageTransition>
                   </main>
+                  <LiveChat />
                   <Footer />
                 </TooltipProvider>
               </SmoothScroll>
