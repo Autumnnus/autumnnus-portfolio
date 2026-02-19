@@ -1,6 +1,7 @@
 "use client";
 
 import Image, { StaticImageData } from "next/image";
+import { useEffect, useState } from "react";
 
 interface IconProps {
   src: string | StaticImageData;
@@ -15,8 +16,23 @@ export default function Icon({
   className = "",
   size = 24,
 }: IconProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isUrl =
     typeof src !== "string" || src.startsWith("http") || src.startsWith("/");
+
+  if (!mounted) {
+    return (
+      <div
+        className={`relative inline-block ${className}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
 
   if (isUrl) {
     return (

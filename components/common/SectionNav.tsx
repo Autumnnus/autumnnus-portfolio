@@ -15,10 +15,12 @@ const sections = [
 
 export default function SectionNav() {
   const t = useTranslations();
+  const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
   useEffect(() => {
+    setMounted(true);
     const observerOptions = {
       root: null,
       rootMargin: "-20% 0px -70% 0px",
@@ -63,6 +65,8 @@ export default function SectionNav() {
       });
     }
   };
+
+  if (!mounted) return null;
 
   return (
     <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-4 items-end">

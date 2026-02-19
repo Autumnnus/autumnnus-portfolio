@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Calendar, FileText } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Badge } from "../ui/Badge";
 
 interface BlogCardProps {
@@ -13,6 +14,14 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post, index = 0 }: BlogCardProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <motion.div
       // initial={{ opacity: 0, scale: 0.9 }}
@@ -36,7 +45,7 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-6xl opacity-30">
-              <FileText className="w-16 h-16" />
+              <FileText className="w-16 h-16" suppressHydrationWarning />
             </div>
           )}
         </div>
@@ -65,13 +74,13 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 border-t border-border/50">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4" suppressHydrationWarning />
               <time>{post.date}</time>
             </div>
 
             <div className="flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
               Read More
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4" suppressHydrationWarning />
             </div>
           </div>
         </div>

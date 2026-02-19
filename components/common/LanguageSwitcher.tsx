@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { languageNames, routing, usePathname, useRouter } from "@/i18n/routing";
 import { Check, ChevronDown, Globe } from "lucide-react";
@@ -9,9 +11,11 @@ export default function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
@@ -37,6 +41,8 @@ export default function LanguageSwitcher() {
     // Using string-based replace with the cleaned, unlocalized pathname.
     router.replace(cleanPath, { locale: nextLocale });
   };
+
+  if (!mounted) return null;
 
   return (
     <div className="relative" ref={dropdownRef}>

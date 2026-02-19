@@ -9,7 +9,7 @@ export default async function VisitorBadge() {
   return (
     <div className="flex items-center gap-2 px-4 py-1.5 bg-secondary/30 border-2 border-border rounded-lg group hover:border-primary/50 transition-colors cursor-default">
       <div className="p-1 bg-primary/10 rounded group-hover:bg-primary/20 transition-colors">
-        <Users className="w-3.5 h-3.5 text-primary" />
+        <Users className="w-3.5 h-3.5 text-primary" suppressHydrationWarning />
       </div>
       <span className="text-[10px] font-pixel uppercase tracking-tighter text-muted-foreground group-hover:text-foreground transition-colors">
         {t("visitorStats", { count: stats.visitorCount })}

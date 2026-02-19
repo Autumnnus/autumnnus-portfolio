@@ -67,7 +67,7 @@ export default async function LocaleLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
-          <NextIntlClientProvider messages={messages}>
+          <NextIntlClientProvider messages={messages} locale={locale}>
             <ThemeProvider
               attribute="class"
               defaultTheme="system"
