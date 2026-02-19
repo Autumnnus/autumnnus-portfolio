@@ -3,6 +3,7 @@
 import {
   createProjectAction,
   createSkillAction,
+  ProjectData,
   updateProjectAction,
   uploadImageAction,
 } from "@/app/admin/actions";
@@ -30,7 +31,12 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import {
+  FieldError,
+  FieldErrors,
+  SubmitHandler,
+  useForm,
+} from "react-hook-form";
 import SeoPopover from "./SeoPopover";
 
 // Helper to update translations
@@ -59,7 +65,7 @@ const transformTranslationsToObject = (translations: ProjectTranslation[]) => {
   return result;
 };
 
-interface ProjectFormProps {
+export interface ProjectFormProps {
   skills: Skill[];
   initialData?: Project & {
     translations: ProjectTranslation[];
@@ -98,7 +104,7 @@ export default function ProjectForm({
   const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<ProjectFormValues>({
-    resolver: zodResolver(ProjectSchema),
+    resolver: zodResolver(ProjectSchema) as any,
     defaultValues: {
       slug: initialData?.slug || "",
       status: initialData?.status || "Completed",
@@ -362,7 +368,10 @@ export default function ProjectForm({
       );
 
       const translationsArray = Object.entries(data.translations)
-        .filter(([, t]) => t.title && t.title.trim() !== "")
+        .filter((item): item is [string, NonNullable<(typeof item)[1]>] => {
+          const t = item[1];
+          return !!(t && t.title && t.title.trim() !== "");
+        })
         .map(([lang, t]) => ({
           language: lang as Language,
           title: t.title,
@@ -373,7 +382,7 @@ export default function ProjectForm({
           keywords: t.keywords || [],
         }));
 
-      const submitData = {
+      const submitData: ProjectData = {
         slug: data.slug,
         status: data.status,
         category: data.category,
@@ -388,10 +397,10 @@ export default function ProjectForm({
       };
 
       if (initialData?.id) {
-        await updateProjectAction(initialData.id, submitData as any);
+        await updateProjectAction(initialData.id, submitData);
         router.refresh();
       } else {
-        const result = await createProjectAction(submitData as any);
+        const result = await createProjectAction(submitData);
         router.push(`/admin/projects/${result.id}/edit`);
         router.refresh();
       }
@@ -404,7 +413,7 @@ export default function ProjectForm({
     }
   };
 
-  const onInvalid = (errors: any) => {
+  const onInvalid = (errors: FieldErrors<ProjectFormValues>) => {
     console.warn("Project Form Hataları:", errors);
   };
 
@@ -427,37 +436,50 @@ export default function ProjectForm({
           <ul className="list-disc list-inside">
             {Object.entries(errors).map(([key, value]) => {
               if (key === "translations" && value) {
-                if ((value as any).message) {
+                if ((value as FieldError).message) {
                   return (
-                    <li key={key}>İçerik Hatası: {(value as any).message}</li>
+                    <li key={key}>
+                      İçerik Hatası: {(value as FieldError).message}
+                    </li>
                   );
                 }
-                return Object.entries(value).map(
-                  ([lang, langErrors]: [string, any]) => {
-                    if (!langErrors || typeof langErrors !== "object")
-                      return null;
+                return Object.entries(value).map(([lang, langErrors]) => {
+                  const fieldError = langErrors as FieldError;
+                  // If the language object itself has a direct error
+                  if (fieldError.message) {
                     return (
                       <li key={`${key}.${lang}`}>
                         {languageNames[lang as keyof typeof languageNames] ||
                           lang.toUpperCase()}
-                        :{" "}
-                        {Object.entries(langErrors)
-                          .map(
-                            ([field, err]: [string, any]) =>
-                              `${field === "title" ? "Ad" : field === "shortDescription" ? "Kısa Açıklama" : field} (${err.message})`,
-                          )
-                          .join(", ")}
+                        : {fieldError.message}
                       </li>
                     );
-                  },
-                );
+                  }
+
+                  const langErrRec = langErrors as Record<string, FieldError>;
+
+                  return (
+                    <li key={`${key}.${lang}`}>
+                      {languageNames[lang as keyof typeof languageNames] ||
+                        lang.toUpperCase()}
+                      :{" "}
+                      {Object.entries(langErrRec)
+                        .map(
+                          ([field, err]) =>
+                            `${field === "title" ? "Ad" : field === "shortDescription" ? "Kısa Açıklama" : field} (${err.message})`,
+                        )
+                        .join(", ")}
+                    </li>
+                  );
+                });
               }
+              const err = value as FieldError | undefined;
               return (
                 <li key={key}>
                   {key === "slug"
                     ? "URL Uzantısı"
                     : key.charAt(0).toUpperCase() + key.slice(1)}
-                  : {(value as any)?.message || "Geçersiz değer"}
+                  : {err?.message || "Geçersiz değer"}
                 </li>
               );
             })}

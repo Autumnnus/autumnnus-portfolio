@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BlogData,
   createBlogAction,
   updateBlogAction,
   uploadImageAction,
@@ -24,7 +25,12 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import {
+  FieldError,
+  FieldErrors,
+  SubmitHandler,
+  useForm,
+} from "react-hook-form";
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
@@ -70,7 +76,7 @@ const slugify = (text: string) => {
     .replace(/--+/g, "-");
 };
 
-interface BlogFormProps {
+export interface BlogFormProps {
   initialData?: BlogPost & { translations: BlogPostTranslation[] };
 }
 
@@ -90,7 +96,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<BlogFormValues>({
-    resolver: zodResolver(BlogSchema),
+    resolver: zodResolver(BlogSchema) as any,
     defaultValues: {
       slug: initialData?.slug || "",
       featured: initialData?.featured ?? false,
@@ -250,7 +256,10 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       }
 
       const translationsArray = Object.entries(data.translations)
-        .filter(([, t]) => t.title && t.title.trim() !== "")
+        .filter((item): item is [string, NonNullable<(typeof item)[1]>] => {
+          const t = item[1];
+          return !!(t && t.title && t.title.trim() !== "");
+        })
         .map(([lang, t]) => ({
           language: lang as Language,
           title: t.title,
@@ -272,7 +281,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         return;
       }
 
-      const submitData = {
+      const submitData: BlogData = {
         slug: data.slug,
         coverImage: finalCoverImage,
         imageAlt: data.imageAlt,
@@ -287,15 +296,15 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         status: data.status,
         commentsEnabled: data.commentsEnabled,
         translations: translationsArray,
-      } as any;
+      };
 
       console.log("Submitting blog data:", submitData);
 
       if (initialData?.id) {
-        await updateBlogAction(initialData.id, submitData as any);
+        await updateBlogAction(initialData.id, submitData);
         router.refresh();
       } else {
-        const result = await createBlogAction(submitData as any);
+        const result = await createBlogAction(submitData);
         router.push(`/admin/blog/${result.id}/edit`);
         router.refresh();
       }
@@ -308,7 +317,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     }
   };
 
-  const onInvalid = (errors: any) => {
+  const onInvalid = (errors: FieldErrors<BlogFormValues>) => {
     console.warn("Form Validation Errors:", errors);
   };
 
@@ -324,63 +333,63 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             {Object.entries(errors).map(([key, value]) => {
               if (key === "translations" && value) {
                 // If it's a global error on the record (like "En az bir dilde...")
-                if ((value as any).message) {
+                if ((value as FieldError).message) {
                   return (
-                    <li key={key}>İçerik Hatası: {(value as any).message}</li>
+                    <li key={key}>
+                      İçerik Hatası: {(value as FieldError).message}
+                    </li>
                   );
                 }
 
                 // If it's a per-language/field error
-                return Object.entries(value).map(
-                  ([lang, langErrors]: [string, any]) => {
-                    if (!langErrors || typeof langErrors !== "object")
-                      return null;
-
-                    // If the language object itself has a direct error
-                    if (langErrors.message) {
-                      return (
-                        <li key={`${key}.${lang}`}>
-                          {languageNames[lang as keyof typeof languageNames] ||
-                            lang.toUpperCase()}
-                          : {langErrors.message}
-                        </li>
-                      );
-                    }
-
-                    // Map field errors (title, content, etc.)
-                    const fieldErrors = Object.entries(langErrors)
-                      .filter(
-                        ([field]) =>
-                          !["message", "type", "ref"].includes(field),
-                      )
-                      .map(([field, err]: [string, any]) => {
-                        const fieldName =
-                          field === "title"
-                            ? "Başlık"
-                            : field === "content"
-                              ? "İçerik"
-                              : field;
-                        return `${fieldName} (${err?.message || "Geçersiz"})`;
-                      });
-
-                    if (fieldErrors.length === 0) return null;
-
+                return Object.entries(value).map(([lang, langErrors]) => {
+                  const fieldError = langErrors as FieldError;
+                  // If the language object itself has a direct error
+                  if (fieldError.message) {
                     return (
                       <li key={`${key}.${lang}`}>
                         {languageNames[lang as keyof typeof languageNames] ||
                           lang.toUpperCase()}
-                        : {fieldErrors.join(", ")}
+                        : {fieldError.message}
                       </li>
                     );
-                  },
-                );
+                  }
+
+                  const langErrRec = langErrors as Record<string, FieldError>;
+
+                  // Map field errors (title, content, etc.)
+                  const fieldErrors = Object.entries(langErrRec)
+                    .filter(
+                      ([field]) => !["message", "type", "ref"].includes(field),
+                    )
+                    .map(([field, err]) => {
+                      const fieldName =
+                        field === "title"
+                          ? "Başlık"
+                          : field === "content"
+                            ? "İçerik"
+                            : field;
+                      return `${fieldName} (${err?.message || "Geçersiz"})`;
+                    });
+
+                  if (fieldErrors.length === 0) return null;
+
+                  return (
+                    <li key={`${key}.${lang}`}>
+                      {languageNames[lang as keyof typeof languageNames] ||
+                        lang.toUpperCase()}
+                      : {fieldErrors.join(", ")}
+                    </li>
+                  );
+                });
               }
+              const err = value as FieldError | undefined;
               return (
                 <li key={key}>
                   {key === "slug"
                     ? "URL Uzantısı"
                     : key.charAt(0).toUpperCase() + key.slice(1)}
-                  : {(value as any)?.message || "Geçersiz değer"}
+                  : {err?.message || "Geçersiz değer"}
                 </li>
               );
             })}

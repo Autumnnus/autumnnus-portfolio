@@ -72,7 +72,11 @@ export default async function AdminExperiencePage() {
               <div>
                 <h3 className="text-xl font-bold">{exp.company}</h3>
                 <p className="text-muted-foreground text-sm">
-                  {exp.translations[0]?.role} • {exp.translations[0]?.period}
+                  {exp.translations[0]?.role} •{" "}
+                  {exp.startDate ? new Date(exp.startDate).getFullYear() : ""} -{" "}
+                  {exp.endDate
+                    ? new Date(exp.endDate).getFullYear()
+                    : "Devam Ediyor"}
                 </p>
               </div>
             </div>

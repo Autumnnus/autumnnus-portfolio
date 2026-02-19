@@ -34,7 +34,7 @@ const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
   return result;
 };
 
-interface ProfileFormProps {
+export interface ProfileFormProps {
   initialData?: Profile & { translations: ProfileTranslation[] };
 }
 

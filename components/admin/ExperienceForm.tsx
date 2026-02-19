@@ -40,8 +40,12 @@ const transformTranslationsToObject = (
   return result;
 };
 
+export type Experience = WorkExperience & {
+  translations: WorkExperienceTranslation[];
+};
+
 interface ExperienceFormProps {
-  initialData?: WorkExperience & { translations: WorkExperienceTranslation[] };
+  initialData?: Experience;
 }
 
 interface ImageData {
