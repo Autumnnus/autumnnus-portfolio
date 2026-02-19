@@ -5,33 +5,69 @@ import {
   updateBlogAction,
   uploadImageAction,
 } from "@/app/admin/actions";
-import { generateTranslationAction } from "@/app/admin/ai-actions";
+import { BlogContent, generateTranslationAction } from "@/app/admin/ai-actions";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
 import { BlogFormValues, BlogSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BlogPost, BlogPostTranslation, Language } from "@prisma/client";
-import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import {
+  FileText,
+  ImagePlus,
+  Layout,
+  Loader2,
+  Search,
+  Settings,
+  Sparkles,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import SeoPopover from "./SeoPopover";
+import TipTapEditor from "./TipTapEditor";
 
 // Helper to update translations
 const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
   const result: Record<
     string,
-    { title: string; description: string; content: string; readTime: string }
+    {
+      title: string;
+      description: string;
+      content: string;
+      readTime: string;
+      excerpt?: string;
+      metaTitle?: string;
+      metaDescription?: string;
+      keywords?: string[];
+    }
   > = {};
   translations.forEach((t) => {
     result[t.language] = {
-      title: t.title,
-      description: t.description,
-      content: t.content,
-      readTime: t.readTime,
+      title: t.title || "",
+      description: t.description || "",
+      content: t.content || "",
+      readTime: t.readTime || "5 dk okuma",
+      excerpt: t.excerpt || "",
+      metaTitle: t.metaTitle || "",
+      metaDescription: t.metaDescription || "",
+      keywords: t.keywords || [],
     };
   });
   return result;
+};
+
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
 };
 
 interface BlogFormProps {
@@ -49,7 +85,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
-
   const [sourceLang, setSourceLang] = useState<string>("tr");
   const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -60,7 +95,11 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       slug: initialData?.slug || "",
       featured: initialData?.featured ?? false,
       coverImage: initialData?.coverImage || "",
+      imageAlt: initialData?.imageAlt || "",
       tags: initialData?.tags?.join(", ") || "",
+      category: initialData?.category || "",
+      status: initialData?.status || "draft",
+      commentsEnabled: initialData?.commentsEnabled ?? true,
       translations: initialData?.translations
         ? transformTranslationsToObject(initialData.translations)
         : {},
@@ -72,8 +111,29 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     handleSubmit,
     setValue,
     getValues,
+    watch,
     formState: { errors },
   } = form;
+
+  // Auto-slugify
+  const isEditing = !!initialData;
+  const sourceTitle = watch(`translations.${sourceLang}.title` as const);
+
+  // Effect to sync slug with title only for NEW posts
+  // or if slug is explicitly empty
+  useEffect(() => {
+    if (!isEditing && sourceTitle) {
+      const currentSlug = getValues("slug");
+      // Only auto-update if slug is empty or it was already an auto-generated version of a slightly shorter title
+      if (
+        !currentSlug ||
+        currentSlug ===
+          slugify(sourceTitle.substring(0, sourceTitle.length - 1))
+      ) {
+        setValue("slug", slugify(sourceTitle), { shouldValidate: true });
+      }
+    }
+  }, [sourceTitle, isEditing, setValue, getValues, sourceLang]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,13 +166,16 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           sourceLang as keyof typeof currentValues.translations
         ];
 
-      if (
-        !sourceContent ||
-        !sourceContent.title ||
-        !sourceContent.description ||
-        !sourceContent.content
-      ) {
-        alert("Lütfen kaynak dildeki alanları doldurunuz.");
+      if (!sourceContent || !sourceContent.title || !sourceContent.content) {
+        const missing = [];
+        if (!sourceContent) missing.push(sourceLang.toUpperCase() + " içeriği");
+        else {
+          if (!sourceContent.title) missing.push("Başlık");
+          if (!sourceContent.content) missing.push("İçerik");
+        }
+        alert(
+          `Lütfen kaynak dildeki (${sourceLang.toUpperCase()}) şu alanları doldurunuz: ${missing.join(", ")}`,
+        );
         setIsTranslating(false);
         return;
       }
@@ -123,19 +186,15 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         targetLangs,
         content: {
           title: sourceContent.title,
-          description: sourceContent.description,
+          description: sourceContent.description || "",
           content: sourceContent.content,
           readTime: sourceContent.readTime || "5 min read",
+          excerpt: sourceContent.excerpt || "",
+          metaTitle: sourceContent.metaTitle || "",
+          metaDescription: sourceContent.metaDescription || "",
+          keywords: sourceContent.keywords || [],
         },
-      })) as Record<
-        string,
-        {
-          title: string;
-          description: string;
-          content: string;
-          readTime: string;
-        }
-      >;
+      })) as Record<string, BlogContent | null>;
 
       // Update target inputs
       Object.entries(translations).forEach(([lang, content]) => {
@@ -143,10 +202,27 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         setValue(`translations.${lang}.title` as const, content.title);
         setValue(
           `translations.${lang}.description` as const,
-          content.description,
+          content.description || "",
         );
         setValue(`translations.${lang}.content` as const, content.content);
-        setValue(`translations.${lang}.readTime` as const, content.readTime);
+        setValue(
+          `translations.${lang}.readTime` as const,
+          content.readTime || "5 min read",
+        );
+        if (content.excerpt)
+          setValue(`translations.${lang}.excerpt` as const, content.excerpt);
+        if (content.metaTitle)
+          setValue(
+            `translations.${lang}.metaTitle` as const,
+            content.metaTitle,
+          );
+        if (content.metaDescription)
+          setValue(
+            `translations.${lang}.metaDescription` as const,
+            content.metaDescription,
+          );
+        if (content.keywords)
+          setValue(`translations.${lang}.keywords` as const, content.keywords);
       });
 
       alert("Çeviri tamamlandı!");
@@ -183,29 +259,46 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           readTime: t.readTime,
           date: new Date().toLocaleDateString(
             lang === "tr" ? "tr-TR" : "en-US",
-          ), // Keep existing logic for now
+          ),
+          excerpt: t.excerpt || "",
+          metaTitle: t.metaTitle || "",
+          metaDescription: t.metaDescription || "",
+          keywords: t.keywords || [],
         }));
+
+      if (translationsArray.length === 0) {
+        alert("En az bir dilde içerik (Başlık ve İçerik) girmelisiniz.");
+        setLoading(false);
+        return;
+      }
 
       const submitData = {
         slug: data.slug,
         coverImage: finalCoverImage,
+        imageAlt: data.imageAlt,
         tags: data.tags
           ? data.tags
               .split(",")
               .map((t) => t.trim())
-              .filter((t) => t !== "")
+              .filter((t: string) => t !== "")
           : [],
         featured: data.featured,
+        category: data.category,
+        status: data.status,
+        commentsEnabled: data.commentsEnabled,
         translations: translationsArray,
-      };
+      } as any;
+
+      console.log("Submitting blog data:", submitData);
 
       if (initialData?.id) {
-        await updateBlogAction(initialData.id, submitData);
+        await updateBlogAction(initialData.id, submitData as any);
+        router.refresh();
       } else {
-        await createBlogAction(submitData);
+        const result = await createBlogAction(submitData as any);
+        router.push(`/admin/blog/${result.id}/edit`);
+        router.refresh();
       }
-      router.push("/admin/blog");
-      router.refresh();
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "İşlem başarısız oldu";
@@ -215,24 +308,93 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     }
   };
 
+  const onInvalid = (errors: any) => {
+    console.warn("Form Validation Errors:", errors);
+  };
+
   return (
     <form
-      onSubmit={
-        handleSubmit(
-          onSubmit,
-        ) as unknown as React.FormEventHandler<HTMLFormElement>
-      }
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
+      {Object.keys(errors).length > 0 && (
+        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
+          <p className="font-bold mb-2">Lütfen formdaki hataları düzeltiniz:</p>
+          <ul className="list-disc list-inside">
+            {Object.entries(errors).map(([key, value]) => {
+              if (key === "translations" && value) {
+                // If it's a global error on the record (like "En az bir dilde...")
+                if ((value as any).message) {
+                  return (
+                    <li key={key}>İçerik Hatası: {(value as any).message}</li>
+                  );
+                }
+
+                // If it's a per-language/field error
+                return Object.entries(value).map(
+                  ([lang, langErrors]: [string, any]) => {
+                    if (!langErrors || typeof langErrors !== "object")
+                      return null;
+
+                    // If the language object itself has a direct error
+                    if (langErrors.message) {
+                      return (
+                        <li key={`${key}.${lang}`}>
+                          {languageNames[lang as keyof typeof languageNames] ||
+                            lang.toUpperCase()}
+                          : {langErrors.message}
+                        </li>
+                      );
+                    }
+
+                    // Map field errors (title, content, etc.)
+                    const fieldErrors = Object.entries(langErrors)
+                      .filter(
+                        ([field]) =>
+                          !["message", "type", "ref"].includes(field),
+                      )
+                      .map(([field, err]: [string, any]) => {
+                        const fieldName =
+                          field === "title"
+                            ? "Başlık"
+                            : field === "content"
+                              ? "İçerik"
+                              : field;
+                        return `${fieldName} (${err?.message || "Geçersiz"})`;
+                      });
+
+                    if (fieldErrors.length === 0) return null;
+
+                    return (
+                      <li key={`${key}.${lang}`}>
+                        {languageNames[lang as keyof typeof languageNames] ||
+                          lang.toUpperCase()}
+                        : {fieldErrors.join(", ")}
+                      </li>
+                    );
+                  },
+                );
+              }
+              return (
+                <li key={key}>
+                  {key === "slug"
+                    ? "URL Uzantısı"
+                    : key.charAt(0).toUpperCase() + key.slice(1)}
+                  : {(value as any)?.message || "Geçersiz değer"}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Slug (URL)</label>
             <input
               {...register("slug")}
-              required
               className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
-              placeholder="my-blog-post"
+              placeholder="blog-yazisi-basligi"
             />
             {errors.slug && (
               <p className="text-xs text-red-500">{errors.slug.message}</p>
@@ -240,71 +402,109 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Etiketler (Virgülle ayırın)
-            </label>
+            <label className="text-sm font-medium">Kategori</label>
             <input
-              {...register("tags")}
+              {...register("category")}
               className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
-              placeholder="Next.js, React, Tailwind"
+              placeholder="Modern Web, React Tips, etc."
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="featured"
-              {...register("featured")}
-              className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-            />
-            <label htmlFor="featured" className="text-sm font-medium">
-              Öne Çıkarılan Yazı
-            </label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Durum</label>
+              <select
+                {...register("status")}
+                className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
+              >
+                <option value="draft">Taslak</option>
+                <option value="published">Yayınlandı</option>
+              </select>
+            </div>
+            <div className="flex flex-col justify-end space-y-4 pb-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  {...register("featured")}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                />
+                <label htmlFor="featured" className="text-sm font-medium">
+                  Öne Çıkar
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="commentsEnabled"
+                  {...register("commentsEnabled")}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                />
+                <label
+                  htmlFor="commentsEnabled"
+                  className="text-sm font-medium"
+                >
+                  Yorumlar Açık
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Kapak Görseli</label>
-          <div className="relative aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors">
-            {coverImage ? (
-              <>
-                <Image
-                  src={coverImage.url}
-                  alt="Cover"
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCoverImage(null);
-                    setValue("coverImage", "");
-                  }}
-                  className="absolute top-2 right-2 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
-                >
-                  <X size={16} />
-                </button>
-              </>
-            ) : (
-              <label className="cursor-pointer flex flex-col items-center gap-2 w-full h-full justify-center">
-                <ImagePlus size={32} className="text-muted-foreground" />
-                <span className="text-sm text-muted-foreground font-medium">
-                  Resim Yükle
-                </span>
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                />
-              </label>
-            )}
-            {loading && (
-              <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-                <Loader2 className="animate-spin text-primary" />
-              </div>
-            )}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Kapak Görseli</label>
+            <div className="relative aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors">
+              {coverImage ? (
+                <>
+                  <Image
+                    src={coverImage.url}
+                    alt="Cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverImage(null);
+                      setValue("coverImage", "");
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
+                  >
+                    <X size={16} />
+                  </button>
+                </>
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center gap-2 w-full h-full justify-center">
+                  <ImagePlus size={32} className="text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground font-medium">
+                    Resim Yükle
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                  />
+                </label>
+              )}
+              {loading && (
+                <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-xs text-muted-foreground uppercase">
+              Görsel Alt Metni (SEO)
+            </label>
+            <input
+              {...register("imageAlt")}
+              className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all text-sm"
+              placeholder="Görseli tanımlayan açıklama..."
+            />
           </div>
         </div>
       </div>
@@ -360,86 +560,199 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {Object.keys(languageNames).map((lang) => {
-          return (
-            <div
-              key={lang}
-              className={`space-y-4 p-4 rounded-lg border transition-all ${
-                sourceLang === lang
-                  ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
-                  : "bg-muted/30 border-border"
-              }`}
-            >
-              <h3 className="font-bold border-b border-border pb-2 flex items-center justify-between">
-                <span>
-                  {languageNames[lang]} ({lang.toUpperCase()})
-                </span>
-                {sourceLang === lang && (
-                  <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                    Kaynak
+        {Object.keys(languageNames)
+          .filter(
+            (lang) =>
+              lang === sourceLang ||
+              targetLangs.includes(lang) ||
+              initialData?.translations.some((t) => t.language === lang),
+          )
+          .map((lang) => {
+            return (
+              <div
+                key={lang}
+                className={`space-y-4 p-4 rounded-lg border transition-all ${
+                  sourceLang === lang
+                    ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
+                    : "bg-muted/30 border-border"
+                }`}
+              >
+                <h3 className="font-bold border-b border-border pb-2 flex items-center justify-between">
+                  <span>
+                    {languageNames[lang]} ({lang.toUpperCase()})
                   </span>
-                )}
-              </h3>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                  Başlık
-                </label>
-                <input
-                  {...register(`translations.${lang}.title` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
-                />
-                {errors.translations?.[lang]?.title && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.title?.message}
-                  </p>
-                )}
+                  {sourceLang === lang && (
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                      Kaynak
+                    </span>
+                  )}
+
+                  <SeoPopover
+                    type="blog"
+                    language={lang}
+                    onSeoGenerated={(result) => {
+                      setValue(
+                        `translations.${lang}.title` as const,
+                        result.title,
+                        { shouldDirty: true },
+                      );
+                      if (result.description) {
+                        setValue(
+                          `translations.${lang}.description` as const,
+                          result.description,
+                          { shouldDirty: true },
+                        );
+                      }
+                      if (result.excerpt) {
+                        setValue(
+                          `translations.${lang}.excerpt` as const,
+                          result.excerpt,
+                          { shouldDirty: true },
+                        );
+                      }
+                      if (result.metaTitle) {
+                        setValue(
+                          `translations.${lang}.metaTitle` as const,
+                          result.metaTitle,
+                          { shouldDirty: true },
+                        );
+                      }
+                      if (result.metaDescription) {
+                        setValue(
+                          `translations.${lang}.metaDescription` as const,
+                          result.metaDescription,
+                          { shouldDirty: true },
+                        );
+                      }
+                      if (result.keywords) {
+                        setValue(
+                          `translations.${lang}.keywords` as const,
+                          result.keywords,
+                          { shouldDirty: true },
+                        );
+                      }
+                    }}
+                  />
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                      <Layout size={12} /> Başlık
+                    </label>
+                    <input
+                      {...register(`translations.${lang}.title` as const)}
+                      className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                      <Settings size={12} /> Okuma Süresi
+                    </label>
+                    <input
+                      {...register(`translations.${lang}.readTime` as const)}
+                      placeholder="5 dk okuma"
+                      className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                    <Search size={12} /> SEO Meta Açıklama
+                  </label>
+                  <textarea
+                    {...register(
+                      `translations.${lang}.metaDescription` as const,
+                    )}
+                    className="w-full p-2 bg-muted rounded border border-border h-20 focus:border-primary outline-hidden transition-all text-sm resize-none"
+                    placeholder="Arama motoru sonuçlarında görünecek açıklama..."
+                  />
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-border/50">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                      <FileText size={12} /> İçerik (HTML)
+                    </label>
+                    <TipTapEditor
+                      content={
+                        getValues(`translations.${lang}.content` as const) || ""
+                      }
+                      onChange={(html) =>
+                        setValue(
+                          `translations.${lang}.content` as const,
+                          html,
+                          {
+                            shouldDirty: true,
+                          },
+                        )
+                      }
+                      uploadPath={`blog/${getValues("slug") || "temp"}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-border/50 mt-4">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                    <Settings size={12} /> Ek SEO Alanları
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                        SEO Meta Başlık
+                      </label>
+                      <input
+                        {...register(`translations.${lang}.metaTitle` as const)}
+                        className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-xs"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                        Anahtar Kelimeler
+                      </label>
+                      <input
+                        onChange={(e) => {
+                          const tags = e.target.value
+                            .split(",")
+                            .map((t) => t.trim());
+                          setValue(
+                            `translations.${lang}.keywords` as const,
+                            tags,
+                            {
+                              shouldDirty: true,
+                            },
+                          );
+                        }}
+                        defaultValue={getValues(
+                          `translations.${lang}.keywords` as const,
+                        )?.join(", ")}
+                        className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-xs"
+                        placeholder="anahtar, kelimeler"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                      Özet (Excerpt)
+                    </label>
+                    <textarea
+                      {...register(`translations.${lang}.excerpt` as const)}
+                      className="w-full p-2 bg-muted rounded border border-border h-20 focus:border-primary outline-hidden transition-all text-xs resize-none"
+                    />
+                  </div>
+
+                  {/* Keep existing fallback for description if needed */}
+                  <input
+                    type="hidden"
+                    {...register(`translations.${lang}.description` as const)}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                  Okuma Süresi
-                </label>
-                <input
-                  {...register(`translations.${lang}.readTime` as const)}
-                  placeholder="5 dk okuma"
-                  className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
-                />
-                {errors.translations?.[lang]?.readTime && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.readTime?.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                  Kısa Açıklama
-                </label>
-                <textarea
-                  {...register(`translations.${lang}.description` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border h-24 focus:border-primary outline-hidden transition-all"
-                />
-                {errors.translations?.[lang]?.description && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.description?.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                  İçerik (Markdown)
-                </label>
-                <textarea
-                  {...register(`translations.${lang}.content` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border h-64 focus:border-primary outline-hidden transition-all"
-                />
-                {errors.translations?.[lang]?.content && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.content?.message}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
       <div className="flex justify-end gap-4 border-t border-border pt-8">

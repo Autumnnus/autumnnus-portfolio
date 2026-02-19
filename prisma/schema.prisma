@@ -38,6 +38,7 @@ model Project {
   liveDemo     String?
   featured     Boolean  @default(false)
   coverImage   String? // URL from MinIO
+  imageAlt     String? // SEO alt text
   images       String[] // URLs from MinIO
 
   technologies Skill[]
@@ -58,6 +59,11 @@ model ProjectTranslation {
   title            String
   shortDescription String
   fullDescription  String
+  
+  // SEO Fields
+  metaTitle       String?
+  metaDescription String?
+  keywords        String[] @default([])
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -66,13 +72,16 @@ model ProjectTranslation {
 }
 
 model BlogPost {
-  id         String   @id @default(uuid())
-  slug       String   @unique
-  coverImage String? // Minio URL
-  featured   Boolean  @default(false)
-  tags       String[]
-  // Date and readTime might be language specific or generic. contents.tsx has them inside translation sometimes or outside.
-  // In contents.tsx: date: { tr: "...", en: "..." }. So it is translated.
+  id              String   @id @default(uuid())
+  slug            String   @unique
+  coverImage      String?  // Minio URL
+  imageAlt        String?  // SEO: Alt text for cover image
+  featured        Boolean  @default(false)
+  tags            String[]
+  category        String?  // Category for the post
+  status          String   @default("draft") // draft | published
+  publishedAt     DateTime? // When the post was published
+  commentsEnabled Boolean  @default(true)
 
   translations BlogPostTranslation[]
   comments     Comment[]
@@ -84,13 +93,17 @@ model BlogPost {
 }
 
 model BlogPostTranslation {
-  id          String   @id @default(uuid())
-  language    Language
-  title       String
-  description String
-  content     String
-  readTime    String
-  date        String
+  id              String   @id @default(uuid())
+  language        Language
+  title           String
+  description     String   // Short description
+  content         String   // HTML content from TipTap
+  readTime        String
+  date            String
+  excerpt         String?  // Short excerpt for SEO and previews
+  metaTitle       String?  // SEO meta title (override)
+  metaDescription String?  // SEO meta description (override)
+  keywords        String[] @default([]) // SEO keywords
 
   blogPostId String
   blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)

@@ -16,47 +16,136 @@ const languageEnumValues = Object.keys(languageNames) as [string, ...string[]];
 
 // Base translation schema for a single language
 const ProjectTranslationSchema = z.object({
-  title: z.string(),
-  shortDescription: z.string(),
-  fullDescription: z.string(),
+  title: z.string().optional().default(""),
+  shortDescription: z.string().optional().default(""),
+  fullDescription: z.string().optional().default(""),
+  metaTitle: z.string().optional().default(""),
+  metaDescription: z.string().optional().default(""),
+  keywords: z.array(z.string()).optional().default([]),
 });
 
 export const ProjectSchema = z.object({
-  slug: z.string().min(1, "Slug zorunludur"),
+  slug: z
+    .string()
+    .min(1, "Slug zorunludur")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Slug sadece küçük harf, rakam ve tire (-) içerebilir, boşluk içeremez.",
+    ),
   status: z.string().min(1, "Durum zorunludur"),
   category: z.string().min(1, "Kategori zorunludur"),
   github: z.string().optional().or(z.literal("")),
   liveDemo: z.string().optional().or(z.literal("")),
   featured: z.boolean().default(false),
   coverImage: z.string().optional().or(z.literal("")),
+  imageAlt: z.string().optional().or(z.literal("")),
   images: z.array(z.string()).optional(),
 
-  // We will structure the form to have a translations object keyed by language
-  // e.g. translations: { tr: { ... }, en: { ... } }
-  // This makes it easier to use with react-hook-form
-  translations: z.record(z.enum(languageEnumValues), ProjectTranslationSchema),
+  translations: z
+    .record(
+      z.enum(languageEnumValues),
+      z.preprocess((val) => val || {}, ProjectTranslationSchema.optional()),
+    )
+    .refine(
+      (data) => {
+        // At least one language must have a title and descriptions
+        return Object.values(data).some(
+          (t) =>
+            t &&
+            t.title &&
+            t.title.trim() !== "" &&
+            t.shortDescription &&
+            t.shortDescription.trim() !== "",
+        );
+      },
+      {
+        message:
+          "En az bir dilde proje detaylarını (Ad ve Kısa Açıklama) doldurmalısınız.",
+        path: ["translations"],
+      },
+    ),
 
   technologies: z.array(z.string()), // Array of skill IDs
 });
 
 export type ProjectFormValues = z.infer<typeof ProjectSchema>;
 
-// --- Blog ---
+//--- Blog ---
 
 const BlogTranslationSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  content: z.string(),
-  readTime: z.string(),
+  title: z.string().optional().default(""),
+  description: z.string().optional().default(""),
+  content: z.string().optional().default(""),
+  readTime: z.string().optional().default("5 dk okuma"),
+  excerpt: z.string().optional().default(""),
+  metaTitle: z.string().optional().default(""),
+  metaDescription: z.string().optional().default(""),
+  keywords: z.array(z.string()).optional().default([]),
 });
 
 export const BlogSchema = z.object({
-  slug: z.string().min(1, "Slug zorunludur"),
-  coverImage: z.string().optional().or(z.literal("")),
+  slug: z
+    .string()
+    .min(1, "Slug zorunludur")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Slug sadece küçük harf, rakam ve tire (-) içerebilir, boşluk içeremez.",
+    ),
+  coverImage: z.string().default(""),
+  imageAlt: z.string().default(""),
   featured: z.boolean().default(false),
-  tags: z.string().optional(), // We'll handle CSV string in form, convert to array for API
+  tags: z.string().default(""),
+  category: z.string().default(""),
+  status: z.string().default("draft"),
+  commentsEnabled: z.boolean().default(true),
+  translations: z
+    .record(
+      z.enum(languageEnumValues),
+      z.preprocess((val) => val || {}, BlogTranslationSchema.optional()),
+    )
+    .superRefine((data, ctx) => {
+      // Check if at least one language is filled
+      const hasAnyFilled = Object.values(data).some(
+        (t) => t && t.title && t.title.trim() !== "",
+      );
 
-  translations: z.record(z.enum(languageEnumValues), BlogTranslationSchema),
+      if (!hasAnyFilled) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "En az bir dilde içerik (Başlık) doldurmalısınız.",
+          path: [],
+        });
+      }
+
+      // Check each language: if title is filled, content must be filled too
+      Object.entries(data).forEach(([lang, t]) => {
+        if (!t) return;
+
+        if (t.title && t.title.trim() !== "") {
+          if (
+            !t.content ||
+            t.content.trim() === "" ||
+            t.content === "<p></p>"
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Başlık yazılan dilde İçerik de zorunludur.",
+              path: [lang, "content"],
+            });
+          }
+        } else if (
+          t.content &&
+          t.content.trim() !== "" &&
+          t.content !== "<p></p>"
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "İçerik yazılan dilde Başlık da zorunludur.",
+            path: [lang, "title"],
+          });
+        }
+      });
+    }),
 });
 
 export type BlogFormValues = z.infer<typeof BlogSchema>;

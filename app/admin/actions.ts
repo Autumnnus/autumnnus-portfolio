@@ -10,6 +10,9 @@ export interface ProjectTranslationInput {
   title: string;
   shortDescription: string;
   fullDescription: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
 }
 
 export interface ProjectData {
@@ -20,6 +23,7 @@ export interface ProjectData {
   liveDemo?: string | null;
   featured: boolean;
   coverImage?: string | null;
+  imageAlt?: string | null;
   images: string[];
   translations: ProjectTranslationInput[];
   technologies: string[];
@@ -32,13 +36,21 @@ export interface BlogTranslationInput {
   content: string;
   readTime: string;
   date: string;
+  excerpt?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
 }
 
 export interface BlogData {
   slug: string;
   coverImage?: string | null;
+  imageAlt?: string | null;
   featured: boolean;
   tags: string[];
+  category?: string;
+  status: string;
+  commentsEnabled: boolean;
   translations: BlogTranslationInput[];
 }
 
@@ -531,6 +543,10 @@ export async function importDatabaseAction(jsonData: string) {
             data: {
               slug: blog.slug,
               coverImage: blog.coverImage,
+              imageAlt: blog.imageAlt,
+              status: blog.status || "published",
+              category: blog.category,
+              commentsEnabled: blog.commentsEnabled ?? true,
               featured: blog.featured,
               tags: blog.tags,
               translations: {
@@ -541,6 +557,10 @@ export async function importDatabaseAction(jsonData: string) {
                   content: t.content,
                   readTime: t.readTime,
                   date: t.date,
+                  excerpt: t.excerpt,
+                  metaTitle: t.metaTitle,
+                  metaDescription: t.metaDescription,
+                  keywords: t.keywords,
                 })),
               },
             },
@@ -559,6 +579,7 @@ export async function importDatabaseAction(jsonData: string) {
               liveDemo: project.liveDemo,
               featured: project.featured,
               coverImage: project.coverImage,
+              imageAlt: project.imageAlt,
               images: project.images,
               technologies: {
                 connect: (
@@ -573,6 +594,9 @@ export async function importDatabaseAction(jsonData: string) {
                   title: t.title,
                   shortDescription: t.shortDescription,
                   fullDescription: t.fullDescription,
+                  metaTitle: t.metaTitle,
+                  metaDescription: t.metaDescription,
+                  keywords: t.keywords,
                 })),
               },
             },
