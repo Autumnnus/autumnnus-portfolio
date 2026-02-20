@@ -6,6 +6,7 @@ import {
   uploadImageAction,
 } from "@/app/admin/actions";
 import { generateTranslationAction } from "@/app/admin/ai-actions";
+import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
 import { ProfileFormValues, ProfileSchema } from "@/lib/validations";
@@ -369,120 +370,107 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {Object.keys(languageNames).map((lang) => {
-          return (
-            <div
-              key={lang}
-              className={`space-y-4 p-4 rounded-lg border transition-all ${
-                sourceLang === lang
-                  ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
-                  : "bg-muted/30 border-border"
-              }`}
-            >
-              <h3 className="font-bold border-b border-border pb-2 flex items-center justify-between">
-                <span>
-                  {languageNames[lang]} ({lang.toUpperCase()})
-                </span>
-                {sourceLang === lang && (
-                  <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                    Kaynak
-                  </span>
-                )}
-              </h3>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">
-                  İsim
-                </label>
-                <input
-                  {...register(`translations.${lang}.name` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border"
-                />
-                {errors.translations?.[lang]?.name && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.name?.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">
-                  Unvan
-                </label>
-                <input
-                  {...register(`translations.${lang}.title` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border"
-                  placeholder="Full Stack Developer"
-                />
-                {errors.translations?.[lang]?.title && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.title?.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">
-                  Karşılama Metni
-                </label>
-                <input
-                  {...register(`translations.${lang}.greetingText` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border"
-                  placeholder="Merhaba, ben"
-                />
-                {errors.translations?.[lang]?.greetingText && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.greetingText?.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">
-                  Hero Açıklama
-                </label>
-                <textarea
-                  {...register(`translations.${lang}.description` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border h-24"
-                />
-                {errors.translations?.[lang]?.description && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.description?.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">
-                  Hakkımda Başlık
-                </label>
-                <input
-                  {...register(`translations.${lang}.aboutTitle` as const)}
-                  className="w-full p-2 bg-muted rounded border border-border"
-                  placeholder="Hakkımda"
-                />
-                {errors.translations?.[lang]?.aboutTitle && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.aboutTitle?.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">
-                  Hakkımda Detay
-                </label>
-                <textarea
-                  {...register(
-                    `translations.${lang}.aboutDescription` as const,
-                  )}
-                  className="w-full p-2 bg-muted rounded border border-border h-48"
-                />
-                {errors.translations?.[lang]?.aboutDescription && (
-                  <p className="text-xs text-red-500">
-                    {errors.translations[lang]?.aboutDescription?.message}
-                  </p>
-                )}
-              </div>
+      <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
+        {(lang) => (
+          <div className="space-y-4 max-w-2xl mx-auto">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground">
+                İsim
+              </label>
+              <input
+                {...register(`translations.${lang}.name` as const)}
+                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                placeholder="Adınız Soyadınız"
+              />
+              {errors.translations?.[lang]?.name && (
+                <p className="text-xs text-red-500">
+                  {errors.translations[lang]?.name?.message}
+                </p>
+              )}
             </div>
-          );
-        })}
-      </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground">
+                Unvan
+              </label>
+              <input
+                {...register(`translations.${lang}.title` as const)}
+                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                placeholder="Örn: Full Stack Developer"
+              />
+              {errors.translations?.[lang]?.title && (
+                <p className="text-xs text-red-500">
+                  {errors.translations[lang]?.title?.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground">
+                Karşılama Metni
+              </label>
+              <input
+                {...register(`translations.${lang}.greetingText` as const)}
+                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                placeholder="Örn: Merhaba, ben"
+              />
+              {errors.translations?.[lang]?.greetingText && (
+                <p className="text-xs text-red-500">
+                  {errors.translations[lang]?.greetingText?.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground">
+                Hero Açıklama
+              </label>
+              <textarea
+                {...register(`translations.${lang}.description` as const)}
+                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[100px]"
+                placeholder="Kısa biyografi özeti"
+              />
+              {errors.translations?.[lang]?.description && (
+                <p className="text-xs text-red-500">
+                  {errors.translations[lang]?.description?.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground">
+                Hakkımda Başlık
+              </label>
+              <input
+                {...register(`translations.${lang}.aboutTitle` as const)}
+                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                placeholder="Örn: Hakkımda"
+              />
+              {errors.translations?.[lang]?.aboutTitle && (
+                <p className="text-xs text-red-500">
+                  {errors.translations[lang]?.aboutTitle?.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground">
+                Hakkımda Detay
+              </label>
+              <textarea
+                {...register(`translations.${lang}.aboutDescription` as const)}
+                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[150px]"
+                placeholder="Detaylı biyografiniz"
+              />
+              {errors.translations?.[lang]?.aboutDescription && (
+                <p className="text-xs text-red-500">
+                  {errors.translations[lang]?.aboutDescription?.message}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </LanguageTabs>
 
       <div className="sticky bottom-8 z-20 flex justify-end gap-4 border-t border-border/50 bg-background/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border">
         <button

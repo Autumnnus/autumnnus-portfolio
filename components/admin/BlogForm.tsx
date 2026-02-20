@@ -7,6 +7,7 @@ import {
   uploadImageAction,
 } from "@/app/admin/actions";
 import { BlogContent, generateTranslationAction } from "@/app/admin/ai-actions";
+import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
 import { BlogFormValues, BlogSchema } from "@/lib/validations";
@@ -96,6 +97,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<BlogFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(BlogSchema) as any,
     defaultValues: {
       slug: initialData?.slug || "",
@@ -506,7 +508,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-xs text-muted-foreground uppercase">
+            <label className="font-medium text-xs text-muted-foreground uppercase">
               Görsel Alt Metni (SEO)
             </label>
             <input
@@ -568,201 +570,166 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {Object.keys(languageNames)
-          .filter(
-            (lang) =>
-              lang === sourceLang ||
-              targetLangs.includes(lang) ||
-              initialData?.translations.some((t) => t.language === lang),
-          )
-          .map((lang) => {
-            return (
-              <div
-                key={lang}
-                className={`space-y-4 p-4 rounded-lg border transition-all ${
-                  sourceLang === lang
-                    ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
-                    : "bg-muted/30 border-border"
-                }`}
-              >
-                <h3 className="font-bold border-b border-border pb-2 flex items-center justify-between">
-                  <span>
-                    {languageNames[lang]} ({lang.toUpperCase()})
-                  </span>
-                  {sourceLang === lang && (
-                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                      Kaynak
-                    </span>
-                  )}
-
-                  <SeoPopover
-                    type="blog"
-                    language={lang}
-                    onSeoGenerated={(result) => {
-                      setValue(
-                        `translations.${lang}.title` as const,
-                        result.title,
-                        { shouldDirty: true },
-                      );
-                      if (result.description) {
-                        setValue(
-                          `translations.${lang}.description` as const,
-                          result.description,
-                          { shouldDirty: true },
-                        );
-                      }
-                      if (result.excerpt) {
-                        setValue(
-                          `translations.${lang}.excerpt` as const,
-                          result.excerpt,
-                          { shouldDirty: true },
-                        );
-                      }
-                      if (result.metaTitle) {
-                        setValue(
-                          `translations.${lang}.metaTitle` as const,
-                          result.metaTitle,
-                          { shouldDirty: true },
-                        );
-                      }
-                      if (result.metaDescription) {
-                        setValue(
-                          `translations.${lang}.metaDescription` as const,
-                          result.metaDescription,
-                          { shouldDirty: true },
-                        );
-                      }
-                      if (result.keywords) {
-                        setValue(
-                          `translations.${lang}.keywords` as const,
-                          result.keywords,
-                          { shouldDirty: true },
-                        );
-                      }
-                    }}
-                  />
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                      <Layout size={12} /> Başlık
-                    </label>
-                    <input
-                      {...register(`translations.${lang}.title` as const)}
-                      className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                      <Settings size={12} /> Okuma Süresi
-                    </label>
-                    <input
-                      {...register(`translations.${lang}.readTime` as const)}
-                      placeholder="5 dk okuma"
-                      className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                    <Search size={12} /> SEO Meta Açıklama
-                  </label>
-                  <textarea
-                    {...register(
+      <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
+        {(lang) => (
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="flex justify-end mb-4">
+              <SeoPopover
+                type="blog"
+                language={lang}
+                onSeoGenerated={(result) => {
+                  setValue(
+                    `translations.${lang}.title` as const,
+                    result.title,
+                    { shouldDirty: true },
+                  );
+                  if (result.description) {
+                    setValue(
+                      `translations.${lang}.description` as const,
+                      result.description,
+                      { shouldDirty: true },
+                    );
+                  }
+                  if (result.excerpt) {
+                    setValue(
+                      `translations.${lang}.excerpt` as const,
+                      result.excerpt,
+                      { shouldDirty: true },
+                    );
+                  }
+                  if (result.metaTitle) {
+                    setValue(
+                      `translations.${lang}.metaTitle` as const,
+                      result.metaTitle,
+                      { shouldDirty: true },
+                    );
+                  }
+                  if (result.metaDescription) {
+                    setValue(
                       `translations.${lang}.metaDescription` as const,
-                    )}
-                    className="w-full p-2 bg-muted rounded border border-border h-20 focus:border-primary outline-hidden transition-all text-sm resize-none"
-                    placeholder="Arama motoru sonuçlarında görünecek açıklama..."
+                      result.metaDescription,
+                      { shouldDirty: true },
+                    );
+                  }
+                  if (result.keywords) {
+                    setValue(
+                      `translations.${lang}.keywords` as const,
+                      result.keywords,
+                      { shouldDirty: true },
+                    );
+                  }
+                }}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                  <Layout size={12} /> Başlık
+                </label>
+                <input
+                  {...register(`translations.${lang}.title` as const)}
+                  className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                  <Settings size={12} /> Okuma Süresi
+                </label>
+                <input
+                  {...register(`translations.${lang}.readTime` as const)}
+                  placeholder="5 dk okuma"
+                  className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                <Search size={12} /> SEO Meta Açıklama
+              </label>
+              <textarea
+                {...register(`translations.${lang}.metaDescription` as const)}
+                className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                placeholder="Arama motoru sonuçlarında görünecek açıklama..."
+              />
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-border/50">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                  <FileText size={12} /> İçerik (HTML)
+                </label>
+                <TipTapEditor
+                  content={
+                    getValues(`translations.${lang}.content` as const) || ""
+                  }
+                  onChange={(html) =>
+                    setValue(`translations.${lang}.content` as const, html, {
+                      shouldDirty: true,
+                    })
+                  }
+                  uploadPath={`blog/${getValues("slug") || "temp"}`}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-6 border-t border-border/50 mt-6">
+              <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                <Settings size={12} /> Ek SEO Alanları
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    SEO Meta Başlık
+                  </label>
+                  <input
+                    {...register(`translations.${lang}.metaTitle` as const)}
+                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
                   />
                 </div>
-
-                <div className="space-y-4 pt-4 border-t border-border/50">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                      <FileText size={12} /> İçerik (HTML)
-                    </label>
-                    <TipTapEditor
-                      content={
-                        getValues(`translations.${lang}.content` as const) || ""
-                      }
-                      onChange={(html) =>
-                        setValue(
-                          `translations.${lang}.content` as const,
-                          html,
-                          {
-                            shouldDirty: true,
-                          },
-                        )
-                      }
-                      uploadPath={`blog/${getValues("slug") || "temp"}`}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4 border-t border-border/50 mt-4">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                    <Settings size={12} /> Ek SEO Alanları
-                  </h4>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                        SEO Meta Başlık
-                      </label>
-                      <input
-                        {...register(`translations.${lang}.metaTitle` as const)}
-                        className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-xs"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                        Anahtar Kelimeler
-                      </label>
-                      <input
-                        onChange={(e) => {
-                          const tags = e.target.value
-                            .split(",")
-                            .map((t) => t.trim());
-                          setValue(
-                            `translations.${lang}.keywords` as const,
-                            tags,
-                            {
-                              shouldDirty: true,
-                            },
-                          );
-                        }}
-                        defaultValue={getValues(
-                          `translations.${lang}.keywords` as const,
-                        )?.join(", ")}
-                        className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-xs"
-                        placeholder="anahtar, kelimeler"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                      Özet (Excerpt)
-                    </label>
-                    <textarea
-                      {...register(`translations.${lang}.excerpt` as const)}
-                      className="w-full p-2 bg-muted rounded border border-border h-20 focus:border-primary outline-hidden transition-all text-xs resize-none"
-                    />
-                  </div>
-
-                  {/* Keep existing fallback for description if needed */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    Anahtar Kelimeler
+                  </label>
                   <input
-                    type="hidden"
-                    {...register(`translations.${lang}.description` as const)}
+                    onChange={(e) => {
+                      const tags = e.target.value
+                        .split(",")
+                        .map((t) => t.trim());
+                      setValue(`translations.${lang}.keywords` as const, tags, {
+                        shouldDirty: true,
+                      });
+                    }}
+                    defaultValue={getValues(
+                      `translations.${lang}.keywords` as const,
+                    )?.join(", ")}
+                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                    placeholder="anahtar, kelimeler"
                   />
                 </div>
               </div>
-            );
-          })}
-      </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Özet (Excerpt)
+                </label>
+                <textarea
+                  {...register(`translations.${lang}.excerpt` as const)}
+                  className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                />
+              </div>
+
+              {/* Keep existing fallback for description if needed */}
+              <input
+                type="hidden"
+                {...register(`translations.${lang}.description` as const)}
+              />
+            </div>
+          </div>
+        )}
+      </LanguageTabs>
 
       <div className="flex justify-end gap-4 border-t border-border pt-8">
         <button

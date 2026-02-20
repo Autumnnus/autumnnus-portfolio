@@ -12,6 +12,7 @@ import {
   generateTranslationAction,
   ProjectContent,
 } from "@/app/admin/ai-actions";
+import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import Icon from "@/components/common/Icon";
 import { languageNames } from "@/i18n/routing";
@@ -163,6 +164,7 @@ export default function ProjectForm({
   };
 
   const form = useForm<ProjectFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(ProjectSchema) as any,
     defaultValues: {
       slug: initialData?.slug || "",
@@ -997,162 +999,130 @@ export default function ProjectForm({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {Object.keys(languageNames)
-          .filter(
-            (lang) =>
-              lang === sourceLang ||
-              targetLangs.includes(lang) ||
-              initialData?.translations.some((t) => t.language === lang),
-          )
-          .map((lang) => {
-            return (
-              <div
-                key={lang}
-                className={`space-y-4 p-4 rounded-lg border transition-all ${
-                  sourceLang === lang
-                    ? "bg-primary/5 border-primary/30 ring-2 ring-primary/20"
-                    : "bg-muted/30 border-border"
-                }`}
-              >
-                <h3 className="font-bold border-b border-border pb-2 flex items-center justify-between">
-                  <span>
-                    {languageNames[lang]} ({lang.toUpperCase()})
-                  </span>
-                  {sourceLang === lang && (
-                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                      Kaynak
-                    </span>
-                  )}
+      <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
+        {(lang) => (
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="flex justify-end mb-4">
+              <SeoPopover
+                type="project"
+                language={lang}
+                onSeoGenerated={(result) => {
+                  setValue(
+                    `translations.${lang}.title` as const,
+                    result.title,
+                    { shouldDirty: true },
+                  );
+                  if (result.shortDescription) {
+                    setValue(
+                      `translations.${lang}.shortDescription` as const,
+                      result.shortDescription,
+                      { shouldDirty: true },
+                    );
+                  }
+                  if (result.metaTitle) {
+                    setValue(
+                      `translations.${lang}.metaTitle` as const,
+                      result.metaTitle,
+                      { shouldDirty: true },
+                    );
+                  }
+                  if (result.metaDescription) {
+                    setValue(
+                      `translations.${lang}.metaDescription` as const,
+                      result.metaDescription,
+                      { shouldDirty: true },
+                    );
+                  }
+                  if (result.keywords) {
+                    setValue(
+                      `translations.${lang}.keywords` as const,
+                      result.keywords,
+                      { shouldDirty: true },
+                    );
+                  }
+                }}
+              />
+            </div>
 
-                  <SeoPopover
-                    type="project"
-                    language={lang}
-                    onSeoGenerated={(result) => {
-                      setValue(
-                        `translations.${lang}.title` as const,
-                        result.title,
-                        { shouldDirty: true },
-                      );
-                      if (result.shortDescription) {
-                        setValue(
-                          `translations.${lang}.shortDescription` as const,
-                          result.shortDescription,
-                          { shouldDirty: true },
-                        );
-                      }
-                      if (result.metaTitle) {
-                        setValue(
-                          `translations.${lang}.metaTitle` as const,
-                          result.metaTitle,
-                          { shouldDirty: true },
-                        );
-                      }
-                      if (result.metaDescription) {
-                        setValue(
-                          `translations.${lang}.metaDescription` as const,
-                          result.metaDescription,
-                          { shouldDirty: true },
-                        );
-                      }
-                      if (result.keywords) {
-                        setValue(
-                          `translations.${lang}.keywords` as const,
-                          result.keywords,
-                          { shouldDirty: true },
-                        );
-                      }
-                    }}
-                  />
-                </h3>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                Proje Adı
+              </label>
+              <input
+                {...register(`translations.${lang}.title` as const)}
+                className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                Kısa Açıklama (Kart vs.)
+              </label>
+              <textarea
+                {...register(`translations.${lang}.shortDescription` as const)}
+                className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all"
+                placeholder="Projenin 2-3 cümlelik özeti..."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                Full Açıklama (Markdown/HTML)
+              </label>
+              <textarea
+                {...register(`translations.${lang}.fullDescription` as const)}
+                className="w-full p-3 bg-background rounded-lg border border-border h-64 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all font-mono text-sm"
+              />
+            </div>
+
+            {/* SEO Meta Fields for Projects */}
+            <div className="space-y-4 pt-6 border-t border-border/50 mt-6">
+              <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                SEO Meta Verileri
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                    Proje Adı
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    Meta Başlık
                   </label>
                   <input
-                    {...register(`translations.${lang}.title` as const)}
-                    className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all"
+                    {...register(`translations.${lang}.metaTitle` as const)}
+                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                    Kısa Açıklama (Kart vs.)
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    Anahtar Kelimeler
                   </label>
-                  <textarea
-                    {...register(
-                      `translations.${lang}.shortDescription` as const,
-                    )}
-                    className="w-full p-2 bg-muted rounded border border-border h-24 focus:border-primary outline-hidden transition-all"
-                    placeholder="Projenin 2-3 cümlelik özeti..."
+                  <input
+                    onChange={(e) => {
+                      const tags = e.target.value
+                        .split(",")
+                        .map((t) => t.trim());
+                      setValue(`translations.${lang}.keywords` as const, tags, {
+                        shouldDirty: true,
+                      });
+                    }}
+                    defaultValue={getValues(
+                      `translations.${lang}.keywords` as const,
+                    )?.join(", ")}
+                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                    placeholder="react, tailwind, portfolio (virgülle ayırın)"
                   />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                    Full Açıklama (Markdown/HTML)
-                  </label>
-                  <textarea
-                    {...register(
-                      `translations.${lang}.fullDescription` as const,
-                    )}
-                    className="w-full p-2 bg-muted rounded border border-border h-64 focus:border-primary outline-hidden transition-all"
-                  />
-                </div>
-
-                {/* SEO Meta Fields for Projects */}
-                <div className="space-y-4 pt-4 border-t border-border/50 mt-4">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase">
-                    SEO Meta Verileri
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                        Meta Başlık
-                      </label>
-                      <input
-                        {...register(`translations.${lang}.metaTitle` as const)}
-                        className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-xs"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                        Anahtar Kelimeler
-                      </label>
-                      <input
-                        onChange={(e) => {
-                          const tags = e.target.value
-                            .split(",")
-                            .map((t) => t.trim());
-                          setValue(
-                            `translations.${lang}.keywords` as const,
-                            tags,
-                            {
-                              shouldDirty: true,
-                            },
-                          );
-                        }}
-                        defaultValue={getValues(
-                          `translations.${lang}.keywords` as const,
-                        )?.join(", ")}
-                        className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-hidden transition-all text-xs"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                      Meta Açıklama
-                    </label>
-                    <textarea
-                      {...register(
-                        `translations.${lang}.metaDescription` as const,
-                      )}
-                      className="w-full p-2 bg-muted rounded border border-border h-20 focus:border-primary outline-hidden transition-all text-xs resize-none"
-                    />
-                  </div>
                 </div>
               </div>
-            );
-          })}
-      </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Meta Açıklama
+                </label>
+                <textarea
+                  {...register(`translations.${lang}.metaDescription` as const)}
+                  className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                  placeholder="Google'da görünecek açıklama..."
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </LanguageTabs>
 
       <div className="flex justify-end gap-4 border-t border-border pt-8">
         <button
