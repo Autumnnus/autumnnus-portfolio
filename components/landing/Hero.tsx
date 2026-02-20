@@ -1,6 +1,6 @@
 "use client";
 import Icon from "@/components/common/Icon";
-import { SKILLS, SOCIAL_LINKS } from "@/config/contents";
+import { Skill, SocialLink } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
@@ -11,14 +11,20 @@ interface HeroData {
   description?: string;
 }
 
-export default function Hero({ data }: { data?: HeroData | null }) {
+export default function Hero({
+  data,
+  skills = [],
+  socialLinks = [],
+}: {
+  data?: HeroData | null;
+  skills?: Skill[];
+  socialLinks?: SocialLink[];
+}) {
   const t = useTranslations("Hero");
   const tNav = useTranslations("Navbar");
 
   const name = "Kadir";
   const title = "Full Stack Developer";
-  const skills = Object.values(SKILLS);
-  const socialLinks = Object.values(SOCIAL_LINKS);
   const buttons = [
     {
       text: t("buttons.projects"),

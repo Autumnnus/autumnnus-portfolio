@@ -170,6 +170,17 @@ export async function getSkills() {
   }
 }
 
+export async function getSocialLinks() {
+  try {
+    return await prisma.socialLink.findMany({
+      orderBy: { name: "asc" },
+    });
+  } catch (error) {
+    console.error("Failed to fetch social links", error);
+    return [];
+  }
+}
+
 export async function getProjectFilters() {
   try {
     const [statuses, categories] = await Promise.all([

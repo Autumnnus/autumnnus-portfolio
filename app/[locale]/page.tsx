@@ -11,6 +11,8 @@ import {
   getBlogPosts,
   getProfile,
   getProjects,
+  getSkills,
+  getSocialLinks,
   getWorkExperiences,
 } from "@/app/actions";
 import SectionNav from "@/components/common/SectionNav";
@@ -25,22 +27,31 @@ export default async function Home({ params }: HomeProps) {
   const { locale } = await params;
   const lang = locale as Language;
 
-  const [projectsResult, blogResult, profileData, experiencesData, aboutStats] =
-    await Promise.all([
-      getProjects({
-        lang,
-        featured: true,
-        limit: 4,
-      }),
-      getBlogPosts({
-        lang,
-        featured: true,
-        limit: 2,
-      }),
-      getProfile(lang),
-      getWorkExperiences(lang),
-      getAboutStats(),
-    ]);
+  const [
+    projectsResult,
+    blogResult,
+    profileData,
+    experiencesData,
+    aboutStats,
+    skills,
+    socialLinks,
+  ] = await Promise.all([
+    getProjects({
+      lang,
+      featured: true,
+      limit: 4,
+    }),
+    getBlogPosts({
+      lang,
+      featured: true,
+      limit: 2,
+    }),
+    getProfile(lang),
+    getWorkExperiences(lang),
+    getAboutStats(),
+    getSkills(),
+    getSocialLinks(),
+  ]);
 
   const featuredProjects = (projectsResult.items as unknown as Project[]) || [];
   const featuredBlogs = (blogResult.items as unknown as BlogPost[]) || [];
@@ -49,7 +60,7 @@ export default async function Home({ params }: HomeProps) {
     <>
       <SectionNav />
       <Container className="min-h-screen py-8">
-        <Hero data={profileData} />
+        <Hero data={profileData} skills={skills} socialLinks={socialLinks} />
         <About data={profileData} stats={aboutStats} />
         <WorkExperienceComponent data={experiencesData as WorkExperience[]} />
         <GitHubCalendar />

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { deleteFolder, uploadFile } from "@/lib/minio";
 import { prisma } from "@/lib/prisma";
 import { Language } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export interface ProjectTranslationInput {
   language: Language;
@@ -682,4 +683,47 @@ export async function fetchGithubReposAction() {
     console.error("Github repos fetch error:", error);
     throw new Error("GitHub istek hatası: " + (error as Error).message);
   }
+}
+
+export async function createSocialLinkAction(data: {
+  name: string;
+  href: string;
+  icon: string;
+}) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  )
+    throw new Error("Unauthorized");
+  return await prisma.socialLink.create({
+    data: {
+      key: data.name.toLowerCase().replace(/\s+/g, "-"),
+      name: data.name,
+      href: data.href,
+      icon: data.icon,
+    },
+  });
+}
+
+export async function deleteSocialLinkAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  )
+    throw new Error("Unauthorized");
+  await prisma.socialLink.delete({ where: { id } });
+  revalidatePath("/[locale]", "layout");
+}
+
+export async function deleteSkillAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  )
+    throw new Error("Unauthorized");
+  await prisma.skill.delete({ where: { id } });
+  revalidatePath("/[locale]", "layout");
 }

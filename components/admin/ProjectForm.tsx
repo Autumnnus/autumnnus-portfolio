@@ -22,10 +22,12 @@ import { Language, Project, ProjectTranslation, Skill } from "@prisma/client";
 import {
   ChevronLeft,
   ChevronRight,
+  FileText,
   Github,
   ImagePlus,
   Loader2,
   Plus,
+  Search,
   Sparkles,
   Star,
   Trash2,
@@ -33,7 +35,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FieldError,
   FieldErrors,
@@ -41,6 +43,7 @@ import {
   useForm,
 } from "react-hook-form";
 import SeoPopover from "./SeoPopover";
+import TipTapEditor from "./TipTapEditor";
 
 // Helper to update translations
 const transformTranslationsToObject = (translations: ProjectTranslation[]) => {
@@ -100,6 +103,14 @@ export default function ProjectForm({
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillIcon, setNewSkillIcon] = useState("");
   const [isAddingSkill, setIsAddingSkill] = useState(false);
+
+  // New states for simple-icons autocomplete
+  const [iconSearchQuery, setIconSearchQuery] = useState("");
+  const [iconSearchResults, setIconSearchResults] = useState<
+    Array<{ name: string; icon: string; hex: string }>
+  >([]);
+  const [isSearchingIcons, setIsSearchingIcons] = useState(false);
+  const [showIconDropdown, setShowIconDropdown] = useState(false);
 
   // AI Translation State
   const [sourceLang, setSourceLang] = useState<string>("tr");
@@ -486,6 +497,51 @@ export default function ProjectForm({
     setValue("technologies", updated);
   };
 
+  // Debounced search for simple-icons
+  useEffect(() => {
+    const searchIcons = async () => {
+      if (!iconSearchQuery.trim()) {
+        setIconSearchResults([]);
+        return;
+      }
+
+      setIsSearchingIcons(true);
+      try {
+        const res = await fetch(
+          `/api/admin/icons?q=${encodeURIComponent(iconSearchQuery)}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setIconSearchResults(data.icons || []);
+        } else {
+          setIconSearchResults([]);
+        }
+      } catch (error) {
+        console.error("Failed to search icons", error);
+        setIconSearchResults([]);
+      } finally {
+        setIsSearchingIcons(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      searchIcons();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [iconSearchQuery]);
+
+  const handleSelectSearchedIcon = (iconItem: {
+    name: string;
+    icon: string;
+    hex: string;
+  }) => {
+    setNewSkillName(iconItem.name);
+    setNewSkillIcon(iconItem.icon);
+    setShowIconDropdown(false);
+    setIconSearchQuery(""); // clear search
+  };
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit, onInvalid)}
@@ -765,51 +821,113 @@ export default function ProjectForm({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="space-y-2">
+                  {/* Search / Autocomplete Field */}
+                  <div className="space-y-2 relative">
                     <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-                      Teknoloji Adı
+                      Teknoloji Ara (Simple Icons)
                     </label>
-                    <input
-                      value={newSkillName}
-                      onChange={(e) => setNewSkillName(e.target.value)}
-                      placeholder="Örn: Bun, GraphQL, Rust"
-                      className="w-full p-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
-                    />
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        <Search size={14} />
+                      </div>
+                      <input
+                        value={iconSearchQuery}
+                        onChange={(e) => {
+                          setIconSearchQuery(e.target.value);
+                          setShowIconDropdown(true);
+                        }}
+                        onFocus={() => setShowIconDropdown(true)}
+                        onBlur={() => {
+                          // Allow click on dropdown items to register before hiding
+                          setTimeout(() => setShowIconDropdown(false), 200);
+                        }}
+                        placeholder="Örn: React, Tailwind, Supabase..."
+                        className="w-full py-2.5 pl-9 pr-10 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
+                      />
+                      {isSearchingIcons && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-primary">
+                          <Loader2 size={14} className="animate-spin" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Search Results Dropdown */}
+                    {showIconDropdown && iconSearchResults.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                        {iconSearchResults.map((result, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => handleSelectSearchedIcon(result)}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-muted cursor-pointer transition-colors border-b border-border/50 last:border-0"
+                          >
+                            <Image
+                              src={result.icon}
+                              alt={result.name}
+                              width={20}
+                              height={20}
+                              className="object-contain"
+                              unoptimized
+                            />
+                            <span className="text-sm font-medium">
+                              {result.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-                      İkon (Emoji veya URL)
-                    </label>
-                    <div className="flex gap-2">
-                      <div className="flex-1 relative group">
-                        <input
-                          value={newSkillIcon}
-                          onChange={(e) => setNewSkillIcon(e.target.value)}
-                          placeholder="🚀 veya https://..."
-                          className="w-full p-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all pr-10"
-                        />
-                        {newSkillIcon && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-card rounded pointer-events-none border border-border/50">
-                            <Icon src={newSkillIcon} alt="Preview" size={16} />
-                          </div>
-                        )}
-                      </div>
-                      <label className="p-2.5 cursor-pointer bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center min-w-[44px]">
-                        <ImagePlus size={18} />
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) =>
-                            handleImageUpload(
-                              e,
-                              (data) => setNewSkillIcon(data.url),
-                              "skills",
-                            )
-                          }
-                          accept="image/*"
-                        />
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                        Seçilen / Manuel İsim
                       </label>
+                      <input
+                        value={newSkillName}
+                        onChange={(e) => setNewSkillName(e.target.value)}
+                        placeholder="Örn: Bun"
+                        className="w-full p-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                        İkon (Emoji veya URL)
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative group">
+                          <input
+                            value={newSkillIcon}
+                            onChange={(e) => setNewSkillIcon(e.target.value)}
+                            placeholder="🚀 veya URL..."
+                            className="w-full px-2.5 py-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all pr-10"
+                          />
+                          {newSkillIcon && (
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-background rounded border border-border">
+                              <Icon
+                                src={newSkillIcon}
+                                alt="Preview"
+                                size={16}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <label className="p-2.5 cursor-pointer bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center min-w-[44px]">
+                          <ImagePlus size={18} />
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) =>
+                              handleImageUpload(
+                                e,
+                                (data) => setNewSkillIcon(data.url),
+                                "skills",
+                              )
+                            }
+                            accept="image/*"
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
 
@@ -1064,12 +1182,24 @@ export default function ProjectForm({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                Full Açıklama (Markdown/HTML)
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                <FileText size={12} /> Full Açıklama (HTML)
               </label>
-              <textarea
-                {...register(`translations.${lang}.fullDescription` as const)}
-                className="w-full p-3 bg-background rounded-lg border border-border h-64 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all font-mono text-sm"
+              <TipTapEditor
+                content={
+                  getValues(`translations.${lang}.fullDescription` as const) ||
+                  ""
+                }
+                onChange={(html) =>
+                  setValue(
+                    `translations.${lang}.fullDescription` as const,
+                    html,
+                    {
+                      shouldDirty: true,
+                    },
+                  )
+                }
+                uploadPath={`projects/${getValues("slug") || "temp"}`}
               />
             </div>
 

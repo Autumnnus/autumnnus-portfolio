@@ -26,13 +26,13 @@ export default function LanguageTabs({
   return (
     <div className="space-y-0">
       {/* Tabs Header */}
-      <div className="flex items-end gap-1 border-b border-border/50 px-2 pt-2">
+      <div className="flex items-end gap-1 border-b border-border/50 px-2 pt-2 overflow-x-auto custom-scrollbar pb-1">
         {activeLangs.map((lang) => (
           <button
             key={lang}
             type="button"
             onClick={() => setActiveTab(lang)}
-            className={`px-5 py-3 text-sm font-bold flex items-center gap-2 rounded-t-xl transition-all border-b-2 bg-background z-10 -mb-[2px] ${
+            className={`px-5 py-3 text-sm font-bold flex items-center gap-2 rounded-t-xl transition-all border-b-2 bg-background z-10 -mb-[2px] whitespace-nowrap shrink-0 ${
               currentTab === lang
                 ? "border-primary text-primary bg-muted/20"
                 : "border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground"

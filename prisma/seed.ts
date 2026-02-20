@@ -4,8 +4,8 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { Pool } from "pg";
-import { PROJECTS_BASE_DATA, SKILLS } from "../config/data";
 import { uploadFile } from "../lib/minio";
+import { PROJECTS_BASE_DATA, SKILLS } from "./seedData";
 
 dotenv.config();
 
