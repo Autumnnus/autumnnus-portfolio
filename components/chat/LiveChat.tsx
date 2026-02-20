@@ -1,10 +1,11 @@
 "use client";
 
+import { getProfile } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -17,10 +18,69 @@ export default function LiveChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
+  const [adminAvatar, setAdminAvatar] = useState<string>("");
+
   const pathname = usePathname();
 
   // Extract locale from pathname (e.g. /tr/blog -> tr)
-  const currentLocale = pathname.split("/")[1] || "en";
+  const pathnameParts = pathname.split("/");
+  const currentLocale = (
+    pathnameParts.length > 1 && pathnameParts[1] ? pathnameParts[1] : "en"
+  ) as
+    | "tr"
+    | "en"
+    | "de"
+    | "fr"
+    | "es"
+    | "it"
+    | "pt"
+    | "ru"
+    | "ja"
+    | "ko"
+    | "ar"
+    | "zh";
+
+  // Fetch Admin Profile for Avatar
+  useEffect(() => {
+    async function fetchAdminData() {
+      try {
+        const profile = await getProfile(currentLocale);
+        if (profile?.avatar) {
+          setAdminAvatar(profile.avatar);
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin avatar:", err);
+      }
+    }
+    fetchAdminData();
+  }, [currentLocale]);
+  const [guestEmail, setGuestEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Only access localStorage in the browser
+    const storedEmail = localStorage.getItem("commentAuthorEmail");
+    if (storedEmail) {
+      setGuestEmail(storedEmail);
+    }
+  }, []);
+
+  const adminEmail =
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL || "prostochasy@gmail.com";
+  const isAdmin = session?.user?.email === adminEmail;
+
+  // Use session email for admin. For regular users, session means nothing here since only admin logins
+  // But we'll fallback to guestEmail from localStorage (if they left a comment before).
+  const userEmail = isAdmin ? session?.user?.email : guestEmail;
+
+  const userImage = isAdmin
+    ? session?.user?.image ||
+      `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(userEmail!)}`
+    : userEmail
+      ? `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(userEmail)}`
+      : `https://api.dicebear.com/7.x/lorelei/svg?seed=guest`;
+
+  const aiImage = adminAvatar;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -107,17 +167,20 @@ export default function LiveChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-4 z-50 w-[350px] sm:w-[400px] h-[500px] bg-background border rounded-xl shadow-2xl flex flex-col overflow-hidden"
+            className="fixed bottom-24 right-4 z-50 w-[380px] sm:w-[450px] h-[600px] max-h-[85vh] bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl shadow-primary/5 flex flex-col overflow-hidden ring-1 ring-black/5 dark:ring-white/5"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-              <div className="flex items-center gap-2">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <Sparkles className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-between p-4 border-b border-border/50 bg-muted/30 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/10 p-2.5 rounded-full shadow-inner">
+                  <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm">{t("title")}</h3>
-                  <p className="text-[10px] text-muted-foreground">
+                  <h3 className="font-semibold text-sm tracking-tight">
+                    {t("title")}
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                     Powered by Gemini AI
                   </p>
                 </div>
@@ -125,7 +188,7 @@ export default function LiveChat() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 hover:bg-muted"
+                className="h-8 w-8 hover:bg-muted/50 rounded-full transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 <X className="w-4 h-4" />
@@ -133,32 +196,44 @@ export default function LiveChat() {
             </div>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="flex flex-col gap-4">
+            <div
+              className="flex-1 min-h-0 p-4 overflow-y-auto overflow-x-hidden custom-scrollbar overscroll-contain"
+              onWheelCapture={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col gap-4 min-h-min">
                 {messages.map((msg) => (
-                  <ChatMessage key={msg.id} message={msg} />
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg}
+                    userImage={userImage}
+                    aiImage={aiImage}
+                  />
                 ))}
-                {isLoading && <ChatLoading />}
+                {isLoading && <ChatLoading aiImage={aiImage} />}
                 <div ref={scrollRef} />
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit} className="p-4 border-t bg-muted/20">
-              <div className="flex gap-2">
+            <form
+              onSubmit={handleSubmit}
+              className="p-4 border-t border-border/50 bg-background/50 backdrop-blur-md"
+            >
+              <div className="flex gap-2 relative">
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={t("placeholder")}
-                  className="flex-1"
+                  className="flex-1 pr-12 rounded-full border-muted-foreground/20 focus-visible:ring-primary/50 bg-muted/20"
                   disabled={isLoading}
                 />
                 <Button
                   type="submit"
                   size="icon"
+                  className="absolute right-1 top-1 bottom-1 h-8 w-8 rounded-full shadow-sm transition-transform active:scale-95"
                   disabled={isLoading || !input.trim()}
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </form>
@@ -169,14 +244,34 @@ export default function LiveChat() {
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow"
+        className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all border border-primary/20"
       >
-        {isOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <MessageCircle className="h-6 w-6" />
-        )}
+        <AnimatePresence mode="wait">
+          {isOpen ? (
+            <motion.div
+              key="close"
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <X className="h-6 w-6" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="open"
+              initial={{ rotate: 90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: -90, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <MessageCircle className="h-6 w-6" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.button>
     </>
   );

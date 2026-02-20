@@ -1127,12 +1127,79 @@ export async function trackVisitor() {
 
       if (shouldNotify(totalUniqueVisitors)) {
         const baseUrl = getBaseUrl();
-        await sendTelegramNotification(
-          `🎉 <b>New Visitor Milestone!</b>\n\n` +
-            `👋 <b>Unique Visitor Count:</b> <code>${totalUniqueVisitors}</code>\n` +
-            `📍 <b>Last IP:</b> ${escapeHtml(ipAddress)}\n\n` +
-            `🔗 <a href="${baseUrl}">Autumnnus Portfolio</a>`,
-        );
+
+        type TierInfo = {
+          autumn: string;
+          winter: string;
+          icon: string;
+          desc: string;
+        };
+        const TIERS: Record<number, TierInfo> = {
+          100: {
+            autumn: "Amber",
+            winter: "Frozen Trail",
+            icon: "🍂",
+            desc: "İlk adımlar atıldı, yapraklar rüzgarla dans etmeye başladı.",
+          },
+          500: {
+            autumn: "Harvest Wind",
+            winter: "Blizzard",
+            icon: "🌪️",
+            desc: "Rüzgar hızlanıyor. Ziyaretçiler akın ediyor!",
+          },
+          1000: {
+            autumn: "Golden Oak",
+            winter: "Ice Crystal",
+            icon: "💎",
+            desc: "Binlerce kök salındı. Buz kristalleri kadar parlak bir kilometre taşı!",
+          },
+          2500: {
+            autumn: "Crimson Forest",
+            winter: "Aurora",
+            icon: "✨",
+            desc: "Orman kızıla büründü, gökyüzünü kuzey ışıkları aydınlatıyor. Ne muazzam bir kalabalık!",
+          },
+          5000: {
+            autumn: "Autumn Storm",
+            winter: "Glacier",
+            icon: "⚡",
+            desc: "Kudretli bir fırtına, görkemli bir buzul! Adeta durdurulamaz bir güç.",
+          },
+          10000: {
+            autumn: "Phoenix",
+            winter: "Polar Star",
+            icon: "🔥",
+            desc: "Küllerinden doğan bir anka, kutup yıldızı kadar parlak on bin ziyaretçi!",
+          },
+          25000: {
+            autumn: "Season Lord",
+            winter: "Eternal Winter",
+            icon: "👑",
+            desc: "Sen artık mevsimlerin efendisisin! Sonsuz kışın hükümdarlığı başlasın.",
+          },
+        };
+
+        const tier = TIERS[totalUniqueVisitors];
+        let telegramMessage = "";
+
+        if (tier) {
+          telegramMessage =
+            `🎉 <b>WOW! Yeni Bir Tier Kilidi Açıldı!</b> ${tier.icon}\n\n` +
+            `🍁 <b>Güz:</b> ${tier.autumn}\n` +
+            `❄️ <b>Kış:</b> ${tier.winter}\n\n` +
+            `<i>"${tier.desc}"</i>\n\n` +
+            `👥 <b>Toplam Ziyaretçi:</b> <code>${totalUniqueVisitors}</code>\n` +
+            `📍 <b>Son Gelen IP:</b> ${escapeHtml(ipAddress)}\n\n` +
+            `🔗 <a href="${baseUrl}">Portfolyoya Git</a>`;
+        } else {
+          telegramMessage =
+            `🎉 <b>Yeni Ziyaretçi Kilometre Taşı!</b>\n\n` +
+            `👋 <b>Toplam Ziyaretçi:</b> <code>${totalUniqueVisitors}</code>\n` +
+            `📍 <b>Son Gelen IP:</b> ${escapeHtml(ipAddress)}\n\n` +
+            `🔗 <a href="${baseUrl}">Portfolyoyu İncele</a>`;
+        }
+
+        await sendTelegramNotification(telegramMessage);
 
         await createAuditLog("VISITOR_MILESTONE", "SYSTEM", "GLOBAL", {
           milestone: totalUniqueVisitors,

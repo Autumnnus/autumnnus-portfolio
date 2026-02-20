@@ -4,6 +4,8 @@ import { searchSimilar } from "@/lib/vectordb";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
+import { auth } from "@/auth";
+
 const RATE_LIMIT_DAILY = 20;
 
 async function getClientIp(req: NextRequest): Promise<string> {
@@ -53,8 +55,17 @@ async function checkRateLimit(ip: string): Promise<boolean> {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    const isAdmin =
+      session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
     const ip = await getClientIp(req);
-    const isAllowed = await checkRateLimit(ip);
+
+    // Admins bypass rate limiting
+    let isAllowed = true;
+    if (!isAdmin) {
+      isAllowed = await checkRateLimit(ip);
+    }
 
     if (!isAllowed) {
       return NextResponse.json(
