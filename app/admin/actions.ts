@@ -625,3 +625,61 @@ export async function deleteCommentAction(id: string) {
     where: { id },
   });
 }
+
+export async function fetchGithubReposAction() {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const accessToken = (session as { accessToken?: string }).accessToken;
+  if (!accessToken) {
+    throw new Error(
+      "GitHub erişim token'ı bulunamadı. Lütfen GitHub ile tekrar giriş yapın (logout/login).",
+    );
+  }
+
+  try {
+    const res = await fetch(
+      "https://api.github.com/user/repos?sort=updated&per_page=100",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+        next: { revalidate: 0 },
+      },
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `GitHub Repoları alınamadı: ${res.status} ${res.statusText}`,
+      );
+    }
+
+    const repos = await res.json();
+    return repos.map(
+      (repo: {
+        id: number;
+        name: string;
+        description: string | null;
+        html_url: string;
+        homepage: string | null;
+        language: string | null;
+      }) => ({
+        id: repo.id,
+        name: repo.name,
+        description: repo.description,
+        html_url: repo.html_url,
+        homepage: repo.homepage,
+        language: repo.language,
+      }),
+    );
+  } catch (error) {
+    console.error("Github repos fetch error:", error);
+    throw new Error("GitHub istek hatası: " + (error as Error).message);
+  }
+}

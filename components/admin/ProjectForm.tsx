@@ -3,6 +3,7 @@
 import {
   createProjectAction,
   createSkillAction,
+  fetchGithubReposAction,
   ProjectData,
   updateProjectAction,
   uploadImageAction,
@@ -20,6 +21,7 @@ import { Language, Project, ProjectTranslation, Skill } from "@prisma/client";
 import {
   ChevronLeft,
   ChevronRight,
+  Github,
   ImagePlus,
   Loader2,
   Plus,
@@ -102,6 +104,63 @@ export default function ProjectForm({
   const [sourceLang, setSourceLang] = useState<string>("tr");
   const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
+
+  // GitHub Repos State
+  interface GithubRepo {
+    id: number;
+    name: string;
+    description: string | null;
+    html_url: string;
+    homepage: string | null;
+    language: string | null;
+  }
+  const [repos, setRepos] = useState<GithubRepo[]>([]);
+  const [isFetchingRepos, setIsFetchingRepos] = useState(false);
+  const [showRepoModal, setShowRepoModal] = useState(false);
+
+  const handleFetchRepos = async () => {
+    if (repos.length > 0) {
+      setShowRepoModal(true);
+      return;
+    }
+    setIsFetchingRepos(true);
+    try {
+      const fetchedRepos = await fetchGithubReposAction();
+      setRepos(fetchedRepos);
+      setShowRepoModal(true);
+    } catch (err: unknown) {
+      alert((err as Error).message || "Repolar alınırken hata oluştu.");
+    } finally {
+      setIsFetchingRepos(false);
+    }
+  };
+
+  const handleSelectRepo = (repo: GithubRepo) => {
+    const langs = ["tr", "en"];
+
+    langs.forEach((lang) => {
+      setValue(`translations.${lang}.title` as const, repo.name, {
+        shouldDirty: true,
+      });
+      if (repo.description) {
+        setValue(
+          `translations.${lang}.shortDescription` as const,
+          repo.description,
+          { shouldDirty: true },
+        );
+      }
+    });
+
+    setValue("github", repo.html_url, { shouldDirty: true });
+    if (repo.homepage) {
+      setValue("liveDemo", repo.homepage, { shouldDirty: true });
+    }
+    setValue("slug", repo.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), {
+      shouldDirty: true,
+    });
+
+    setShowRepoModal(false);
+  };
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(ProjectSchema) as any,
@@ -486,6 +545,69 @@ export default function ProjectForm({
           </ul>
         </div>
       )}
+
+      <div className="flex justify-between items-center bg-muted/30 p-5 border border-border rounded-xl">
+        <div>
+          <h2 className="text-lg font-bold">GitHub Repoları</h2>
+          <p className="text-xs text-muted-foreground">
+            GitHub&apos;dan projenizi seçerek bilgileri otomatik doldurun.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleFetchRepos}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-all text-sm"
+          disabled={isFetchingRepos}
+        >
+          {isFetchingRepos ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : (
+            <Github size={16} />
+          )}
+          {repos.length > 0 ? "Repoları Aç" : "GitHub&apos;dan Çek"}
+        </button>
+      </div>
+
+      {showRepoModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-card w-full max-w-2xl max-h-[80vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-border">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Github size={20} /> Repo Seç ({repos.length})
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowRepoModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 flex flex-col gap-3">
+              {repos.map((repo) => (
+                <div
+                  key={repo.id}
+                  className="p-4 border border-border rounded-lg bg-muted/20 hover:bg-muted/50 hover:border-primary/50 cursor-pointer transition-colors"
+                  onClick={() => handleSelectRepo(repo)}
+                >
+                  <div className="font-bold text-primary flex justify-between">
+                    <span>{repo.name}</span>
+                    <span className="text-xs text-muted-foreground bg-muted p-1 rounded font-normal">
+                      {repo.language || "Unknown"}
+                    </span>
+                  </div>
+                  {repo.description && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {repo.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="space-y-2">
