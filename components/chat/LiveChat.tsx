@@ -1,6 +1,7 @@
 "use client";
 
 import { getProfile } from "@/app/actions";
+import { type SourceItem } from "@/app/api/chat/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { AnimatePresence, motion } from "framer-motion";
@@ -124,6 +125,10 @@ export default function LiveChat() {
         body: JSON.stringify({
           message: userMessage.content,
           locale: currentLocale,
+          history: messages.slice(-10).map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
         }),
       });
 
@@ -136,11 +141,21 @@ export default function LiveChat() {
         throw new Error(data.error || t("errorMessage"));
       }
 
+      // Filter out sources that have already been shown in previous messages
+      const shownSourceUrls = new Set(
+        messages.flatMap((m) => m.sources ?? []).map((s) => s.url),
+      );
+
+      const uniqueSources = (data.sources ?? []).filter(
+        (s: SourceItem) => !shownSourceUrls.has(s.url),
+      );
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
         content: data.response,
         timestamp: new Date(),
+        sources: uniqueSources,
       };
 
       setMessages((prev) => [...prev, aiMessage]);

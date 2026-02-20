@@ -226,7 +226,7 @@ model Embedding {
   language   String   // tr, en (others fallback to en)
   chunkText  String
   chunkIndex Int
-  embedding  Unsupported("vector(768)")?
+  embedding  Unsupported("vector(3072)")?
   metadata   Json?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

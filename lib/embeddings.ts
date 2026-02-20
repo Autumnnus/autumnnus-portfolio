@@ -40,11 +40,11 @@ export async function processAndEmbed(
   sourceType: "blog" | "project" | "profile" | "experience",
   sourceId: string,
   language: string,
-  title: string,
+  header: string,
   description: string,
   content: string,
 ) {
-  const fullText = `Title: ${title}\nDescription: ${description}\nContent: ${content}`;
+  const fullText = `${header}\nDescription: ${description}\nContent: ${content}`;
   const chunks = chunkText(fullText);
 
   console.log(
@@ -85,14 +85,19 @@ export async function syncSingleContent(
       where: { id: sourceId },
       include: { translations: true },
     });
-    if (blog && blog.status === "published") {
+    if (blog) {
       for (const t of blog.translations) {
         if (t.language === Language.tr || t.language === Language.en) {
+          const header =
+            `[blog] Title: ${t.title}` +
+            ` | Slug: ${blog.slug}` +
+            (blog.category ? ` | Category: ${blog.category}` : "") +
+            (blog.tags?.length ? ` | Tags: ${blog.tags.join(", ")}` : "");
           await processAndEmbed(
             "blog",
             blog.id,
             t.language,
-            t.title,
+            header,
             t.description,
             t.content,
           );
@@ -102,16 +107,27 @@ export async function syncSingleContent(
   } else if (sourceType === "project") {
     const project = await prisma.project.findUnique({
       where: { id: sourceId },
-      include: { translations: true },
+      include: { translations: true, technologies: true },
     });
-    if (project && project.status === "Completed") {
+    if (project) {
       for (const t of project.translations) {
         if (t.language === Language.tr || t.language === Language.en) {
+          const techs = project.technologies
+            .map((tech) => tech.name)
+            .join(", ");
+          const header =
+            `[project] Title: ${t.title}` +
+            ` | Slug: ${project.slug}` +
+            ` | Category: ${project.category}` +
+            ` | Status: ${project.status}` +
+            (techs ? ` | Technologies: ${techs}` : "") +
+            (project.github ? ` | GitHub: ${project.github}` : "") +
+            (project.liveDemo ? ` | Live Demo: ${project.liveDemo}` : "");
           await processAndEmbed(
             "project",
             project.id,
             t.language,
-            t.title,
+            header,
             t.shortDescription,
             t.fullDescription,
           );
@@ -126,11 +142,17 @@ export async function syncSingleContent(
     if (profile) {
       for (const t of profile.translations) {
         if (t.language === Language.tr || t.language === Language.en) {
+          const header =
+            `[profile] Name: ${t.name}` +
+            ` | Title: ${t.title}` +
+            (profile.email ? ` | Email: ${profile.email}` : "") +
+            (profile.github ? ` | GitHub: ${profile.github}` : "") +
+            (profile.linkedin ? ` | LinkedIn: ${profile.linkedin}` : "");
           await processAndEmbed(
             "profile",
             profile.id,
             t.language,
-            t.name,
+            header,
             t.title,
             t.aboutDescription,
           );
@@ -145,11 +167,22 @@ export async function syncSingleContent(
     if (exp) {
       for (const t of exp.translations) {
         if (t.language === Language.tr || t.language === Language.en) {
+          const startDate = exp.startDate
+            ? exp.startDate.getFullYear().toString()
+            : "";
+          const endDate = exp.endDate
+            ? exp.endDate.getFullYear().toString()
+            : "Present";
+          const header =
+            `[experience] Company: ${exp.company}` +
+            ` | Role: ${t.role}` +
+            ` | Location Type: ${t.locationType}` +
+            (startDate ? ` | Period: ${startDate} - ${endDate}` : "");
           await processAndEmbed(
             "experience",
             exp.id,
             t.language,
-            t.role,
+            header,
             t.locationType,
             t.description,
           );
@@ -167,17 +200,21 @@ export async function syncAllContent() {
   // 1. Sync Blogs
   const blogs = await prisma.blogPost.findMany({
     include: { translations: true },
-    where: { status: "published" }, // Only published blogs
   });
 
   for (const blog of blogs) {
     for (const t of blog.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
+        const header =
+          `[blog] Title: ${t.title}` +
+          ` | Slug: ${blog.slug}` +
+          (blog.category ? ` | Category: ${blog.category}` : "") +
+          (blog.tags?.length ? ` | Tags: ${blog.tags.join(", ")}` : "");
         await processAndEmbed(
           "blog",
           blog.id,
           t.language,
-          t.title,
+          header,
           t.description,
           t.content,
         );
@@ -187,28 +224,26 @@ export async function syncAllContent() {
 
   // 2. Sync Projects
   const projects = await prisma.project.findMany({
-    include: {
-      translations: {
-        include: { project: { select: { technologies: true } } },
-      },
-    }, // technologies needed?
-    where: { status: "Completed" }, // Only completed projects? Or all. Let's do all.
+    include: { translations: true, technologies: true },
   });
 
   for (const project of projects) {
     for (const t of project.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
-        // Include tech stack in content
-        // const techs = project.technologies.map(t => t.name).join(", ");
-        // We need to fetch techs separately or include differently.
-        // Re-fetching project to get techs if not joined properly above.
-        // Actually relations are fine.
-        // Let's simplified process.
+        const techs = project.technologies.map((tech) => tech.name).join(", ");
+        const header =
+          `[project] Title: ${t.title}` +
+          ` | Slug: ${project.slug}` +
+          ` | Category: ${project.category}` +
+          ` | Status: ${project.status}` +
+          (techs ? ` | Technologies: ${techs}` : "") +
+          (project.github ? ` | GitHub: ${project.github}` : "") +
+          (project.liveDemo ? ` | Live Demo: ${project.liveDemo}` : "");
         await processAndEmbed(
           "project",
           project.id,
           t.language,
-          t.title,
+          header,
           t.shortDescription,
           t.fullDescription,
         );
@@ -224,11 +259,17 @@ export async function syncAllContent() {
   for (const profile of profiles) {
     for (const t of profile.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
+        const header =
+          `[profile] Name: ${t.name}` +
+          ` | Title: ${t.title}` +
+          (profile.email ? ` | Email: ${profile.email}` : "") +
+          (profile.github ? ` | GitHub: ${profile.github}` : "") +
+          (profile.linkedin ? ` | LinkedIn: ${profile.linkedin}` : "");
         await processAndEmbed(
           "profile",
           profile.id,
           t.language,
-          t.name,
+          header,
           t.title,
           t.aboutDescription,
         );
@@ -244,11 +285,22 @@ export async function syncAllContent() {
   for (const exp of experiences) {
     for (const t of exp.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
+        const startDate = exp.startDate
+          ? exp.startDate.getFullYear().toString()
+          : "";
+        const endDate = exp.endDate
+          ? exp.endDate.getFullYear().toString()
+          : "Present";
+        const header =
+          `[experience] Company: ${exp.company}` +
+          ` | Role: ${t.role}` +
+          ` | Location Type: ${t.locationType}` +
+          (startDate ? ` | Period: ${startDate} - ${endDate}` : "");
         await processAndEmbed(
           "experience",
           exp.id,
           t.language,
-          t.role,
+          header,
           t.locationType,
           t.description,
         );

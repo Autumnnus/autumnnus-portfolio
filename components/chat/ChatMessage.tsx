@@ -1,10 +1,12 @@
 "use client";
 
+import { type SourceItem } from "@/app/api/chat/route";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Sparkles, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { SourceList } from "./SourceCard";
 
 export type MessageRole = "user" | "ai";
 
@@ -13,6 +15,7 @@ export interface Message {
   role: MessageRole;
   content: string;
   timestamp: Date;
+  sources?: SourceItem[];
 }
 
 interface ChatMessageProps {
@@ -36,7 +39,7 @@ export function ChatMessage({ message, userImage, aiImage }: ChatMessageProps) {
         damping: 20,
       }}
       className={cn(
-        "flex w-full gap-3 p-2 items-start", // Change: items-start for alignment
+        "flex w-full gap-3 p-2 items-start",
         isUser ? "flex-row-reverse" : "flex-row",
       )}
     >
@@ -60,15 +63,20 @@ export function ChatMessage({ message, userImage, aiImage }: ChatMessageProps) {
 
       <div
         className={cn(
-          "flex max-w-[85%] flex-col gap-1 rounded-2xl px-4 py-2.5 text-sm shadow-sm transition-colors",
+          "flex flex-col gap-1 rounded-2xl px-4 py-2.5 text-sm shadow-sm transition-colors",
           isUser
-            ? "bg-primary text-primary-foreground rounded-tr-sm" // Adjusted: matching bubble tail orientation
-            : "bg-muted/80 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm shadow-inner",
+            ? "max-w-[85%] bg-primary text-primary-foreground rounded-tr-sm"
+            : "w-full max-w-[85%] bg-muted/80 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm shadow-inner",
         )}
       >
-        <div className="prose prose-sm dark:prose-invert break-words max-w-none prose-p:leading-relaxed prose-pre:bg-black/10 dark:prose-pre:bg-white/10 prose-pre:rounded-lg">
+        <div className="prose prose-sm dark:prose-invert wrap-break-word max-w-none prose-p:leading-relaxed prose-pre:bg-black/10 dark:prose-pre:bg-white/10 prose-pre:rounded-lg">
           <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
+
+        {!isUser && message.sources && message.sources.length > 0 && (
+          <SourceList sources={message.sources} />
+        )}
+
         <span className="text-[10px] opacity-70 self-end font-medium mt-1">
           {message.timestamp.toLocaleTimeString([], {
             hour: "2-digit",
