@@ -7,7 +7,7 @@ import CommentSection from "@/components/interactive/CommentSection";
 import LikeButton from "@/components/interactive/LikeButton";
 import ViewCounter from "@/components/interactive/ViewCounter";
 import JsonLd from "@/components/seo/JsonLd";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/badge";
 import { BlogPost } from "@/types/contents";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { useTranslations } from "next-intl";

@@ -3,7 +3,7 @@
 import { Project } from "@/types/contents";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Badge } from "../ui/Badge";
+import { Badge } from "../ui/badge";
 
 interface RelatedProjectCardProps {
   project: Project;

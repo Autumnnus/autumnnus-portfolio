@@ -164,6 +164,7 @@ model Profile {
   email        String
   github       String
   linkedin     String
+  updatedAt    DateTime             @updatedAt
   translations ProfileTranslation[]
 }
 

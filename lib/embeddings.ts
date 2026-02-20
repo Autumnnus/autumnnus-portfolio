@@ -1,6 +1,6 @@
 import { getEmbeddingModel } from "@/lib/gemini";
 import { prisma } from "@/lib/prisma";
-import { upsertEmbedding } from "@/lib/vectordb";
+import { deleteEmbeddingsBySource, upsertEmbedding } from "@/lib/vectordb";
 import { Language } from "@prisma/client";
 
 const MAX_CHUNK_SIZE = 1000;
@@ -36,7 +36,7 @@ export function chunkText(
   return chunks;
 }
 
-async function processAndEmbed(
+export async function processAndEmbed(
   sourceType: "blog" | "project" | "profile" | "experience",
   sourceId: string,
   language: string,
@@ -70,6 +70,95 @@ async function processAndEmbed(
       );
     }
   }
+}
+
+export async function syncSingleContent(
+  sourceType: "blog" | "project" | "profile" | "experience",
+  sourceId: string,
+) {
+  console.log(`Starting single content sync for ${sourceType} ${sourceId}...`);
+
+  await deleteEmbeddingsBySource(sourceType, sourceId);
+
+  if (sourceType === "blog") {
+    const blog = await prisma.blogPost.findUnique({
+      where: { id: sourceId },
+      include: { translations: true },
+    });
+    if (blog && blog.status === "published") {
+      for (const t of blog.translations) {
+        if (t.language === Language.tr || t.language === Language.en) {
+          await processAndEmbed(
+            "blog",
+            blog.id,
+            t.language,
+            t.title,
+            t.description,
+            t.content,
+          );
+        }
+      }
+    }
+  } else if (sourceType === "project") {
+    const project = await prisma.project.findUnique({
+      where: { id: sourceId },
+      include: { translations: true },
+    });
+    if (project && project.status === "Completed") {
+      for (const t of project.translations) {
+        if (t.language === Language.tr || t.language === Language.en) {
+          await processAndEmbed(
+            "project",
+            project.id,
+            t.language,
+            t.title,
+            t.shortDescription,
+            t.fullDescription,
+          );
+        }
+      }
+    }
+  } else if (sourceType === "profile") {
+    const profile = await prisma.profile.findUnique({
+      where: { id: sourceId },
+      include: { translations: true },
+    });
+    if (profile) {
+      for (const t of profile.translations) {
+        if (t.language === Language.tr || t.language === Language.en) {
+          await processAndEmbed(
+            "profile",
+            profile.id,
+            t.language,
+            t.name,
+            t.title,
+            t.aboutDescription,
+          );
+        }
+      }
+    }
+  } else if (sourceType === "experience") {
+    const exp = await prisma.workExperience.findUnique({
+      where: { id: sourceId },
+      include: { translations: true },
+    });
+    if (exp) {
+      for (const t of exp.translations) {
+        if (t.language === Language.tr || t.language === Language.en) {
+          await processAndEmbed(
+            "experience",
+            exp.id,
+            t.language,
+            t.role,
+            t.locationType,
+            t.description,
+          );
+        }
+      }
+    }
+  }
+
+  console.log(`Finished single content sync for ${sourceType} ${sourceId}`);
 }
 
 export async function syncAllContent() {
