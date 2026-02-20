@@ -27,7 +27,10 @@
   "GitHub": {
     "title": "Code Contributions",
     "subTitle": "Activity",
-    "activityTitle": "GitHub Activity"
+    "activityTitle": "GitHub Activity",
+    "tooltip": "{countText} on {date}",
+    "noContributions": "No contributions",
+    "contributionCount": "{count, plural, one {# contribution} other {# contributions}}"
   },
   "Projects": {
     "title": "Featured Projects",

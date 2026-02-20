@@ -27,7 +27,10 @@
   "GitHub": {
     "title": "Kod Katkıları",
     "subTitle": "Aktivite",
-    "activityTitle": "GitHub Aktivitesi"
+    "activityTitle": "GitHub Aktivitesi",
+    "tooltip": "{countText} {date} tarihinde",
+    "noContributions": "Katkı yok",
+    "contributionCount": "{count} katkı"
   },
   "Projects": {
     "title": "Öne Çıkan Projeler",

@@ -1,8 +1,10 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityCalendar } from "react-activity-calendar";
+import { Tooltip as ReactTooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
 import FadeIn from "../common/FadeIn";
 
 interface GitHubCalendarProps {
@@ -10,16 +12,17 @@ interface GitHubCalendarProps {
 }
 
 import { Leaf, Snowflake } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import SectionHeading from "../common/SectionHeading";
 
 export default function GitHubCalendar({
   username = "Autumnnus",
 }: GitHubCalendarProps) {
-  const t = useTranslations("GitHub");
+  const t = useTranslations();
   const { resolvedTheme } = useTheme();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const format = useFormatter();
 
   useEffect(() => {
     if (!username) {
@@ -70,7 +73,10 @@ export default function GitHubCalendar({
         </div>
       ) : (
         <>
-          <SectionHeading subHeading={t("subTitle")} heading={t("title")} />
+          <SectionHeading
+            subHeading={t("GitHub.subTitle")}
+            heading={t("GitHub.title")}
+          />
           <FadeIn delay={0.2}>
             <div className="border border-border/50 p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all">
               <div className="flex items-center gap-2 mb-4">
@@ -81,10 +87,12 @@ export default function GitHubCalendar({
                     <Leaf className="w-6 h-6 text-primary" />
                   )}
                 </span>
-                <h3 className="text-lg font-bold">{t("activityTitle")}</h3>
+                <h3 className="text-lg font-bold">
+                  {t("GitHub.activityTitle")}
+                </h3>
               </div>
 
-              <div className="overflow-x-auto pb-2">
+              <div className="overflow-x-auto pb-2 relative">
                 <ActivityCalendar
                   data={data}
                   theme={theme}
@@ -93,6 +101,42 @@ export default function GitHubCalendar({
                   blockMargin={4}
                   fontSize={12}
                   showWeekdayLabels
+                  renderBlock={(block, activity) => {
+                    const countText =
+                      activity.count === 0
+                        ? t("GitHub.noContributions")
+                        : t("GitHub.contributionCount", {
+                            count: activity.count,
+                          });
+
+                    const dateText = format.dateTime(new Date(activity.date), {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    });
+
+                    const tooltipHtml = t("GitHub.tooltip", {
+                      countText: "[[COUNT]]",
+                      date: dateText,
+                    }).replace("[[COUNT]]", `<strong>${countText}</strong>`);
+
+                    return React.cloneElement(
+                      block as React.ReactElement<Record<string, string>>,
+                      {
+                        "data-tooltip-id": "gh-calendar-tooltip",
+                        "data-tooltip-html": tooltipHtml,
+                      },
+                    );
+                  }}
+                />
+                <ReactTooltip
+                  id="gh-calendar-tooltip"
+                  className="z-50 shadow-md rounded-md! px-3! py-2! text-xs! font-medium!"
+                  style={{
+                    backgroundColor: "var(--popover)",
+                    color: "var(--popover-foreground)",
+                    border: "1px solid var(--border)",
+                  }}
                 />
               </div>
             </div>

@@ -360,38 +360,86 @@ function seededRandom(seed: number): number {
   return x - Math.floor(x);
 }
 
-// -- Confetti Component --
-function ConfettiExplosion() {
-  const particles = useMemo(() => Array.from({ length: 20 }), []);
+// -- Thematic Explosion Component --
+function ThematicExplosion({
+  tier,
+  isWinter,
+}: {
+  tier: BadgeTier;
+  isWinter: boolean;
+}) {
+  const particles = useMemo(() => Array.from({ length: 25 }), []);
+  const TierIcon = tier.icon;
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-md z-50">
+      {/* Core Explosion Glow */}
+      <motion.div
+        className="absolute left-1/2 top-1/4 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+        style={{ background: tier.gradient, width: 120, height: 120 }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: [0, 0.7, 0], scale: [0.5, 1.5, 2] }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      />
+
       {particles.map((_, i) => {
-        const randomX = seededRandom(i) * 200 - 100;
-        const randomY = seededRandom(i + 10) * -150 - 50;
-        const color = ["#f59e0b", "#ec4899", "#3b82f6", "#10b981", "#ef4444"][
-          i % 5
-        ];
+        // Create an organic explosion pattern
+        const angle = seededRandom(i) * Math.PI * 2;
+        const velocity = 60 + seededRandom(i + 1) * 120;
+        const randomX = Math.cos(angle) * velocity;
+        const randomY = Math.sin(angle) * velocity + 40; // slight gravity effect
+
+        const randomScale = 0.5 + seededRandom(i + 2) * 1;
+        const initialRotate = seededRandom(i + 3) * 360;
+        const rotateAmount =
+          (seededRandom(i + 4) > 0.5 ? 1 : -1) * (180 + seededRandom(i) * 180);
+
+        const particleType = i % 3; // 0: Tier Icon, 1: Theme Icon (Leaf/Snowflake), 2: Sparkle/Dot
 
         return (
           <motion.div
             key={i}
-            className="absolute left-1/2 top-3/4 w-2 h-2 rounded-full"
-            style={{ backgroundColor: color }}
-            initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
-            animate={{
+            className="absolute left-1/2 top-1/4 flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
+            style={{ color: tier.particleColor }}
+            initial={{
               opacity: 0,
+              x: 0,
+              y: 0,
+              scale: 0,
+              rotate: initialRotate,
+            }}
+            animate={{
+              opacity: [0, 1, 1, 0],
               x: randomX,
               y: randomY,
-              scale: [0, 1.5, 0],
-              rotate: seededRandom(i + 20) * 360,
+              scale: [0, randomScale, randomScale * 0.8],
+              rotate: initialRotate + rotateAmount,
             }}
             transition={{
-              duration: 1.5,
-              ease: "easeOut",
-              delay: 0.1,
+              duration: 1.5 + seededRandom(i) * 1,
+              ease: [0.25, 1, 0.5, 1],
             }}
-          />
+          >
+            {particleType === 0 ? (
+              <TierIcon size={12 + seededRandom(i) * 8} />
+            ) : particleType === 1 ? (
+              isWinter ? (
+                <Snowflake size={10 + seededRandom(i) * 8} />
+              ) : (
+                <Leaf size={10 + seededRandom(i) * 8} />
+              )
+            ) : (
+              <div
+                className="rounded-full blur-[1px]"
+                style={{
+                  backgroundColor: tier.particleColor,
+                  width: 6 + seededRandom(i) * 4,
+                  height: 6 + seededRandom(i) * 4,
+                  boxShadow: `0 0 ${10 + seededRandom(i) * 10}px ${tier.glowColor}`,
+                }}
+              />
+            )}
+          </motion.div>
         );
       })}
     </div>
@@ -676,7 +724,14 @@ export default function VisitorBadgeClient({
         sideOffset={10}
         onWheel={(e) => e.stopPropagation()}
       >
-        <AnimatePresence>{isOpen && <ConfettiExplosion />}</AnimatePresence>
+        <AnimatePresence>
+          {isOpen && (
+            <ThematicExplosion
+              tier={tier}
+              isWinter={resolvedTheme === "dark"}
+            />
+          )}
+        </AnimatePresence>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 10 }}
