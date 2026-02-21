@@ -57,19 +57,11 @@ _Note: Make sure the containers are running successfully using Docker Desktop or
 Since you just set up the database locally, you need to push the project schemas to the SQL database and generate the Prisma Client for the application:
 
 ```bash
-yarn prisma generate
-yarn prisma db push
+yarn db:generate
+yarn db:push
 ```
 
-### 6. Seed the Database (Optional)
-
-If you want to populate the database with basic default projects, skills, or profile data when trying the project for the first time:
-
-```bash
-yarn seed
-```
-
-### 7. Run the Project
+### 6. Run the Project
 
 Once all the steps are complete, you can start the Next.js development server:
 
@@ -78,3 +70,15 @@ yarn dev
 ```
 
 You're all set! 🎉 You can now view your portfolio by navigating to `http://localhost:3001`.
+
+## Useful Prisma Commands
+
+When you make changes to `prisma/schema.prisma`, use these commands:
+
+| Command            | Description                                                               |
+| ------------------ | ------------------------------------------------------------------------- |
+| `yarn db:push`     | Syncs schema changes directly to the DB without migrations (Development). |
+| `yarn db:migrate`  | Creates a migration file and applies it (Production/Stable changes).      |
+| `yarn db:generate` | Regenerates the Prisma Client (Run this if types are missing).            |
+| `yarn db:studio`   | Opens a web browser GUI to view/edit your database data.                  |
+| `yarn db:validate` | Checks if your `schema.prisma` file is valid.                             |
