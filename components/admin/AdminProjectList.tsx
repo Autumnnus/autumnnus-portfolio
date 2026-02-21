@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteProjectAction } from "@/app/admin/actions";
+import { deleteProjectAction } from "@/app/[locale]/admin/actions";
 import { Link } from "@/i18n/routing";
 import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

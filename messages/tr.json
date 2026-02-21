@@ -114,8 +114,8 @@
     }
   },
   "Chat": {
-    "title": "AutumnAI",
-    "greeting": "Merhaba! Ben AutumnAI. Kadir'in çalışmaları hakkında size nasıl yardımcı olabilirim?",
+    "title": "AutumnusAI",
+    "online": "Çevrimiçi",
     "placeholder": "Bir soru sorun...",
     "newChat": "Yeni Sohbet",
     "rateLimitMessage": "Günlük mesaj limitine ulaşıldı. Lütfen yarın tekrar deneyin.",
@@ -142,6 +142,11 @@
         "description": "Kişisel bilgilerini, avatarını ve hakkımda yazılarını güncelle.",
         "edit": "Düzenle"
       },
+      "livechat": {
+        "title": "Live Chat",
+        "description": "Chat davranışını ve karşılama mesajlarını yönetin.",
+        "manage": "Yönet"
+      },
       "experience": {
         "title": "Deneyimler",
         "description": "İş deneyimlerini ve çalışma geçmişini yönet.",
@@ -157,6 +162,7 @@
       "experience": "Deneyim",
       "profile": "Profil",
       "embeddings": "Vektör Veri",
+      "liveChat": "Live Chat",
       "signOut": "Çıkış Yap"
     },
     "Database": {
@@ -366,7 +372,6 @@
     "forks": "Forklar",
     "created": "Oluşturulma",
     "lastUpdated": "Son Güncelleme",
-    "poweredBy": "Gemini AI tarafından desteklenmektedir",
     "allSystemsOperational": "Tüm Sistemler Çalışıyor",
     "githubStats": "GitHub İstatistikleri",
     "more": "{count} daha",

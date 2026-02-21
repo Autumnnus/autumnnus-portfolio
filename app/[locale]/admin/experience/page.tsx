@@ -1,4 +1,4 @@
-import { deleteExperienceAction } from "@/app/admin/actions";
+import { deleteExperienceAction } from "@/app/[locale]/admin/actions";
 import { auth } from "@/auth";
 import Container from "@/components/common/Container";
 import { prisma } from "@/lib/prisma";

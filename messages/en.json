@@ -114,8 +114,8 @@
     }
   },
   "Chat": {
-    "title": "AutumnAI",
-    "greeting": "Hello! I'm AutumnAI. How can I assist you today about Kadir's work?",
+    "title": "AutumnusAI",
+    "online": "Online",
     "placeholder": "Ask a question...",
     "newChat": "New Chat",
     "rateLimitMessage": "Daily message limit reached. Please try again tomorrow.",
@@ -142,6 +142,11 @@
         "description": "Update personal info, avatar, and about me sections.",
         "edit": "Edit"
       },
+      "livechat": {
+        "title": "Live Chat",
+        "description": "Manage chat behavior and greeting messages.",
+        "manage": "Manage"
+      },
       "experience": {
         "title": "Experience",
         "description": "Manage work experience and professional history.",
@@ -157,6 +162,7 @@
       "experience": "Experience",
       "profile": "Profile",
       "embeddings": "Embeddings",
+      "liveChat": "Live Chat",
       "signOut": "Sign Out"
     },
     "Database": {
@@ -366,7 +372,6 @@
     "forks": "Forks",
     "created": "Created",
     "lastUpdated": "Last Updated",
-    "poweredBy": "Powered by Gemini AI",
     "allSystemsOperational": "All Systems Operational",
     "githubStats": "GitHub Stats",
     "more": "{count} more",

@@ -52,14 +52,26 @@ docker-compose up -d
 
 _Note: Make sure the containers are running successfully using Docker Desktop or the `docker ps` command._
 
-### 5. Push Prisma Schema and Generate Client
+### 5. Setup Database Schema and Seed Data
 
-Since you just set up the database locally, you need to push the project schemas to the SQL database and generate the Prisma Client for the application:
+Since you just set up the database locally, you need to push the project schemas to the SQL database, generate the Prisma Client, and populate essential data (like your Profile and Chat settings):
 
 ```bash
+# Generate Prisma Client
 yarn db:generate
+
+# Push schema to database
+# Note: If this fails with "vector extension" error,
+# make sure the pgvector extension is enabled in your DB.
 yarn db:push
+
+# Populate initial data (Profile, Live Chat config, etc.)
+npx prisma db seed
 ```
+
+> [!IMPORTANT]
+> If `db:push` fails with a "vector type does not exist" error, run this command to enable it:
+> `docker exec autumnnus_postgres psql -U postgres -d autumnnus_portfolio -c "CREATE EXTENSION IF NOT EXISTS vector;"`
 
 ### 6. Run the Project
 
@@ -75,10 +87,11 @@ You're all set! 🎉 You can now view your portfolio by navigating to `http://lo
 
 When you make changes to `prisma/schema.prisma`, use these commands:
 
-| Command            | Description                                                               |
-| ------------------ | ------------------------------------------------------------------------- |
-| `yarn db:push`     | Syncs schema changes directly to the DB without migrations (Development). |
-| `yarn db:migrate`  | Creates a migration file and applies it (Production/Stable changes).      |
-| `yarn db:generate` | Regenerates the Prisma Client (Run this if types are missing).            |
-| `yarn db:studio`   | Opens a web browser GUI to view/edit your database data.                  |
-| `yarn db:validate` | Checks if your `schema.prisma` file is valid.                             |
+| Command              | Description                                                               |
+| -------------------- | ------------------------------------------------------------------------- |
+| `yarn db:push`       | Syncs schema changes directly to the DB without migrations (Development). |
+| `yarn db:migrate`    | Creates a migration file and applies it (Production/Stable changes).      |
+| `yarn db:generate`   | Regenerates the Prisma Client (Run this if types are missing).            |
+| `yarn db:studio`     | Opens a web browser GUI to view/edit your database data.                  |
+| `yarn db:validate`   | Checks if your `schema.prisma` file is valid.                             |
+| `npx prisma db seed` | Populates the database with initial data (Profile, Settings, etc.).       |

@@ -115,6 +115,25 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
+        {/* Live Chat Yönetimi */}
+        <div className="p-8 bg-card border border-border rounded-xl space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500/10 rounded-lg">
+              <Plus className="w-8 h-8 text-green-500" />
+            </div>
+            <h2 className="text-2xl font-bold">{t("livechat.title")}</h2>
+          </div>
+          <p className="text-muted-foreground">{t("livechat.description")}</p>
+          <div className="flex gap-4">
+            <Link
+              href="/admin/livechat"
+              className="px-6 py-2 bg-green-500 text-white rounded-lg font-medium hover:opacity-90 transition-all"
+            >
+              {t("livechat.manage")}
+            </Link>
+          </div>
+        </div>
+
         {/* Veritabanı Yönetimi */}
         <DatabaseManagement />
       </div>

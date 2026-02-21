@@ -264,3 +264,32 @@ model ChatRateLimit {
 
   @@unique([ipAddress, date])
 }
+
+model LiveChatConfig {
+  id                   String             @id @default(uuid())
+  isEnabled            Boolean            @default(true)
+  allowedPaths         String[]           @default([]) // Empty means all if configured
+  excludedPaths        String[]           @default([]) // Paths where the widget should NEVER appear
+  pingSoundUrl        String?            // Custom URL or null for default
+  notificationSoundUrl String?            // Custom URL or null for default
+  greetings            LiveChatGreeting[]
+  updatedAt            DateTime           @updatedAt
+}
+
+model LiveChatGreeting {
+  id           String                        @id @default(uuid())
+  pathname     String                        @unique // e.g. "/", "/blog"
+  configId     String
+  config       LiveChatConfig                @relation(fields: [configId], references: [id], onDelete: Cascade)
+  translations LiveChatGreetingTranslation[]
+}
+
+model LiveChatGreetingTranslation {
+  id         String           @id @default(uuid())
+  language   Language
+  text       String
+  greetingId String
+  greeting   LiveChatGreeting @relation(fields: [greetingId], references: [id], onDelete: Cascade)
+
+  @@unique([greetingId, language])
+}

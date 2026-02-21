@@ -4,7 +4,7 @@ import {
   createExperienceAction,
   updateExperienceAction,
   uploadImageAction,
-} from "@/app/admin/actions";
+} from "@/app/[locale]/admin/actions";
 import { generateTranslationAction } from "@/app/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";

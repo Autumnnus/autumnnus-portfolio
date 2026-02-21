@@ -3,7 +3,7 @@ import {
   ExperienceData,
   ProfileData,
   ProjectData,
-} from "@/app/admin/actions";
+} from "@/app/[locale]/admin/actions";
 import { auth } from "@/auth";
 import { uploadFile } from "@/lib/minio";
 import { prisma } from "@/lib/prisma";

@@ -7,7 +7,7 @@ import {
   ProjectData,
   updateProjectAction,
   uploadImageAction,
-} from "@/app/admin/actions";
+} from "@/app/[locale]/admin/actions";
 import {
   generateTranslationAction,
   ProjectContent,

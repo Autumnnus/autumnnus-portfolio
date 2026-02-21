@@ -5,7 +5,7 @@ import {
   createBlogAction,
   updateBlogAction,
   uploadImageAction,
-} from "@/app/admin/actions";
+} from "@/app/[locale]/admin/actions";
 import { BlogContent, generateTranslationAction } from "@/app/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";

@@ -1,6 +1,6 @@
 "use client";
 
-import { uploadImageAction } from "@/app/admin/actions";
+import { uploadImageAction } from "@/app/[locale]/admin/actions";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";

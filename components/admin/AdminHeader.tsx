@@ -58,6 +58,12 @@ export default function AdminHeader() {
           >
             {t("embeddings")}
           </Link>
+          <Link
+            href="/admin/livechat"
+            className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1"
+          >
+            {t("liveChat")}
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">
