@@ -4,6 +4,7 @@ import Icon from "@/components/common/Icon";
 import { Project } from "@/types/contents";
 import { motion } from "framer-motion";
 import { ExternalLink, Github } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,6 +16,7 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
+  const t = useTranslations("Common");
   const getStatusColor = (status: Project["status"]) => {
     switch (status) {
       case "Completed":
@@ -136,7 +138,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
         {/* Technologies */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Technologies
+            {t("technologies")}
           </p>
           <div className="flex flex-wrap gap-2">
             {visibleTechs.map((tech) => (
@@ -168,7 +170,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
               {project.status === "Working"
-                ? "All Systems Operational"
+                ? t("allSystemsOperational")
                 : project.status}
             </span>
           </div>
@@ -177,7 +179,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
             href={`/projects/${project.slug}`}
             className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
           >
-            Details
+            {t("details")}
             <span>→</span>
           </Link>
         </div>

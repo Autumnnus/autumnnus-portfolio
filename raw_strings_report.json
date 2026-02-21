@@ -1,0 +1,457 @@
+[
+  {
+    "file": "/app/[locale]/loading.tsx",
+    "texts": [
+      "Loading"
+    ]
+  },
+  {
+    "file": "/app/admin/page.tsx",
+    "texts": [
+      "Admin Dashboard",
+      "Hoş geldin,",
+      "Projeler",
+      "Yeni projeler ekle, mevcutları düzenle veya sil.",
+      "Yönet",
+      "Yeni Ekle",
+      "Blog Yazıları",
+      "Düşüncelerini ve teknik yazılarını paylaş.",
+      "Yönet",
+      "Yeni Ekle",
+      "Profil & Hakkımda",
+      "Kişisel bilgilerini, avatarını ve hakkımda yazılarını güncelle.",
+      "Düzenle",
+      "Deneyimler",
+      "İş deneyimlerini ve çalışma geçmişini yönet.",
+      "Yönet",
+      "Yeni Ekle"
+    ]
+  },
+  {
+    "file": "/components/admin/AdminBlogList.tsx",
+    "texts": [
+      "Başlık",
+      "Aksiyonlar",
+      "Henüz yazı eklenmemiş."
+    ]
+  },
+  {
+    "file": "/components/admin/AdminHeader.tsx",
+    "texts": [
+      "Ana Sayfaya Dön",
+      "Admin Panel",
+      "Projects",
+      "Blog",
+      "Experience",
+      "Profile",
+      "Embeddings",
+      "Çıkış Yap"
+    ]
+  },
+  {
+    "file": "/components/admin/AdminProjectList.tsx",
+    "texts": [
+      "Proje",
+      "Durum",
+      "Kategori",
+      "Aksiyonlar",
+      "Henüz proje eklenmemiş."
+    ]
+  },
+  {
+    "file": "/components/admin/AdminSidebar.tsx",
+    "texts": [
+      "Admin",
+      "Panel",
+      "Sign Out"
+    ]
+  },
+  {
+    "file": "/components/admin/BlogForm.tsx",
+    "texts": [
+      "Lütfen formdaki hataları düzeltiniz:",
+      "İçerik Hatası:",
+      "Slug (URL)",
+      "Kategori",
+      "Durum",
+      "Taslak",
+      "Yayınlandı",
+      "Öne Çıkar",
+      "Yorumlar Açık",
+      "Kapak Görseli",
+      "Resim Yükle",
+      "Görsel Alt Metni (SEO)",
+      "Kaynak Dil:",
+      "Seçilen Dillerde Çevir",
+      "Kaynak dildeki alanları doldurduktan sonra, en az bir hedef dil seçip\n          çeviri yapabilirsiniz.",
+      "Başlık",
+      "Okuma Süresi",
+      "SEO Meta Açıklama",
+      "İçerik (HTML)",
+      "Ek SEO Alanları",
+      "SEO Meta Başlık",
+      "Anahtar Kelimeler",
+      "Özet (Excerpt)",
+      "İptal",
+      "Yazıyı\n          Kaydet"
+    ]
+  },
+  {
+    "file": "/components/admin/DatabaseManagement.tsx",
+    "texts": [
+      "Tam Yedekleme Yönetimi",
+      "Tüm veri tabanını ve MinIO&apos;daki tüm resimleri ZIP olarak\n            yedekle/geri yükle.",
+      "Tam Yedek Al (ZIP)",
+      "JSON + Resimler",
+      "Yedeği Geri Yükle",
+      "ZIP dosyasından yükle",
+      "⚠️ İçe aktarma işlemi mevcut verileri silecektir. İşlem dosya boyutuna\n        göre sürebilir."
+    ]
+  },
+  {
+    "file": "/components/admin/ExperienceForm.tsx",
+    "texts": [
+      "Şirket Logosu",
+      "Logo Seç",
+      "Şirket Adı",
+      "Başlangıç Tarihi",
+      "Bitiş Tarihi",
+      "Devam ediyorsa boş bırakın",
+      "Kaynak Dil:",
+      "Kaynak dildeki içeriği doldurduktan sonra, diğer dile otomatik\n            çeviri yapabilirsiniz.",
+      "AI ile Çevir (",
+      "Pozisyon",
+      "Çalışma Şekli",
+      "Açıklama (Markdown)",
+      "İptal",
+      "Deneyimi\n          Kaydet"
+    ]
+  },
+  {
+    "file": "/components/admin/LanguageTabs.tsx",
+    "texts": [
+      "Kaynak"
+    ]
+  },
+  {
+    "file": "/components/admin/MultiLanguageSelector.tsx",
+    "texts": [
+      "Hedef Diller:",
+      "Tümünü Seç",
+      "Temizle"
+    ]
+  },
+  {
+    "file": "/components/admin/ProfileForm.tsx",
+    "texts": [
+      "Profil Resmi Yükle",
+      "Profil Fotoğrafı",
+      "İmajınızı yönetin. Önerilen boyut 400x400px.",
+      "Email Adresi",
+      "GitHub Profili",
+      "LinkedIn Profili",
+      "Kaynak Dil:",
+      "Seçilen Dillerde Çevir",
+      "İsim",
+      "Unvan",
+      "Karşılama Metni",
+      "Hero Açıklama",
+      "Hakkımda Başlık",
+      "Hakkımda Detay",
+      "Değişiklikleri Yayınla"
+    ]
+  },
+  {
+    "file": "/components/admin/ProjectForm.tsx",
+    "texts": [
+      "Lütfen formdaki hataları düzeltiniz:",
+      "İçerik Hatası:",
+      "GitHub Repoları",
+      "GitHub&apos;dan projenizi seçerek bilgileri otomatik doldurun.",
+      "Repo Seç (",
+      "Slug (URL)",
+      "Durum",
+      "Completed",
+      "Working",
+      "Building",
+      "Archived",
+      "Kategori",
+      "Kapak Görseli",
+      "Kapak Resmi Yükle",
+      "Kapak Görseli Alt Metni (SEO)",
+      "Öne Çıkarılan Proje",
+      "GitHub URL",
+      "Canlı Demo URL",
+      "Teknolojiler",
+      "Yeni Teknoloji Tanımla",
+      "Teknoloji Ara (Simple Icons)",
+      "Seçilen / Manuel İsim",
+      "İkon (Emoji veya URL)",
+      "Kütüphaneye Ekle",
+      "Proje Galerisi",
+      "Proje detay sayfasında görünecek ekstra resimler",
+      "Resim Ekle",
+      "Henüz galeride resim yok.",
+      "Kaynak Dil:",
+      "Seçilen Dillerde Çevir",
+      "Kaynak dildeki alanları doldurduktan sonra, en az bir hedef dil seçip\n          çeviri yapabilirsiniz.",
+      "Proje Adı",
+      "Kısa Açıklama (Kart vs.)",
+      "Full Açıklama (HTML)",
+      "SEO Meta Verileri",
+      "Meta Başlık",
+      "Anahtar Kelimeler",
+      "Meta Açıklama",
+      "İptal",
+      "Projeyi\n          Kaydet"
+    ]
+  },
+  {
+    "file": "/components/admin/SeoPopover.tsx",
+    "texts": [
+      "SEO Optimize",
+      "İçerik Bağlamı",
+      "Oluşturulacak SEO içeriği için bağlam veya temel bilgi giriniz.",
+      "karakter",
+      "İptal",
+      "Oluşturuluyor...",
+      "Oluştur"
+    ]
+  },
+  {
+    "file": "/components/admin/SkillsManager.tsx",
+    "texts": [
+      "Yetenekler (Skills)",
+      "Yetenek Ara (Simple Icons) veya Manuel İsim",
+      "İkon (URL veya Base64)",
+      "Yeni Yetenek Ekle"
+    ]
+  },
+  {
+    "file": "/components/admin/SocialLinksManager.tsx",
+    "texts": [
+      "Sosyal Medya Linkleri",
+      "Marka Ara (Simple Icons) veya Manuel İsim",
+      "URL",
+      "İkon (URL veya Base64)",
+      "Yeni Link Ekle"
+    ]
+  },
+  {
+    "file": "/components/admin/TipTapEditor.tsx",
+    "texts": [
+      "Editör yükleniyor..."
+    ]
+  },
+  {
+    "file": "/components/blog/BlogCard.tsx",
+    "texts": [
+      "Read More"
+    ]
+  },
+  {
+    "file": "/components/blog/CommentSection.tsx",
+    "texts": [
+      "You need to sign in to post comments. This creates a unique\n              identity for you in this browser.",
+      "Cancel",
+      "Continue"
+    ]
+  },
+  {
+    "file": "/components/chat/LiveChat.tsx",
+    "texts": [
+      "Powered by Gemini AI"
+    ]
+  },
+  {
+    "file": "/components/chat/SourceCard.tsx",
+    "texts": [
+      "GitHub",
+      "Live Demo",
+      "Kaynaklar"
+    ]
+  },
+  {
+    "file": "/components/common/CodeBlock.tsx",
+    "texts": [
+      "Loading Code..."
+    ]
+  },
+  {
+    "file": "/components/common/Navbar.tsx",
+    "texts": [
+      "KADIR.DEV",
+      "Dashboard"
+    ]
+  },
+  {
+    "file": "/components/common/ThemeToggle.tsx",
+    "texts": [
+      "Theme"
+    ]
+  },
+  {
+    "file": "/components/interactive/CommentSection.tsx",
+    "texts": [
+      "ADMIN",
+      "Reply",
+      "Comments (",
+      "Replying to",
+      "Name",
+      "Email",
+      "No comments yet. Be the first to share your thoughts!"
+    ]
+  },
+  {
+    "file": "/components/landing/GitHubCalendar.tsx",
+    "texts": [
+      "No activity data found",
+      "Last Year"
+    ]
+  },
+  {
+    "file": "/components/projects/ProjectCard.tsx",
+    "texts": [
+      "Technologies",
+      "Details"
+    ]
+  },
+  {
+    "file": "/components/projects/ProjectDetailView.tsx",
+    "texts": [
+      "more",
+      "GitHub Stats",
+      "Created",
+      "Last Updated"
+    ]
+  },
+  {
+    "file": "/app/[locale]/login/page.tsx",
+    "texts": [
+      "Admin Login",
+      "Sadece site sahibi giriş yapabilir.",
+      "GitHub ile Giriş Yap"
+    ]
+  },
+  {
+    "file": "/app/[locale]/test/page.tsx",
+    "texts": [
+      "Test Page",
+      "Current Locale:"
+    ]
+  },
+  {
+    "file": "/app/admin/blog/page.tsx",
+    "texts": [
+      "Dashboard",
+      "Blog Yazılarını Yönet",
+      "Yeni Yazı"
+    ]
+  },
+  {
+    "file": "/app/admin/embeddings/page.tsx",
+    "texts": [
+      "Vector Embeddings",
+      "Manage your AI knowledge base and synchronize content.",
+      "Clear Vector DB",
+      "Sync All Data",
+      "Total Vector Chunks",
+      "Total embeddings in DB",
+      "s",
+      "Vector chunks active",
+      "Content Synchronization",
+      "Individually update outdated AI contexts.",
+      "All Types",
+      "Projects",
+      "Blogs",
+      "Profile",
+      "Experience",
+      "All Status",
+      "Synced",
+      "Outdated",
+      "Missing",
+      "Type",
+      "Item Title",
+      "Last Edited",
+      "Status",
+      "Action",
+      "Loading content...",
+      "No matching content found.",
+      "Synced",
+      "Outdated",
+      "Missing",
+      "Sync"
+    ]
+  },
+  {
+    "file": "/app/admin/experience/page.tsx",
+    "texts": [
+      "Deneyimler",
+      "İş deneyimlerini yönet.",
+      "Yeni Ekle",
+      "Henüz deneyim eklenmedi."
+    ]
+  },
+  {
+    "file": "/app/admin/profile/page.tsx",
+    "texts": [
+      "Profil Bilgileri",
+      "Ekstra Ayarlar"
+    ]
+  },
+  {
+    "file": "/app/admin/projects/page.tsx",
+    "texts": [
+      "Dashboard",
+      "Projeleri Yönet",
+      "Yeni Proje"
+    ]
+  },
+  {
+    "file": "/app/admin/blog/new/page.tsx",
+    "texts": [
+      "Blog Yönetimine Dön",
+      "Yeni Blog Yazısı Ekle"
+    ]
+  },
+  {
+    "file": "/app/admin/experience/[id]/page.tsx",
+    "texts": [
+      "Deneyimi Düzenle"
+    ]
+  },
+  {
+    "file": "/app/admin/experience/new/page.tsx",
+    "texts": [
+      "Yeni Deneyim Ekle"
+    ]
+  },
+  {
+    "file": "/app/admin/projects/new/page.tsx",
+    "texts": [
+      "Dashboard&apos;a Dön",
+      "Yeni Proje Ekle"
+    ]
+  },
+  {
+    "file": "/app/admin/blog/[id]/edit/page.tsx",
+    "texts": [
+      "Blog Yönetimine Dön",
+      "Blog Yazısını Düzenle"
+    ]
+  },
+  {
+    "file": "/app/admin/projects/[id]/edit/page.tsx",
+    "texts": [
+      "Projelere Dön",
+      "Projeyi Düzenle"
+    ]
+  },
+  {
+    "file": "/app/admin/blog/[id/]/edit/page.tsx",
+    "texts": [
+      "Blog Yönetimine Dön",
+      "Blog Yazısını Düzenle"
+    ]
+  }
+]

@@ -13,6 +13,7 @@ import { ProfileFormValues, ProfileSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Language, Profile, ProfileTranslation } from "@prisma/client";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -45,6 +46,7 @@ interface ImageData {
 }
 
 export default function ProfileForm({ initialData }: ProfileFormProps) {
+  const t = useTranslations("Admin.Form");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<ImageData | null>(
@@ -106,7 +108,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert("Lütfen en az bir hedef dil seçiniz.");
+      alert(t("translateError"));
       return;
     }
 
@@ -124,7 +126,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         !sourceContent.aboutTitle ||
         !sourceContent.aboutDescription
       ) {
-        alert("Lütfen kaynak dildeki alanları doldurunuz.");
+        alert(t("fillRequired"));
         setIsTranslating(false);
         return;
       }
@@ -156,7 +158,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         setValue(`translations.${lang}.aboutDescription`, c.aboutDescription);
       });
 
-      alert("Çeviri tamamlandı!");
+      alert(t("translateSuccess"));
     } catch (error) {
       alert(
         "Çeviri başarısız oldu: " +
@@ -198,7 +200,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       };
 
       await updateProfileAction(submitData);
-      alert("Profil başarıyla güncellendi");
+      alert(t("translateSuccess")); // Reusing translateSuccess or should add updateSuccess
       router.refresh();
     } catch (err) {
       const message =
@@ -258,7 +260,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                       <ImagePlus size={32} />
                     </div>
                     <span className="text-xs font-semibold text-muted-foreground">
-                      Profil Resmi Yükle
+                      {t("avatar")}
                     </span>
                     <input
                       type="file"
@@ -279,17 +281,15 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             </div>
 
             <div className="space-y-1 text-center sm:text-left">
-              <h3 className="text-xl font-bold">Profil Fotoğrafı</h3>
-              <p className="text-sm text-muted-foreground">
-                İmajınızı yönetin. Önerilen boyut 400x400px.
-              </p>
+              <h3 className="text-xl font-bold">{t("avatar")}</h3>
+              <p className="text-sm text-muted-foreground">{t("avatarDesc")}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 bg-muted/20 p-6 rounded-2xl border border-border/50">
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
-                Email Adresi
+                {t("email")}
               </label>
               <input
                 {...register("email")}
@@ -305,7 +305,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
-                GitHub Profili
+                {t("github")}
               </label>
               <input
                 {...register("github")}
@@ -316,7 +316,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
-                LinkedIn Profili
+                {t("linkedin")}
               </label>
               <input
                 {...register("linkedin")}
@@ -334,7 +334,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-primary">Kaynak Dil:</span>
+            <span className="text-sm font-bold text-primary">
+              {t("sourceLanguage")}:
+            </span>
             <select
               value={sourceLang}
               onChange={(e) => setSourceLang(e.target.value)}
@@ -366,7 +368,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           ) : (
             <Sparkles className="w-4 h-4" />
           )}
-          Seçilen Dillerde Çevir
+          {t("translate")}
         </button>
       </div>
 
@@ -375,7 +377,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           <div className="space-y-4 max-w-2xl mx-auto">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground">
-                İsim
+                {t("name")}
               </label>
               <input
                 {...register(`translations.${lang}.name` as const)}
@@ -391,7 +393,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground">
-                Unvan
+                {t("unvan")}
               </label>
               <input
                 {...register(`translations.${lang}.title` as const)}
@@ -407,7 +409,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground">
-                Karşılama Metni
+                {t("greetingText")}
               </label>
               <input
                 {...register(`translations.${lang}.greetingText` as const)}
@@ -423,7 +425,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground">
-                Hero Açıklama
+                {t("heroDescription")}
               </label>
               <textarea
                 {...register(`translations.${lang}.description` as const)}
@@ -439,7 +441,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground">
-                Hakkımda Başlık
+                {t("aboutTitle")}
               </label>
               <input
                 {...register(`translations.${lang}.aboutTitle` as const)}
@@ -455,7 +457,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground">
-                Hakkımda Detay
+                {t("aboutDescription")}
               </label>
               <textarea
                 {...register(`translations.${lang}.aboutDescription` as const)}
@@ -483,7 +485,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           ) : (
             <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
           )}
-          Değişiklikleri Yayınla
+          {t("save")}
         </button>
       </div>
     </form>

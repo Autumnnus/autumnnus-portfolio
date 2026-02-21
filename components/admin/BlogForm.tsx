@@ -35,6 +35,8 @@ import {
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
+import { useTranslations } from "next-intl";
+
 // Helper to update translations
 const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
   const result: Record<
@@ -55,7 +57,7 @@ const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
       title: t.title || "",
       description: t.description || "",
       content: t.content || "",
-      readTime: t.readTime || "5 dk okuma",
+      readTime: t.readTime || "",
       excerpt: t.excerpt || "",
       metaTitle: t.metaTitle || "",
       metaDescription: t.metaDescription || "",
@@ -87,6 +89,7 @@ interface ImageData {
 }
 
 export default function BlogForm({ initialData }: BlogFormProps) {
+  const t = useTranslations("Admin.Form");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
@@ -162,7 +165,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert("Lütfen en az bir hedef dil seçiniz.");
+      alert(t("translateError"));
       return;
     }
 
@@ -182,7 +185,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           if (!sourceContent.content) missing.push("İçerik");
         }
         alert(
-          `Lütfen kaynak dildeki (${sourceLang.toUpperCase()}) şu alanları doldurunuz: ${missing.join(", ")}`,
+          `${t("fillRequired")} (${sourceLang.toUpperCase()}): ${missing.join(", ")}`,
         );
         setIsTranslating(false);
         return;
@@ -233,10 +236,11 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           setValue(`translations.${lang}.keywords` as const, content.keywords);
       });
 
-      alert("Çeviri tamamlandı!");
+      alert(t("translateSuccess"));
     } catch (error) {
       alert(
-        "Çeviri başarısız oldu: " +
+        t("translateError") +
+          ": " +
           (error instanceof Error ? error.message : "Bilinmeyen hata"),
       );
     } finally {
@@ -278,7 +282,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         }));
 
       if (translationsArray.length === 0) {
-        alert("En az bir dilde içerik (Başlık ve İçerik) girmelisiniz.");
+        alert(t("fillRequired"));
         setLoading(false);
         return;
       }
@@ -330,7 +334,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     >
       {Object.keys(errors).length > 0 && (
         <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
-          <p className="font-bold mb-2">Lütfen formdaki hataları düzeltiniz:</p>
+          <p className="font-bold mb-2">{t("validationError")}:</p>
           <ul className="list-disc list-inside">
             {Object.entries(errors).map(([key, value]) => {
               if (key === "translations" && value) {
@@ -401,11 +405,11 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Slug (URL)</label>
+            <label className="text-sm font-medium">{t("slug")}</label>
             <input
               {...register("slug")}
               className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
-              placeholder="blog-yazisi-basligi"
+              placeholder="..."
             />
             {errors.slug && (
               <p className="text-xs text-red-500">{errors.slug.message}</p>
@@ -413,23 +417,23 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Kategori</label>
+            <label className="text-sm font-medium">{t("category")}</label>
             <input
               {...register("category")}
               className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
-              placeholder="Modern Web, React Tips, etc."
+              placeholder="..."
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Durum</label>
+              <label className="text-sm font-medium">{t("status")}</label>
               <select
                 {...register("status")}
                 className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
               >
-                <option value="draft">Taslak</option>
-                <option value="published">Yayınlandı</option>
+                <option value="draft">{t("draft")}</option>
+                <option value="published">{t("publish")}</option>
               </select>
             </div>
             <div className="flex flex-col justify-end space-y-4 pb-2">
@@ -441,7 +445,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                   className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
                 />
                 <label htmlFor="featured" className="text-sm font-medium">
-                  Öne Çıkar
+                  {t("featured")}
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -455,7 +459,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                   htmlFor="commentsEnabled"
                   className="text-sm font-medium"
                 >
-                  Yorumlar Açık
+                  {t("commentsEnabled")}
                 </label>
               </div>
             </div>
@@ -490,7 +494,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                 <label className="cursor-pointer flex flex-col items-center gap-2 w-full h-full justify-center">
                   <ImagePlus size={32} className="text-muted-foreground" />
                   <span className="text-sm text-muted-foreground font-medium">
-                    Resim Yükle
+                    {t("coverImage")}
                   </span>
                   <input
                     type="file"
@@ -509,12 +513,12 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           </div>
           <div className="space-y-2">
             <label className="font-medium text-xs text-muted-foreground uppercase">
-              Görsel Alt Metni (SEO)
+              {t("imageAlt")}
             </label>
             <input
               {...register("imageAlt")}
               className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all text-sm"
-              placeholder="Görseli tanımlayan açıklama..."
+              placeholder="..."
             />
           </div>
         </div>
@@ -625,7 +629,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <Layout size={12} /> Başlık
+                  <Layout size={12} /> {t("title")}
                 </label>
                 <input
                   {...register(`translations.${lang}.title` as const)}
@@ -634,11 +638,11 @@ export default function BlogForm({ initialData }: BlogFormProps) {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <Settings size={12} /> Okuma Süresi
+                  <Settings size={12} /> {t("readTime")}
                 </label>
                 <input
                   {...register(`translations.${lang}.readTime` as const)}
-                  placeholder="5 dk okuma"
+                  placeholder="..."
                   className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
                 />
               </div>
@@ -646,19 +650,19 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                <Search size={12} /> SEO Meta Açıklama
+                <Search size={12} /> {t("metaDescription")}
               </label>
               <textarea
                 {...register(`translations.${lang}.metaDescription` as const)}
                 className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
-                placeholder="Arama motoru sonuçlarında görünecek açıklama..."
+                placeholder="..."
               />
             </div>
 
             <div className="space-y-4 pt-4 border-t border-border/50">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <FileText size={12} /> İçerik (HTML)
+                  <FileText size={12} /> {t("fullDescription")} (HTML)
                 </label>
                 <TipTapEditor
                   content={
@@ -676,13 +680,13 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
             <div className="space-y-4 pt-6 border-t border-border/50 mt-6">
               <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                <Settings size={12} /> Ek SEO Alanları
+                <Settings size={12} /> {t("seo")}
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                    SEO Meta Başlık
+                    {t("metaTitle")}
                   </label>
                   <input
                     {...register(`translations.${lang}.metaTitle` as const)}
@@ -691,7 +695,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Anahtar Kelimeler
+                    {t("keywords")}
                   </label>
                   <input
                     onChange={(e) => {
@@ -713,7 +717,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                  Özet (Excerpt)
+                  {t("excerpt")}
                 </label>
                 <textarea
                   {...register(`translations.${lang}.excerpt` as const)}
@@ -737,15 +741,14 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           onClick={() => router.back()}
           className="px-8 py-3 bg-muted rounded-lg font-bold hover:bg-muted/80 transition-colors"
         >
-          İptal
+          {useTranslations("Admin.Common")("cancel")}
         </button>
         <button
           type="submit"
           disabled={loading}
           className="px-12 py-3 bg-orange-500 text-white rounded-lg font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20"
         >
-          {loading && <Loader2 className="animate-spin w-4 h-4" />} Yazıyı
-          Kaydet
+          {loading && <Loader2 className="animate-spin w-4 h-4" />} {t("save")}
         </button>
       </div>
     </form>

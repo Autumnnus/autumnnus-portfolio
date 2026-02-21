@@ -18,6 +18,7 @@ import {
   WorkExperienceTranslation,
 } from "@prisma/client";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -60,6 +61,7 @@ const formatDateForInput = (date?: string | Date | null) => {
 };
 
 export default function ExperienceForm({ initialData }: ExperienceFormProps) {
+  const t = useTranslations("Admin.Form");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -111,7 +113,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert("Lütfen en az bir hedef dil seçiniz.");
+      alert(t("translateError"));
       return;
     }
 
@@ -129,7 +131,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         !sourceContent.description ||
         !sourceContent.locationType
       ) {
-        alert("Lütfen kaynak dildeki alanları doldurunuz.");
+        alert(t("fillRequired"));
         setIsTranslating(false);
         return;
       }
@@ -162,7 +164,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         );
       });
 
-      alert("Çeviri tamamlandı!");
+      alert(t("translateSuccess"));
     } catch (error) {
       alert(
         "Çeviri başarısız oldu: " +
@@ -207,9 +209,9 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
       router.push("/admin/experience");
       router.refresh();
+      alert(t("translateSuccess")); // Reusing translateSuccess for now
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "İşlem başarısız oldu";
+      const message = err instanceof Error ? err.message : t("translateError");
       alert(message);
     } finally {
       setLoading(false);
@@ -223,7 +225,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Şirket Logosu</label>
+          <label className="text-sm font-medium">{t("companyLogo")}</label>
           <div className="relative w-full aspect-square md:w-full bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors group">
             {logo ? (
               <>
@@ -248,7 +250,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
             ) : (
               <label className="cursor-pointer flex flex-col items-center gap-3 w-full h-full justify-center text-muted-foreground hover:text-primary transition-colors">
                 <ImagePlus size={32} />
-                <span className="text-sm font-medium">Logo Seç</span>
+                <span className="text-sm font-medium">{t("companyLogo")}</span>
                 <input
                   type="file"
                   className="hidden"
@@ -262,7 +264,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
         <div className="md:col-span-2 space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Şirket Adı</label>
+            <label className="text-sm font-medium">{t("companyName")}</label>
             <Input
               {...register("company")}
               required
@@ -275,15 +277,15 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Başlangıç Tarihi</label>
+              <label className="text-sm font-medium">{t("startDate")}</label>
               <Input type="date" {...register("startDate")} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Bitiş Tarihi</label>
+              <label className="text-sm font-medium">{t("endDate")}</label>
               <div className="relative">
                 <Input type="date" {...register("endDate")} />
                 <span className="text-[10px] text-muted-foreground absolute -bottom-5 left-0">
-                  Devam ediyorsa boş bırakın
+                  {t("endDateDesc")}
                 </span>
               </div>
             </div>
@@ -297,7 +299,9 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
       <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-primary">Kaynak Dil:</span>
+            <span className="text-sm font-bold text-primary">
+              {t("sourceLanguage")}:
+            </span>
             <select
               value={sourceLang}
               onChange={(e) => setSourceLang(e.target.value)}
@@ -316,8 +320,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
             onChange={setTargetLangs}
           />
           <p className="text-xs text-muted-foreground hidden md:block">
-            Kaynak dildeki içeriği doldurduktan sonra, diğer dile otomatik
-            çeviri yapabilirsiniz.
+            {t("autoTranslate")}
           </p>
         </div>
 
@@ -332,7 +335,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
           ) : (
             <Sparkles className="w-4 h-4" />
           )}
-          AI ile Çevir ({sourceLang === "tr" ? "EN" : "TR"})
+          {t("translate")}
         </button>
       </div>
 
@@ -341,7 +344,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
           <div className="space-y-4 max-w-2xl mx-auto">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                Pozisyon
+                {t("position")}
               </label>
               <Input
                 {...register(`translations.${lang}.role` as const)}
@@ -355,7 +358,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                Çalışma Şekli
+                {t("workType")}
               </label>
               <Input
                 {...register(`translations.${lang}.locationType` as const)}
@@ -370,7 +373,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                Açıklama (Markdown)
+                {t("experienceDesc")}
               </label>
               <textarea
                 {...register(`translations.${lang}.description` as const)}
@@ -393,15 +396,14 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
           onClick={() => router.back()}
           className="px-8 py-3 bg-muted rounded-lg font-bold hover:bg-muted/80 transition-colors"
         >
-          İptal
+          {useTranslations("Admin.Common")("cancel")}
         </button>
         <button
           type="submit"
           disabled={loading}
           className="px-12 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
         >
-          {loading && <Loader2 className="animate-spin w-4 h-4" />} Deneyimi
-          Kaydet
+          {loading && <Loader2 className="animate-spin w-4 h-4" />} {t("save")}
         </button>
       </div>
     </form>

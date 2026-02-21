@@ -3,6 +3,7 @@
 import { BlogPost } from "@/types/contents";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, FileText } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -14,6 +15,7 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post, index = 0 }: BlogCardProps) {
+  const t = useTranslations("Common");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -79,7 +81,7 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
             </div>
 
             <div className="flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
-              Read More
+              {t("readMore")}
               <ArrowRight className="w-4 h-4" suppressHydrationWarning />
             </div>
           </div>

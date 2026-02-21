@@ -35,6 +35,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -60,6 +61,9 @@ interface EmbeddingItem {
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function EmbeddingsPage() {
+  const t = useTranslations("Admin.Embeddings");
+  const tNav = useTranslations("Admin.Navigation");
+  const tCommon = useTranslations("Common");
   const { data: stats, mutate: mutateStats } = useSWR<EmbeddingStats>(
     "/api/admin/embeddings",
     fetcher,
@@ -88,11 +92,11 @@ export default function EmbeddingsPage() {
       const res = await fetch("/api/admin/embeddings", { method: "POST" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
-      toast.success("All content synced successfully!");
+      toast.success(t("syncSuccess"));
       mutateStats();
       mutateItems();
     } catch (error) {
-      toast.error("Failed to sync all content.");
+      toast.error(t("syncError"));
       console.error(error);
     } finally {
       setIsSyncingAll(false);
@@ -109,11 +113,11 @@ export default function EmbeddingsPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
-      toast.success(`${sourceType} synced successfully!`);
+      toast.success(t("syncSuccess")); // Or a more specific one but syncSuccess is fine
       mutateStats();
       mutateItems();
     } catch (error) {
-      toast.error(`Failed to sync ${sourceType}.`);
+      toast.error(t("syncError"));
       console.error(error);
     } finally {
       setSyncingItem(null);
@@ -121,7 +125,7 @@ export default function EmbeddingsPage() {
   };
 
   const handleDeleteAll = async () => {
-    if (!confirm("Are you sure you want to delete ALL embeddings?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     setIsDeleting(true);
     try {
       const res = await fetch("/api/admin/embeddings", {
@@ -131,11 +135,11 @@ export default function EmbeddingsPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
-      toast.success("All embeddings deleted.");
+      toast.success(t("deleteSuccess"));
       mutateStats();
       mutateItems();
     } catch (error) {
-      toast.error("Failed to delete embeddings.");
+      toast.error(t("deleteError"));
       console.error(error);
     } finally {
       setIsDeleting(false);
@@ -159,11 +163,9 @@ export default function EmbeddingsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Vector Embeddings
+            {t("title")}
           </h2>
-          <p className="text-muted-foreground mt-1">
-            Manage your AI knowledge base and synchronize content.
-          </p>
+          <p className="text-muted-foreground mt-1">{t("description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -177,7 +179,7 @@ export default function EmbeddingsPage() {
             ) : (
               <Trash2 className="mr-2 h-4 w-4" />
             )}
-            Clear Vector DB
+            {t("clearDb")}
           </Button>
           <Button
             onClick={handleSyncAll}
@@ -189,7 +191,7 @@ export default function EmbeddingsPage() {
             ) : (
               <RefreshCw className="mr-2 h-4 w-4" />
             )}
-            Sync All Data
+            {t("syncAll")}
           </Button>
         </div>
       </div>
@@ -198,7 +200,7 @@ export default function EmbeddingsPage() {
         <Card className="shadow-md hover:shadow-lg transition-all duration-300 border-primary/20 bg-gradient-to-br from-card to-card/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Vector Chunks
+              {t("totalChunks")}
             </CardTitle>
             <Database className="h-4 w-4 text-primary" />
           </CardHeader>
@@ -207,7 +209,7 @@ export default function EmbeddingsPage() {
               {stats?.totalCount || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total embeddings in DB
+              {t("totalChunksDesc")}
             </p>
           </CardContent>
         </Card>
@@ -228,7 +230,7 @@ export default function EmbeddingsPage() {
             <CardContent>
               <div className="text-2xl font-bold">{s._count._all}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Vector chunks active
+                {t("activeChunks")}
               </p>
             </CardContent>
           </Card>
@@ -239,16 +241,14 @@ export default function EmbeddingsPage() {
         <CardHeader className="border-b bg-muted/20 pb-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-xl">Content Synchronization</CardTitle>
-              <CardDescription>
-                Individually update outdated AI contexts.
-              </CardDescription>
+              <CardTitle className="text-xl">{t("contentSync")}</CardTitle>
+              <CardDescription>{t("contentSyncDesc")}</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search titles..."
+                  placeholder={t("searchPlaceholder")}
                   className="pl-9 w-[200px] lg:w-[250px] bg-background"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -259,11 +259,13 @@ export default function EmbeddingsPage() {
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="project">Projects</SelectItem>
-                  <SelectItem value="blog">Blogs</SelectItem>
-                  <SelectItem value="profile">Profile</SelectItem>
-                  <SelectItem value="experience">Experience</SelectItem>
+                  <SelectItem value="all">{t("typeAll")}</SelectItem>
+                  <SelectItem value="project">{tNav("projects")}</SelectItem>
+                  <SelectItem value="blog">{tNav("blog")}</SelectItem>
+                  <SelectItem value="profile">{tNav("profile")}</SelectItem>
+                  <SelectItem value="experience">
+                    {tNav("experience")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -271,10 +273,10 @@ export default function EmbeddingsPage() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="synced">Synced</SelectItem>
-                  <SelectItem value="outdated">Outdated</SelectItem>
-                  <SelectItem value="missing">Missing</SelectItem>
+                  <SelectItem value="all">{t("statusAll")}</SelectItem>
+                  <SelectItem value="synced">{t("synced")}</SelectItem>
+                  <SelectItem value="outdated">{t("outdated")}</SelectItem>
+                  <SelectItem value="missing">{t("missing")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -285,11 +287,15 @@ export default function EmbeddingsPage() {
             <Table>
               <TableHeader className="bg-muted/50 sticky top-0 backdrop-blur-sm z-10">
                 <TableRow>
-                  <TableHead className="w-[100px]">Type</TableHead>
-                  <TableHead>Item Title</TableHead>
-                  <TableHead>Last Edited</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead className="w-[100px]">
+                    {tCommon("category")}
+                  </TableHead>
+                  <TableHead>{tCommon("title")}</TableHead>
+                  <TableHead>{tCommon("date")}</TableHead>
+                  <TableHead>{tCommon("status")}</TableHead>
+                  <TableHead className="text-right">
+                    {tCommon("actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,7 +307,7 @@ export default function EmbeddingsPage() {
                     >
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                        <span>Loading content...</span>
+                        <span>{t("loading")}</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -311,7 +317,7 @@ export default function EmbeddingsPage() {
                       colSpan={5}
                       className="h-48 text-center text-muted-foreground"
                     >
-                      No matching content found.
+                      {tCommon("noResults")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -344,7 +350,7 @@ export default function EmbeddingsPage() {
                             variant="secondary"
                             className="bg-green-500/10 text-green-600 hover:bg-green-500/20 gap-1 border-green-200"
                           >
-                            <CheckCircle2 className="w-3 h-3" /> Synced
+                            <CheckCircle2 className="w-3 h-3" /> {t("synced")}
                           </Badge>
                         )}
                         {item.status === "outdated" && (
@@ -352,7 +358,8 @@ export default function EmbeddingsPage() {
                             variant="secondary"
                             className="bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 gap-1 border-yellow-200"
                           >
-                            <AlertTriangle className="w-3 h-3" /> Outdated
+                            <AlertTriangle className="w-3 h-3" />{" "}
+                            {t("outdated")}
                           </Badge>
                         )}
                         {item.status === "missing" && (
@@ -360,7 +367,7 @@ export default function EmbeddingsPage() {
                             variant="default"
                             className="bg-red-500/10 text-red-600 hover:bg-red-500/20 gap-1 border-red-200 w-fit"
                           >
-                            <XCircle className="w-3 h-3" /> Missing
+                            <XCircle className="w-3 h-3" /> {t("missing")}
                           </Badge>
                         )}
                       </TableCell>
@@ -383,7 +390,7 @@ export default function EmbeddingsPage() {
                               className={`w-4 h-4 mr-2 ${item.status !== "synced" ? "animate-pulse" : ""}`}
                             />
                           )}
-                          Sync
+                          {t("sync")}
                         </Button>
                       </TableCell>
                     </TableRow>

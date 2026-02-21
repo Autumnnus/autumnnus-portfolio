@@ -25,16 +25,35 @@ import { formatDistanceToNow } from "date-fns";
 import { de, enUS, tr } from "date-fns/locale";
 import { Loader2, Reply, Trash2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-const commentSchema = z.object({
-  authorName: z.string().min(2, "Name must be at least 2 characters."),
-  authorEmail: z.string().email("Invalid email address."),
-  content: z.string().min(2, "Comment must be at least 2 characters."),
-});
+const createCommentSchema = (t: any) =>
+  z.object({
+    authorName: z
+      .string()
+      .min(
+        2,
+        t("authorNameMin", {
+          defaultMessage: "Name must be at least 2 characters.",
+        }),
+      ),
+    authorEmail: z
+      .string()
+      .email(
+        t("authorEmailInvalid", { defaultMessage: "Invalid email address." }),
+      ),
+    content: z
+      .string()
+      .min(
+        2,
+        t("contentMin", {
+          defaultMessage: "Comment must be at least 2 characters.",
+        }),
+      ),
+  });
 
 type CommentFormValues = z.infer<typeof commentSchema>;
 
@@ -73,6 +92,9 @@ export default function CommentSection({
   const adminEmail =
     process.env.NEXT_PUBLIC_ADMIN_EMAIL || "prost.alchemist@gmail.com";
   const isAdmin = session?.user?.email === adminEmail;
+
+  const t = useTranslations("Comments");
+  const commentSchema = createCommentSchema(t);
 
   const form = useForm<CommentFormValues>({
     resolver: zodResolver(commentSchema),
@@ -127,7 +149,7 @@ export default function CommentSection({
 
   const onSubmit = async (values: CommentFormValues) => {
     if (!isDev && !turnstileToken) {
-      alert("Please complete the security verification.");
+      alert(t("securityVerification"));
       return;
     }
 
@@ -181,18 +203,18 @@ export default function CommentSection({
         setReplyTo(null);
         setTurnstileToken("");
       } else {
-        alert(result.error || "Failed to post comment");
+        alert(result.error || t("postCommentError"));
       }
     } catch (error) {
       console.error("Error posting comment:", error);
-      alert("An error occurred.");
+      alert(t("errorOccurred"));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     try {
       const result = await deleteComment(commentId);
       if (result.success) {
@@ -259,7 +281,7 @@ export default function CommentSection({
               <h4 className="font-semibold">{comment.authorName}</h4>
               {comment.isAdmin && (
                 <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-[10px] px-1.5 py-0 h-4">
-                  ADMIN
+                  {t("admin")}
                 </Badge>
               )}
             </div>
@@ -274,7 +296,7 @@ export default function CommentSection({
                 <button
                   onClick={() => handleDelete(comment.id)}
                   className="text-muted-foreground hover:text-destructive transition-colors"
-                  title="Delete"
+                  title={t("delete")}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -290,7 +312,7 @@ export default function CommentSection({
               className="text-xs font-medium text-primary hover:underline flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity"
             >
               <Reply className="w-3 h-3" />
-              Reply
+              {t("reply")}
             </button>
           </div>
         </div>
@@ -307,7 +329,9 @@ export default function CommentSection({
 
   return (
     <div className="space-y-8 mt-12 border-t pt-8">
-      <h3 className="text-2xl font-semibold">Comments ({comments.length})</h3>
+      <h3 className="text-2xl font-semibold">
+        {t("title")} ({comments.length})
+      </h3>
 
       <div
         ref={formRef}
@@ -317,7 +341,7 @@ export default function CommentSection({
           <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground px-4 py-2 rounded-t-lg flex items-center justify-between animate-in slide-in-from-top-2">
             <div className="text-sm font-medium flex items-center gap-2">
               <Reply className="w-4 h-4" />
-              Replying to{" "}
+              {t("replyingTo")}{" "}
               <span className="underline font-bold">{replyTo.authorName}</span>
             </div>
             <button
@@ -336,10 +360,10 @@ export default function CommentSection({
                 name="authorName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t("name")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Your Name"
+                        placeholder={t("yourName")}
                         {...field}
                         disabled={!!session}
                       />
@@ -353,10 +377,10 @@ export default function CommentSection({
                 name="authorEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t("email")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="your@email.com"
+                        placeholder={t("yourEmail")}
                         {...field}
                         disabled={!!session}
                       />
@@ -373,13 +397,13 @@ export default function CommentSection({
                 <FormItem>
                   <FormLabel>
                     {replyTo
-                      ? `Your reply to ${replyTo.authorName}`
-                      : "Comment"}
+                      ? t("yourReplyTo", { name: replyTo.authorName })
+                      : t("comment")}
                   </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder={
-                        replyTo ? "Write a reply..." : "Share your thoughts..."
+                        replyTo ? t("writeReply") : t("shareThoughts")
                       }
                       className="min-h-[100px]"
                       {...field}
@@ -399,7 +423,7 @@ export default function CommentSection({
                 {submitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {replyTo ? "Post Reply" : "Post Comment"}
+                {replyTo ? t("postReply") : t("postComment")}
               </Button>
 
               {!isDev && (
@@ -427,7 +451,7 @@ export default function CommentSection({
           ))
         ) : (
           <p className="text-center text-muted-foreground py-8">
-            No comments yet. Be the first to share your thoughts!
+            {t("noComments")}
           </p>
         )}
       </div>

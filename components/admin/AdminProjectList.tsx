@@ -1,8 +1,9 @@
 "use client";
 
 import { deleteProjectAction } from "@/app/admin/actions";
+import { Link } from "@/i18n/routing";
 import { Edit, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
@@ -17,18 +18,19 @@ interface ProjectListProps {
 }
 
 export default function AdminProjectList({ projects }: ProjectListProps) {
+  const t = useTranslations("Admin.Common");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu projeyi silmek istediğinize emin misiniz?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
 
     startTransition(async () => {
       try {
         await deleteProjectAction(id);
         router.refresh();
       } catch {
-        alert("Silme işlemi başarısız");
+        alert(t("deleteError"));
       }
     });
   };
@@ -38,11 +40,11 @@ export default function AdminProjectList({ projects }: ProjectListProps) {
       <table className="w-full text-left border-collapse">
         <thead className="bg-muted/50">
           <tr>
-            <th className="p-4 font-bold text-sm uppercase">Proje</th>
-            <th className="p-4 font-bold text-sm uppercase">Durum</th>
-            <th className="p-4 font-bold text-sm uppercase">Kategori</th>
+            <th className="p-4 font-bold text-sm uppercase">{t("project")}</th>
+            <th className="p-4 font-bold text-sm uppercase">{t("status")}</th>
+            <th className="p-4 font-bold text-sm uppercase">{t("category")}</th>
             <th className="p-4 font-bold text-sm uppercase text-right">
-              Aksiyonlar
+              {t("actions")}
             </th>
           </tr>
         </thead>
@@ -86,7 +88,7 @@ export default function AdminProjectList({ projects }: ProjectListProps) {
           {projects.length === 0 && (
             <tr>
               <td colSpan={4} className="p-8 text-center text-muted-foreground">
-                Henüz proje eklenmemiş.
+                {t("noResults")}
               </td>
             </tr>
           )}

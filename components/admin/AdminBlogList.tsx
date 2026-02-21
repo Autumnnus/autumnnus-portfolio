@@ -1,8 +1,9 @@
 "use client";
 
 import { deleteBlogAction } from "@/app/admin/actions";
+import { Link } from "@/i18n/routing";
 import { Edit, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
@@ -15,18 +16,19 @@ interface BlogListProps {
 }
 
 export default function AdminBlogList({ posts }: BlogListProps) {
+  const t = useTranslations("Admin.Common");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu yazıyı silmek istediğinize emin misiniz?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
 
     startTransition(async () => {
       try {
         await deleteBlogAction(id);
         router.refresh();
       } catch {
-        alert("Silme işlemi başarısız");
+        alert(t("deleteError"));
       }
     });
   };
@@ -36,9 +38,9 @@ export default function AdminBlogList({ posts }: BlogListProps) {
       <table className="w-full text-left border-collapse">
         <thead className="bg-muted/50">
           <tr>
-            <th className="p-4 font-bold text-sm uppercase">Başlık</th>
+            <th className="p-4 font-bold text-sm uppercase">{t("title")}</th>
             <th className="p-4 font-bold text-sm uppercase text-right">
-              Aksiyonlar
+              {t("actions")}
             </th>
           </tr>
         </thead>
@@ -71,7 +73,7 @@ export default function AdminBlogList({ posts }: BlogListProps) {
           {posts.length === 0 && (
             <tr>
               <td colSpan={2} className="p-8 text-center text-muted-foreground">
-                Henüz yazı eklenmemiş.
+                {t("noResults")}
               </td>
             </tr>
           )}

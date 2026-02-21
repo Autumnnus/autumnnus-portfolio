@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import {
   BrainCircuit,
@@ -11,21 +12,22 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 
-const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Projects", href: "/admin/projects", icon: FolderOpen },
-  { name: "Blog Posts", href: "/admin/blog", icon: FileText },
-  { name: "Experience", href: "/admin/experience", icon: Briefcase },
-  { name: "Profile", href: "/admin/profile", icon: User },
-  { name: "Embeddings", href: "/admin/embeddings", icon: BrainCircuit },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-];
-
 export function AdminSidebar() {
+  const t = useTranslations("Admin.Navigation");
   const pathname = usePathname();
+
+  const navigation = [
+    { name: t("dashboard"), href: "/admin", icon: LayoutDashboard },
+    { name: t("projects"), href: "/admin/projects", icon: FolderOpen },
+    { name: t("blog"), href: "/admin/blog", icon: FileText },
+    { name: t("experience"), href: "/admin/experience", icon: Briefcase },
+    { name: t("profile"), href: "/admin/profile", icon: User },
+    { name: t("embeddings"), href: "/admin/embeddings", icon: BrainCircuit },
+    { name: t("settings"), href: "/admin/settings", icon: Settings },
+  ];
 
   return (
     <div className="flex h-full w-64 flex-col border-r bg-card">
@@ -40,7 +42,7 @@ export function AdminSidebar() {
             const isActive = pathname === item.href;
             return (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -60,7 +62,7 @@ export function AdminSidebar() {
         <form action={async () => {}}>
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-destructive">
             <LogOut className="h-4 w-4" />
-            Sign Out
+            {t("signOut")}
           </button>
         </form>
       </div>

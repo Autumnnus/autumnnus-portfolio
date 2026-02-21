@@ -1,10 +1,12 @@
 "use client";
 
 import { AlertCircle, Database, Download, Loader2, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 export default function DatabaseManagement() {
+  const t = useTranslations("Admin.Database");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +18,7 @@ export default function DatabaseManagement() {
       setError(null);
 
       const response = await fetch("/api/admin/export");
-      if (!response.ok) throw new Error("Export failed");
+      if (!response.ok) throw new Error(t("error"));
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -28,7 +30,7 @@ export default function DatabaseManagement() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Export failed");
+      setError(err instanceof Error ? err.message : t("error"));
     } finally {
       setLoading(false);
     }
@@ -38,11 +40,7 @@ export default function DatabaseManagement() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (
-      !confirm(
-        "BU İŞLEM MEVCUT TÜM VERİLERİ (VERİTABANI VE RESİMLER) SİLECEK VE YEDEKTEKİLERİ YÜKLEYECEKTİR! Devam etmek istiyor musunuz?",
-      )
-    ) {
+    if (!confirm(t("confirm"))) {
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -61,13 +59,13 @@ export default function DatabaseManagement() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Import failed");
+        throw new Error(data.error || t("error"));
       }
 
-      alert("Tam yedek (Veritabanı + Resimler) başarıyla geri yüklendi!");
+      alert(t("success"));
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      setError(err instanceof Error ? err.message : t("error"));
       console.error(err);
     } finally {
       setLoading(false);
@@ -82,11 +80,8 @@ export default function DatabaseManagement() {
           <Database className="w-8 h-8 text-red-500" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold">Tam Yedekleme Yönetimi</h2>
-          <p className="text-muted-foreground text-sm">
-            Tüm veri tabanını ve MinIO&apos;daki tüm resimleri ZIP olarak
-            yedekle/geri yükle.
-          </p>
+          <h2 className="text-2xl font-bold">{t("title")}</h2>
+          <p className="text-muted-foreground text-sm">{t("description")}</p>
         </div>
       </div>
 
@@ -108,8 +103,8 @@ export default function DatabaseManagement() {
             <Download className="w-5 h-5" />
           )}
           <div className="text-left">
-            <div className="font-bold">Tam Yedek Al (ZIP)</div>
-            <div className="text-xs opacity-70">JSON + Resimler</div>
+            <div className="font-bold">{t("export")}</div>
+            <div className="text-xs opacity-70">{t("exportSub")}</div>
           </div>
         </button>
 
@@ -129,16 +124,15 @@ export default function DatabaseManagement() {
               <Upload className="w-5 h-5" />
             )}
             <div className="text-left">
-              <div className="font-bold">Yedeği Geri Yükle</div>
-              <div className="text-xs opacity-70">ZIP dosyasından yükle</div>
+              <div className="font-bold">{t("import")}</div>
+              <div className="text-xs opacity-70">{t("importSub")}</div>
             </div>
           </div>
         </label>
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        ⚠️ İçe aktarma işlemi mevcut verileri silecektir. İşlem dosya boyutuna
-        göre sürebilir.
+        ⚠️ {t("warning")}
       </p>
     </div>
   );

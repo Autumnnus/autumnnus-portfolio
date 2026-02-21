@@ -45,7 +45,7 @@ export default function Navbar() {
                 href="/admin"
                 className="pixel-btn-nav px-2 py-1 sm:px-3 sm:py-2 text-xs font-pixel uppercase tracking-wide text-accent hover:text-primary hover:bg-secondary/20 transition-all border-2 border-accent/20 hover:border-accent"
               >
-                Dashboard
+                {t("Dashboard")}
               </NextLink>
             )}
             <LanguageSwitcher />

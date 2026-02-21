@@ -7,6 +7,7 @@ import {
 import Icon from "@/components/common/Icon";
 import { SocialLink } from "@prisma/client";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -16,6 +17,7 @@ export default function SocialLinksManager({
 }: {
   initialLinks: SocialLink[];
 }) {
+  const t = useTranslations("Admin.SocialLinks");
   const router = useRouter();
   const [links, setLinks] = useState(initialLinks);
   const [loading, setLoading] = useState(false);
@@ -92,21 +94,21 @@ export default function SocialLinksManager({
       setNewIcon("");
       router.refresh();
     } catch (error) {
-      alert("Ekleme başarısız: " + (error as Error).message);
+      alert(t("addError") + ": " + (error as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu linki silmek istediğinize emin misiniz?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     setLoadingId(id);
     try {
       await deleteSocialLinkAction(id);
       setLinks(links.filter((l) => l.id !== id));
       router.refresh();
     } catch (error) {
-      alert("Silme başarısız: " + (error as Error).message);
+      alert(t("deleteError") + ": " + (error as Error).message);
     } finally {
       setLoadingId(null);
     }
@@ -114,7 +116,7 @@ export default function SocialLinksManager({
 
   return (
     <div className="bg-card p-6 rounded-2xl border shadow-sm space-y-6">
-      <h3 className="text-xl font-bold">Sosyal Medya Linkleri</h3>
+      <h3 className="text-xl font-bold">{t("title")}</h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {links.map((link) => (
@@ -151,7 +153,7 @@ export default function SocialLinksManager({
       <form onSubmit={handleAdd} className="space-y-4 pt-4 border-t">
         <div className="space-y-2 relative">
           <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-            Marka Ara (Simple Icons) veya Manuel İsim
+            {t("searchLabel")}
           </label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -166,7 +168,7 @@ export default function SocialLinksManager({
               }}
               onFocus={() => setShowIconDropdown(true)}
               onBlur={() => setTimeout(() => setShowIconDropdown(false), 200)}
-              placeholder="Örn: GitHub, Twitter..."
+              placeholder={t("searchPlaceholder")}
               className="w-full py-2.5 pl-9 pr-10 rounded-lg border bg-background text-sm focus:border-primary outline-hidden transition-all"
               required
             />
@@ -203,7 +205,7 @@ export default function SocialLinksManager({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-              URL
+              {t("urlLabel")}
             </label>
             <input
               value={newHref}
@@ -215,12 +217,12 @@ export default function SocialLinksManager({
           </div>
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-              İkon (URL veya Base64)
+              {t("iconLabel")}
             </label>
             <input
               value={newIcon}
               onChange={(e) => setNewIcon(e.target.value)}
-              placeholder="İkon URL..."
+              placeholder={t("iconPlaceholder")}
               className="w-full p-2.5 rounded-lg border bg-background text-sm focus:border-primary outline-hidden transition-all"
               required
             />
@@ -237,7 +239,7 @@ export default function SocialLinksManager({
           ) : (
             <Plus className="w-4 h-4" />
           )}
-          Yeni Link Ekle
+          {t("add")}
         </button>
       </form>
     </div>

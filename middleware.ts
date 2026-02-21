@@ -6,22 +6,26 @@ import { routing } from "./i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 export default auth((req) => {
+  const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
-  const isOnAdmin = req.nextUrl.pathname.startsWith("/admin");
-  const isOnApi = req.nextUrl.pathname.startsWith("/api");
-  // Check if it's a file request (like favicon, images, etc.)
-  const isFile = req.nextUrl.pathname.includes(".");
+
+  // Detect if we are on an admin route (with or without locale)
+  const isAdminPath = pathname
+    .split("/")
+    .some((segment) => segment === "admin");
+  const isOnApi = pathname.startsWith("/api");
+  const isFile = pathname.includes(".");
 
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
-  if (isOnAdmin) {
+  if (isAdminPath) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/tr/login", req.nextUrl)); // Redirect to login
+      return NextResponse.redirect(new URL("/tr/login", req.nextUrl));
     }
     if (req.auth?.user?.email !== adminEmail) {
       return NextResponse.redirect(new URL("/tr", req.nextUrl));
     }
-    return NextResponse.next();
+    // Let intlMiddleware handle the locale normalization/prefixing
   }
 
   if (isOnApi || isFile) {

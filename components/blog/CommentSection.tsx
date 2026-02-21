@@ -20,6 +20,8 @@ interface CommentsectionProps {
 
 export default function CommentSection({ postSlug }: CommentsectionProps) {
   const t = useTranslations("Blog");
+  const tComments = useTranslations("Comments");
+  const tCommon = useTranslations("Common");
   const [comments, setComments] = useState<Comment[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [newComment, setNewComment] = useState("");
@@ -87,7 +89,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
+            placeholder={tComments("writePlaceholder")}
             className="w-full p-4 border border-border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary min-h-[100px]"
           />
           <div className="flex items-center justify-between">
@@ -127,20 +129,19 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
               {t("signInToComment")}
             </Dialog.Title>
             <Dialog.Description className="text-sm text-muted-foreground">
-              You need to sign in to post comments. This creates a unique
-              identity for you in this browser.
+              {tComments("signInRequired")}
             </Dialog.Description>
             <div className="flex gap-3 justify-end">
               <Dialog.Close asChild>
                 <button className="px-4 py-2 border border-border rounded-md hover:bg-accent transition-colors">
-                  Cancel
+                  {tCommon("cancel")}
                 </button>
               </Dialog.Close>
               <button
                 onClick={handleSignIn}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
               >
-                Continue
+                {tCommon("continue")}
               </button>
             </div>
           </Dialog.Content>

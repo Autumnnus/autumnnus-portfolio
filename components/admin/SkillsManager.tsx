@@ -4,6 +4,7 @@ import { createSkillAction, deleteSkillAction } from "@/app/admin/actions";
 import Icon from "@/components/common/Icon";
 import { Skill } from "@prisma/client";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ export default function SkillsManager({
 }: {
   initialSkills: Skill[];
 }) {
+  const t = useTranslations("Admin.Skills");
   const router = useRouter();
   const [skills, setSkills] = useState(initialSkills);
   const [loading, setLoading] = useState(false);
@@ -86,26 +88,21 @@ export default function SkillsManager({
       setNewIcon("");
       router.refresh();
     } catch (error) {
-      alert("Yetenek ekleme başarısız: " + (error as Error).message);
+      alert(t("addError") + ": " + (error as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (
-      !confirm(
-        `"${name}" yeteneğini silmek istediğinize emin misiniz? (Projelerle olan bağlantıları da koparılacak)`,
-      )
-    )
-      return;
+    if (!confirm(t("deleteConfirm", { name }))) return;
     setLoadingId(id);
     try {
       await deleteSkillAction(id);
       setSkills(skills.filter((s) => s.id !== id));
       router.refresh();
     } catch (error) {
-      alert("Silme başarısız: " + (error as Error).message);
+      alert(t("deleteError") + ": " + (error as Error).message);
     } finally {
       setLoadingId(null);
     }
@@ -113,7 +110,7 @@ export default function SkillsManager({
 
   return (
     <div className="bg-card p-6 rounded-2xl border shadow-sm space-y-6">
-      <h3 className="text-xl font-bold">Yetenekler (Skills)</h3>
+      <h3 className="text-xl font-bold">{t("title")}</h3>
 
       <div className="flex flex-wrap gap-2">
         {skills.map((skill) => (
@@ -144,7 +141,7 @@ export default function SkillsManager({
       <form onSubmit={handleAdd} className="space-y-4 pt-4 border-t">
         <div className="space-y-2 relative">
           <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-            Yetenek Ara (Simple Icons) veya Manuel İsim
+            {t("searchLabel")}
           </label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -159,7 +156,7 @@ export default function SkillsManager({
               }}
               onFocus={() => setShowIconDropdown(true)}
               onBlur={() => setTimeout(() => setShowIconDropdown(false), 200)}
-              placeholder="Örn: React, Node.js..."
+              placeholder={t("searchPlaceholder")}
               className="w-full py-2.5 pl-9 pr-10 rounded-lg border bg-background text-sm focus:border-primary outline-hidden transition-all"
               required
             />
@@ -195,12 +192,12 @@ export default function SkillsManager({
 
         <div className="space-y-2">
           <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-            İkon (URL veya Base64)
+            {t("iconLabel")}
           </label>
           <input
             value={newIcon}
             onChange={(e) => setNewIcon(e.target.value)}
-            placeholder="İkon URL..."
+            placeholder={t("iconPlaceholder")}
             className="w-full p-2.5 rounded-lg border bg-background text-sm focus:border-primary outline-hidden transition-all"
             required
           />
@@ -216,7 +213,7 @@ export default function SkillsManager({
           ) : (
             <Plus className="w-4 h-4" />
           )}
-          Yeni Yetenek Ekle
+          {t("add")}
         </button>
       </form>
     </div>

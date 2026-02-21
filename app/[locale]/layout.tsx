@@ -1,12 +1,5 @@
-import LiveChat from "@/components/chat/LiveChat";
-import Footer from "@/components/common/Footer";
-import Navbar from "@/components/common/Navbar";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
-import SeasonalEffects from "@/components/decorations/SeasonalEffects";
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import PageTransition from "@/components/providers/PageTransition";
-import SmoothScroll from "@/components/providers/SmoothScroll";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -75,17 +68,7 @@ export default async function LocaleLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <SeasonalEffects />
-              <SmoothScroll>
-                <TooltipProvider delayDuration={0}>
-                  <Navbar />
-                  <main className="flex-1 flex flex-col">
-                    <PageTransition>{children}</PageTransition>
-                  </main>
-                  <LiveChat />
-                  <Footer />
-                </TooltipProvider>
-              </SmoothScroll>
+              <div className="flex-1 flex flex-col">{children}</div>
             </ThemeProvider>
           </NextIntlClientProvider>
         </AuthProvider>

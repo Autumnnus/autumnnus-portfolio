@@ -27,6 +27,7 @@ export default function ProjectDetailView({
   githubStats?: GithubRepoStats | null;
 }) {
   const t = useTranslations("Projects");
+  const tCommon = useTranslations("Common");
   const { resolvedTheme } = useTheme();
 
   const isWinter = resolvedTheme === "dark";
@@ -160,7 +161,9 @@ export default function ProjectDetailView({
             </Badge>
           ))}
           {remainingCount > 0 && (
-            <Badge variant="outline">+{remainingCount} more</Badge>
+            <Badge variant="outline">
+              +{tCommon("more", { count: remainingCount })}
+            </Badge>
           )}
           <div className="ml-auto">
             <ViewCounter itemId={project.id} itemType="project" />
@@ -207,23 +210,28 @@ export default function ProjectDetailView({
             <>
               <div className="p-4 bg-muted/30 rounded-lg">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                  GitHub Stats
+                  {tCommon("githubStats")}
                 </p>
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="flex items-center gap-1" title="Stars">
+                  <span
+                    className="flex items-center gap-1"
+                    title={tCommon("stars")}
+                  >
                     <span className="text-yellow-500">★</span>
                     {githubStats.stars}
                   </span>
-                  <span className="flex items-center gap-1" title="Forks">
+                  <span
+                    className="flex items-center gap-1"
+                    title={tCommon("forks")}
+                  >
                     <span className="text-blue-500">⑂</span>
                     {githubStats.forks}
                   </span>
                 </div>
               </div>
-
               <div className="p-4 bg-muted/30 rounded-lg">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                  Created
+                  {tCommon("created")}
                 </p>
                 <p className="text-sm font-medium">
                   {new Date(githubStats.createdAt).toLocaleDateString()}
@@ -232,7 +240,7 @@ export default function ProjectDetailView({
 
               <div className="p-4 bg-muted/30 rounded-lg col-span-2 sm:col-span-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                  Last Updated
+                  {tCommon("lastUpdated")}
                 </p>
                 <p className="text-sm font-medium">
                   {new Date(githubStats.pushedAt).toLocaleDateString()}

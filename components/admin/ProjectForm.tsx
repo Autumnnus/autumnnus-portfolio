@@ -45,6 +45,8 @@ import {
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
+import { useTranslations } from "next-intl";
+
 // Helper to update translations
 const transformTranslationsToObject = (translations: ProjectTranslation[]) => {
   const result: Record<
@@ -88,6 +90,7 @@ export default function ProjectForm({
   skills: initialSkills,
   initialData,
 }: ProjectFormProps) {
+  const t = useTranslations("Admin.Form");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
@@ -141,7 +144,9 @@ export default function ProjectForm({
       setRepos(fetchedRepos);
       setShowRepoModal(true);
     } catch (err: unknown) {
-      alert((err as Error).message || "Repolar alınırken hata oluştu.");
+      alert(
+        (err as Error).message || t("fetchRepos") + " " + t("translateError"),
+      );
     } finally {
       setIsFetchingRepos(false);
     }
@@ -549,14 +554,14 @@ export default function ProjectForm({
     >
       {Object.keys(errors).length > 0 && (
         <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
-          <p className="font-bold mb-2">Lütfen formdaki hataları düzeltiniz:</p>
+          <p className="font-bold mb-2">{t("validationError")}:</p>
           <ul className="list-disc list-inside">
             {Object.entries(errors).map(([key, value]) => {
               if (key === "translations" && value) {
                 if ((value as FieldError).message) {
                   return (
                     <li key={key}>
-                      İçerik Hatası: {(value as FieldError).message}
+                      {t("title")}: {(value as FieldError).message}
                     </li>
                   );
                 }
@@ -583,7 +588,7 @@ export default function ProjectForm({
                       {Object.entries(langErrRec)
                         .map(
                           ([field, err]) =>
-                            `${field === "title" ? "Ad" : field === "shortDescription" ? "Kısa Açıklama" : field} (${err.message})`,
+                            `${field === "title" ? t("title") : field === "shortDescription" ? t("shortDescription") : field} (${err.message})`,
                         )
                         .join(", ")}
                     </li>
@@ -594,7 +599,7 @@ export default function ProjectForm({
               return (
                 <li key={key}>
                   {key === "slug"
-                    ? "URL Uzantısı"
+                    ? t("slug")
                     : key.charAt(0).toUpperCase() + key.slice(1)}
                   : {err?.message || "Geçersiz değer"}
                 </li>
@@ -606,9 +611,9 @@ export default function ProjectForm({
 
       <div className="flex justify-between items-center bg-muted/30 p-5 border border-border rounded-xl">
         <div>
-          <h2 className="text-lg font-bold">GitHub Repoları</h2>
+          <h2 className="text-lg font-bold">{t("githubRepos")}</h2>
           <p className="text-xs text-muted-foreground">
-            GitHub&apos;dan projenizi seçerek bilgileri otomatik doldurun.
+            {t("githubReposDesc")}
           </p>
         </div>
         <button
@@ -622,7 +627,7 @@ export default function ProjectForm({
           ) : (
             <Github size={16} />
           )}
-          {repos.length > 0 ? "Repoları Aç" : "GitHub&apos;dan Çek"}
+          {repos.length > 0 ? t("openRepos") : t("fetchRepos")}
         </button>
       </div>
 
@@ -631,7 +636,7 @@ export default function ProjectForm({
           <div className="bg-card w-full max-w-2xl max-h-[80vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b border-border">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                <Github size={20} /> Repo Seç ({repos.length})
+                <Github size={20} /> {t("selectRepo")} ({repos.length})
               </h3>
               <button
                 type="button"
@@ -669,7 +674,7 @@ export default function ProjectForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Slug (URL)</label>
+            <label className="text-sm font-medium">{t("slug")}</label>
             <input
               {...register("slug")}
               required
@@ -683,7 +688,7 @@ export default function ProjectForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Durum</label>
+              <label className="text-sm font-medium">{t("status")}</label>
               <select
                 {...register("status")}
                 className="w-full p-2 bg-muted rounded border border-border"
@@ -698,7 +703,7 @@ export default function ProjectForm({
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Kategori</label>
+              <label className="text-sm font-medium">{t("category")}</label>
               <input
                 {...register("category")}
                 required
@@ -714,7 +719,7 @@ export default function ProjectForm({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Kapak Görseli</label>
+            <label className="text-sm font-medium">{t("coverImage")}</label>
             <div className="relative aspect-video bg-muted rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden">
               {coverImage ? (
                 <>
@@ -740,7 +745,7 @@ export default function ProjectForm({
                 <label className="cursor-pointer flex flex-col items-center gap-2 w-full h-full justify-center hover:bg-muted/50 transition-colors">
                   <ImagePlus size={32} className="text-muted-foreground" />
                   <span className="text-sm text-muted-foreground font-medium">
-                    Kapak Resmi Yükle
+                    {t("coverImage")}
                   </span>
                   <input
                     type="file"
@@ -758,7 +763,7 @@ export default function ProjectForm({
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                Kapak Görseli Alt Metni (SEO)
+                {t("imageAlt")}
               </label>
               <input
                 {...register("imageAlt")}
@@ -776,14 +781,14 @@ export default function ProjectForm({
               className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
             />
             <label htmlFor="featured" className="text-sm font-medium">
-              Öne Çıkarılan Proje
+              {t("featured")}
             </label>
           </div>
         </div>
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">GitHub URL</label>
+            <label className="text-sm font-medium">{t("githubUrl")}</label>
             <input
               {...register("github")}
               className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none transition-all"
@@ -791,7 +796,7 @@ export default function ProjectForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Canlı Demo URL</label>
+            <label className="text-sm font-medium">{t("liveDemoUrl")}</label>
             <input
               {...register("liveDemo")}
               className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none transition-all"
@@ -801,13 +806,13 @@ export default function ProjectForm({
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <label className="text-sm font-medium">Teknolojiler</label>
+              <label className="text-sm font-medium">{t("technologies")}</label>
               <button
                 type="button"
                 onClick={() => setShowAddSkill(!showAddSkill)}
                 className="text-xs flex items-center gap-1 text-primary font-bold hover:underline"
               >
-                <Plus size={12} /> {showAddSkill ? "Kapat" : "Yeni Ekle"}
+                <Plus size={12} /> {showAddSkill ? "Kapat" : t("quickAdd")}
               </button>
             </div>
 
@@ -816,7 +821,7 @@ export default function ProjectForm({
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
-                    Yeni Teknoloji Tanımla
+                    {t("newSkill")}
                   </h4>
                 </div>
 
@@ -824,7 +829,7 @@ export default function ProjectForm({
                   {/* Search / Autocomplete Field */}
                   <div className="space-y-2 relative">
                     <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-                      Teknoloji Ara (Simple Icons)
+                      {t("skillName")} (Simple Icons)
                     </label>
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -880,7 +885,7 @@ export default function ProjectForm({
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-                        Seçilen / Manuel İsim
+                        {t("skillName")}
                       </label>
                       <input
                         value={newSkillName}
@@ -892,7 +897,7 @@ export default function ProjectForm({
 
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
-                        İkon (Emoji veya URL)
+                        {t("skillIcon")} (Emoji veya URL)
                       </label>
                       <div className="flex gap-2">
                         <div className="flex-1 relative group">
@@ -942,7 +947,7 @@ export default function ProjectForm({
                     ) : (
                       <Plus size={16} />
                     )}
-                    Kütüphaneye Ekle
+                    {t("quickAdd")}
                   </button>
                 </div>
               </div>
@@ -973,13 +978,13 @@ export default function ProjectForm({
       <div className="p-6 bg-muted/20 border border-border rounded-xl space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-bold">Proje Galerisi</h3>
+            <h3 className="text-lg font-bold">{t("gallery")}</h3>
             <p className="text-xs text-muted-foreground">
               Proje detay sayfasında görünecek ekstra resimler
             </p>
           </div>
           <label className="cursor-pointer px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm font-bold hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-2">
-            <Plus size={16} /> Resim Ekle
+            <Plus size={16} /> {t("gallery")}
             <input
               type="file"
               multiple
@@ -1061,7 +1066,7 @@ export default function ProjectForm({
           ))}
           {galleryImages.length === 0 && (
             <div className="col-span-full py-10 text-center border-2 border-dashed border-border/50 rounded-lg text-muted-foreground italic text-sm">
-              Henüz galeride resim yok.
+              {t("noResults")}
             </div>
           )}
         </div>
@@ -1075,7 +1080,7 @@ export default function ProjectForm({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-primary">
-                Kaynak Dil:
+                {t("sourceLanguage")}:
               </span>
               <select
                 value={sourceLang}
@@ -1108,13 +1113,10 @@ export default function ProjectForm({
             ) : (
               <Sparkles className="w-4 h-4" />
             )}
-            Seçilen Dillerde Çevir
+            {t("translate")}
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Kaynak dildeki alanları doldurduktan sonra, en az bir hedef dil seçip
-          çeviri yapabilirsiniz.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("autoTranslate")}</p>
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
@@ -1164,7 +1166,7 @@ export default function ProjectForm({
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                Proje Adı
+                {t("title")}
               </label>
               <input
                 {...register(`translations.${lang}.title` as const)}
@@ -1173,17 +1175,17 @@ export default function ProjectForm({
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-                Kısa Açıklama (Kart vs.)
+                {t("shortDescription")}
               </label>
               <textarea
                 {...register(`translations.${lang}.shortDescription` as const)}
                 className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all"
-                placeholder="Projenin 2-3 cümlelik özeti..."
+                placeholder="..."
               />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                <FileText size={12} /> Full Açıklama (HTML)
+                <FileText size={12} /> {t("fullDescription")} (HTML)
               </label>
               <TipTapEditor
                 content={
@@ -1206,12 +1208,12 @@ export default function ProjectForm({
             {/* SEO Meta Fields for Projects */}
             <div className="space-y-4 pt-6 border-t border-border/50 mt-6">
               <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                SEO Meta Verileri
+                {t("seo")}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Meta Başlık
+                    {t("metaTitle")}
                   </label>
                   <input
                     {...register(`translations.${lang}.metaTitle` as const)}
@@ -1220,7 +1222,7 @@ export default function ProjectForm({
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Anahtar Kelimeler
+                    {t("keywords")}
                   </label>
                   <input
                     onChange={(e) => {
@@ -1235,18 +1237,18 @@ export default function ProjectForm({
                       `translations.${lang}.keywords` as const,
                     )?.join(", ")}
                     className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
-                    placeholder="react, tailwind, portfolio (virgülle ayırın)"
+                    placeholder="react, tailwind..."
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                  Meta Açıklama
+                  {t("metaDescription")}
                 </label>
                 <textarea
                   {...register(`translations.${lang}.metaDescription` as const)}
                   className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
-                  placeholder="Google'da görünecek açıklama..."
+                  placeholder="..."
                 />
               </div>
             </div>
@@ -1260,15 +1262,14 @@ export default function ProjectForm({
           onClick={() => router.back()}
           className="px-8 py-3 bg-muted rounded-lg font-bold hover:bg-muted/80 transition-colors"
         >
-          İptal
+          {useTranslations("Admin.Common")("cancel")}
         </button>
         <button
           type="submit"
           disabled={loading}
           className="px-12 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
         >
-          {loading && <Loader2 className="animate-spin w-4 h-4" />} Projeyi
-          Kaydet
+          {loading && <Loader2 className="animate-spin w-4 h-4" />} {t("save")}
         </button>
       </div>
     </form>
