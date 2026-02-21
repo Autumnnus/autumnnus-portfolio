@@ -378,6 +378,14 @@ export async function getProfile(lang: Language) {
         translations: {
           where: { language: lang },
         },
+        quests: {
+          include: {
+            translations: {
+              where: { language: lang },
+            },
+          },
+          orderBy: { order: "asc" },
+        },
       },
     });
 
@@ -387,6 +395,12 @@ export async function getProfile(lang: Language) {
     return {
       ...profile,
       ...translation,
+      quests: profile.quests.map((q) => ({
+        id: q.id,
+        completed: q.completed,
+        order: q.order,
+        label: q.translations[0]?.title || "",
+      })),
     };
   } catch (error) {
     console.error("Failed to fetch profile:", error);
@@ -442,11 +456,13 @@ export async function getAboutStats() {
     }
 
     const visitorCount = await prisma.uniqueVisitor.count();
+    const blogCount = await prisma.blogPost.count();
 
     return {
       projectCount,
       experienceYears,
       visitorCount,
+      blogCount,
     };
   } catch (error) {
     console.error("Failed to fetch about stats:", error);
@@ -455,6 +471,7 @@ export async function getAboutStats() {
       projectCount: 0,
       experienceYears: new Date().getFullYear() - 2022,
       visitorCount: 0,
+      blogCount: 0,
     };
   }
 }

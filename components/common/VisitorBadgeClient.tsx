@@ -460,6 +460,7 @@ interface VisitorBadgeClientProps {
   locale: string;
   milestonesTitle: string;
   lockedLabel: string;
+  externalOpen?: boolean;
 }
 
 export default function VisitorBadgeClient({
@@ -470,13 +471,35 @@ export default function VisitorBadgeClient({
   locale,
   milestonesTitle,
   lockedLabel,
+  externalOpen,
 }: VisitorBadgeClientProps) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [showExplosion, setShowExplosion] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (externalOpen) {
+      setIsOpen(true);
+    }
+  }, [externalOpen]);
+
+  useEffect(() => {
+    const handleTrigger = () => {
+      setIsOpen(true);
+      setShowExplosion(true);
+      // Reset explosion after some time
+      setTimeout(() => setShowExplosion(false), 3000);
+    };
+
+    window.addEventListener("trigger-visitor-badge", handleTrigger);
+    return () =>
+      window.removeEventListener("trigger-visitor-badge", handleTrigger);
   }, []);
 
   const activeTiers =
@@ -488,7 +511,6 @@ export default function VisitorBadgeClient({
     [count, activeTiers],
   );
   const TierIcon = tier.icon;
-  const [isOpen, setIsOpen] = useState(false);
   const tierIndex = activeTiers.indexOf(tier);
   const isHighTier = tierIndex >= 4;
   const particleCount = Math.min(tierIndex + 3, 8);
@@ -725,7 +747,7 @@ export default function VisitorBadgeClient({
         onWheel={(e) => e.stopPropagation()}
       >
         <AnimatePresence>
-          {isOpen && (
+          {showExplosion && (
             <ThematicExplosion
               tier={tier}
               isWinter={resolvedTheme === "dark"}

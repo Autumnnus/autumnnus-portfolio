@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -25,9 +26,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Separator } from "@radix-ui/react-separator";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronRight,
   Database,
   Loader2,
   RefreshCw,
@@ -58,6 +62,14 @@ interface EmbeddingItem {
   status: "synced" | "outdated" | "missing";
 }
 
+interface EmbeddingDetail {
+  id: string;
+  chunkText: string;
+  chunkIndex: number;
+  language: string;
+  updatedAt: string;
+}
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function EmbeddingsPage() {
@@ -85,6 +97,17 @@ export default function EmbeddingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  const [selectedItem, setSelectedItem] = useState<EmbeddingItem | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const { data: detailsData, isLoading: detailsLoading } = useSWR<{
+    embeddings: EmbeddingDetail[];
+  }>(
+    selectedItem
+      ? `/api/admin/embeddings/details?sourceType=${selectedItem.sourceType}&sourceId=${selectedItem.id}`
+      : null,
+    fetcher,
+  );
 
   const handleSyncAll = async () => {
     setIsSyncingAll(true);
@@ -138,6 +161,37 @@ export default function EmbeddingsPage() {
       toast.success(t("deleteSuccess"));
       mutateStats();
       mutateItems();
+    } catch (error) {
+      toast.error(t("deleteError"));
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteSingle = async (
+    e: React.MouseEvent,
+    sourceType: string,
+    sourceId: string,
+  ) => {
+    e.stopPropagation();
+    if (!confirm(t("deleteConfirm"))) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/embeddings", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceType, sourceId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      toast.success(t("deleteSuccess"));
+      mutateStats();
+      mutateItems();
+      if (selectedItem?.id === sourceId) {
+        setSelectedItem(null);
+        setIsDetailOpen(false);
+      }
     } catch (error) {
       toast.error(t("deleteError"));
       console.error(error);
@@ -287,13 +341,13 @@ export default function EmbeddingsPage() {
             <Table>
               <TableHeader className="bg-muted/50 sticky top-0 backdrop-blur-sm z-10">
                 <TableRow>
-                  <TableHead className="w-[100px]">
+                  <TableHead className="w-[120px] pl-6">
                     {tCommon("category")}
                   </TableHead>
                   <TableHead>{tCommon("title")}</TableHead>
                   <TableHead>{tCommon("date")}</TableHead>
                   <TableHead>{tCommon("status")}</TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-right pr-6">
                     {tCommon("actions")}
                   </TableHead>
                 </TableRow>
@@ -324,13 +378,35 @@ export default function EmbeddingsPage() {
                   filteredItems.map((item) => (
                     <TableRow
                       key={item.id}
-                      className="group hover:bg-muted/30 transition-colors"
+                      className="group hover:bg-muted/40 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setIsDetailOpen(true);
+                      }}
                     >
-                      <TableCell className="font-medium capitalize text-muted-foreground">
-                        {item.sourceType}
+                      <TableCell className="pl-6 font-medium capitalize text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              item.sourceType === "project"
+                                ? "bg-blue-500"
+                                : item.sourceType === "blog"
+                                  ? "bg-purple-500"
+                                  : item.sourceType === "profile"
+                                    ? "bg-orange-500"
+                                    : "bg-green-500"
+                            }`}
+                          />
+                          {item.sourceType}
+                        </div>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        {item.title}
+                        <div className="flex flex-col">
+                          <span>{item.title}</span>
+                          <span className="text-[10px] text-muted-foreground font-normal truncate max-w-[200px]">
+                            ID: {item.id}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(item.lastUpdated).toLocaleDateString(
@@ -371,27 +447,42 @@ export default function EmbeddingsPage() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant={
-                            item.status === "synced" ? "ghost" : "default"
-                          }
-                          size="sm"
-                          className={`transition-all duration-300 ${item.status !== "synced" && "shadow-sm"}`}
-                          disabled={syncingItem === item.id}
-                          onClick={() =>
-                            handleSyncSingle(item.sourceType, item.id)
-                          }
-                        >
-                          {syncingItem === item.id ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <RefreshCw
-                              className={`w-4 h-4 mr-2 ${item.status !== "synced" ? "animate-pulse" : ""}`}
-                            />
-                          )}
-                          {t("sync")}
-                        </Button>
+                      <TableCell className="text-right pr-6">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={(e) =>
+                              handleDeleteSingle(e, item.sourceType, item.id)
+                            }
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={
+                              item.status === "synced" ? "outline" : "default"
+                            }
+                            size="sm"
+                            className={`h-8 transition-all duration-300 ${item.status !== "synced" && "shadow-sm"}`}
+                            disabled={syncingItem === item.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSyncSingle(item.sourceType, item.id);
+                            }}
+                          >
+                            {syncingItem === item.id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <RefreshCw
+                                className={`w-4 h-4 mr-2 ${item.status !== "synced" ? "animate-pulse" : ""}`}
+                              />
+                            )}
+                            {t("sync")}
+                          </Button>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -401,6 +492,197 @@ export default function EmbeddingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Detail Drawer */}
+      <AnimatePresence>
+        {isDetailOpen && selectedItem && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDetailOpen(false)}
+              className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-full md:w-[600px] bg-background border-l shadow-2xl z-50 flex flex-col"
+            >
+              <div className="p-6 border-b flex items-center justify-between bg-card">
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Database className="w-5 h-5 text-primary" />
+                    {t("itemDetails")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedItem.title}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsDetailOpen(false)}
+                  className="rounded-full hover:bg-muted"
+                >
+                  <XCircle className="w-6 h-6 text-muted-foreground" />
+                </Button>
+              </div>
+
+              <ScrollArea className="flex-1">
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-xs font-medium text-muted-foreground uppercase">
+                        {tCommon("category")}
+                      </span>
+                      <p className="font-semibold capitalize">
+                        {selectedItem.sourceType}
+                      </p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <span className="text-xs font-medium text-muted-foreground uppercase">
+                        {tCommon("status")}
+                      </span>
+                      <div>
+                        {selectedItem.status === "synced" && (
+                          <Badge
+                            variant="outline"
+                            className="text-green-600 border-green-200 bg-green-50"
+                          >
+                            {t("synced")}
+                          </Badge>
+                        )}
+                        {selectedItem.status === "outdated" && (
+                          <Badge
+                            variant="outline"
+                            className="text-yellow-600 border-yellow-200 bg-yellow-50"
+                          >
+                            {t("outdated")}
+                          </Badge>
+                        )}
+                        {selectedItem.status === "missing" && (
+                          <Badge
+                            variant="outline"
+                            className="text-red-600 border-red-200 bg-red-50"
+                          >
+                            {t("missing")}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="h-px bg-border" />
+
+                  <div className="space-y-4">
+                    <h4 className="font-bold flex items-center gap-2 text-primary">
+                      {t("chunks")}
+                      <Badge variant="secondary" className="ml-auto">
+                        {detailsData?.embeddings.length || 0}
+                      </Badge>
+                    </h4>
+
+                    {detailsLoading ? (
+                      <div className="flex flex-col items-center justify-center py-12 gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <span className="text-muted-foreground">
+                          {t("loading")}
+                        </span>
+                      </div>
+                    ) : detailsData?.embeddings.length === 0 ? (
+                      <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed">
+                        <Database className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                        <p className="text-muted-foreground">{t("noChunks")}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-4"
+                          onClick={() =>
+                            handleSyncSingle(
+                              selectedItem.sourceType,
+                              selectedItem.id,
+                            )
+                          }
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          {t("sync")}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {detailsData?.embeddings.map((emb) => (
+                          <div
+                            key={emb.id}
+                            className="group relative bg-card border rounded-xl p-4 hover:border-primary/40 transition-colors shadow-sm"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <Badge
+                                variant="outline"
+                                className="bg-primary/5 text-primary text-[10px]"
+                              >
+                                Chunk #{emb.chunkIndex}
+                              </Badge>
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px]"
+                              >
+                                {emb.language.toUpperCase()}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-foreground/80 leading-relaxed font-mono bg-muted/30 p-3 rounded-lg border border-border/50">
+                              {emb.chunkText}
+                            </div>
+                            <div className="mt-2 text-[10px] text-muted-foreground flex items-center justify-between">
+                              <span>
+                                {new Date(emb.updatedAt).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </ScrollArea>
+
+              <div className="p-6 border-t bg-card mt-auto flex gap-3">
+                <Button
+                  variant="destructive"
+                  className="flex-1 shadow-md"
+                  onClick={(e) =>
+                    handleDeleteSingle(
+                      e,
+                      selectedItem.sourceType,
+                      selectedItem.id,
+                    )
+                  }
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {t("deleteSingle")}
+                </Button>
+                <Button
+                  className="flex-1 shadow-md"
+                  onClick={() =>
+                    handleSyncSingle(selectedItem.sourceType, selectedItem.id)
+                  }
+                  disabled={syncingItem === selectedItem.id}
+                >
+                  {syncingItem === selectedItem.id ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  {t("sync")}
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

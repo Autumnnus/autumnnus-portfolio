@@ -3,7 +3,7 @@
 import {
   createSocialLinkAction,
   deleteSocialLinkAction,
-} from "@/app/admin/actions";
+} from "@/app/[locale]/admin/actions";
 import Icon from "@/components/common/Icon";
 import { SocialLink } from "@prisma/client";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";

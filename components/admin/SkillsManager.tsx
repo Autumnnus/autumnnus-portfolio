@@ -1,6 +1,9 @@
 "use client";
 
-import { createSkillAction, deleteSkillAction } from "@/app/admin/actions";
+import {
+  createSkillAction,
+  deleteSkillAction,
+} from "@/app/[locale]/admin/actions";
 import Icon from "@/components/common/Icon";
 import { Skill } from "@prisma/client";
 import { Loader2, Plus, Search, Trash2 } from "lucide-react";

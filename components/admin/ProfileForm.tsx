@@ -4,20 +4,20 @@ import {
   ProfileTranslationInput,
   updateProfileAction,
   uploadImageAction,
-} from "@/app/admin/actions";
-import { generateTranslationAction } from "@/app/admin/ai-actions";
+} from "@/app/[locale]/admin/actions";
+import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
 import { ProfileFormValues, ProfileSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Language, Profile, ProfileTranslation } from "@prisma/client";
-import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { ImagePlus, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Resolver, useFieldArray, useForm } from "react-hook-form";
 
 // Helper to transform array translations to object keyed by language
 const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
@@ -36,8 +36,38 @@ const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
   return result;
 };
 
+interface QuestTranslationData {
+  language: string;
+  title: string;
+}
+
+interface QuestData {
+  id: string;
+  completed: boolean;
+  order: number;
+  translations: QuestTranslationData[];
+}
+
+const transformQuestsToForm = (quests: Array<QuestData>) => {
+  return quests.map((q) => {
+    const transObj: Record<string, { title: string }> = {};
+    q.translations.forEach((t) => {
+      transObj[t.language] = { title: t.title };
+    });
+    return {
+      id: q.id,
+      completed: q.completed,
+      order: q.order,
+      translations: transObj,
+    };
+  });
+};
+
 export interface ProfileFormProps {
-  initialData?: Profile & { translations: ProfileTranslation[] };
+  initialData?: Profile & {
+    translations: ProfileTranslation[];
+    quests: QuestData[];
+  };
 }
 
 interface ImageData {
@@ -58,7 +88,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(ProfileSchema),
+    resolver: zodResolver(ProfileSchema) as Resolver<ProfileFormValues>,
     defaultValues: {
       email: initialData?.email || "",
       github: initialData?.github || "",
@@ -67,7 +97,15 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       translations: initialData?.translations
         ? transformTranslationsToObject(initialData.translations)
         : {},
+      quests: initialData?.quests
+        ? transformQuestsToForm(initialData.quests)
+        : [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "quests",
   });
 
   // Sync state with initialData when it changes (after router.refresh())
@@ -83,7 +121,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   const {
     register,
-    handleSubmit,
     setValue,
     getValues,
     formState: { errors },
@@ -197,6 +234,16 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         github: data.github || "",
         linkedin: data.linkedin || "",
         translations: translationsArray,
+        quests: data.quests.map((q) => ({
+          completed: q.completed,
+          order: q.order,
+          translations: Object.entries(q.translations)
+            .filter(([, t]) => t.title && t.title.trim() !== "")
+            .map(([lang, t]) => ({
+              language: lang as Language,
+              title: t.title,
+            })),
+        })),
       };
 
       await updateProfileAction(submitData);
@@ -213,7 +260,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={form.handleSubmit(onSubmit)}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -473,6 +520,94 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           </div>
         )}
       </LanguageTabs>
+
+      <div className="h-px bg-border/50" />
+
+      {/* Quests Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h3 className="text-xl font-bold">Mevcut Görevler (Quests)</h3>
+            <p className="text-sm text-muted-foreground">
+              Hakkımda bölümünde görünecek görev listesi
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              append({
+                completed: false,
+                order: fields.length,
+                translations: {
+                  tr: { title: "" },
+                  en: { title: "" },
+                },
+              })
+            }
+            className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-bold hover:bg-primary/20 transition-all"
+          >
+            <Plus size={16} />
+            Görev Ekle
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {fields.map((field, index) => (
+            <div
+              key={field.id}
+              className="bg-card border-2 border-border p-6 rounded-2xl space-y-4 relative group"
+            >
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full transition-all"
+              >
+                <Trash2 size={18} />
+              </button>
+
+              <div className="flex items-center gap-4">
+                <input
+                  type="checkbox"
+                  {...register(`quests.${index}.completed`)}
+                  className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                />
+                <span className="text-sm font-bold uppercase text-muted-foreground">
+                  Görev #{index + 1}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">
+                    Başlık (TR)
+                  </label>
+                  <input
+                    {...register(`quests.${index}.translations.tr.title`)}
+                    className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    placeholder="Görev başlığı"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">
+                    Title (EN)
+                  </label>
+                  <input
+                    {...register(`quests.${index}.translations.en.title`)}
+                    className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    placeholder="Quest title"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {fields.length === 0 && (
+            <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl text-muted-foreground">
+              Henüz görev eklenmemiş.
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="sticky bottom-8 z-20 flex justify-end gap-4 border-t border-border/50 bg-background/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border">
         <button

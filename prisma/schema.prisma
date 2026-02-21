@@ -166,6 +166,28 @@ model Profile {
   linkedin     String
   updatedAt    DateTime             @updatedAt
   translations ProfileTranslation[]
+  quests       Quest[]
+}
+
+model Quest {
+  id           String             @id @default(uuid())
+  completed    Boolean            @default(false)
+  order        Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  profileId    String?
+  profile      Profile?           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  translations QuestTranslation[]
+}
+
+model QuestTranslation {
+  id       String   @id @default(uuid())
+  language Language
+  title    String
+  questId  String
+  quest    Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@unique([questId, language])
 }
 
 model ProfileTranslation {

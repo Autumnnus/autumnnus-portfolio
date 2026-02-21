@@ -3,16 +3,17 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
+import { Press_Start_2P, Space_Grotesk, Space_Mono } from "next/font/google";
 import "../globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  variable: "--font-space-mono",
   subsets: ["latin"],
 });
 
@@ -58,7 +59,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col`}
+        className={`${spaceGrotesk.variable} ${spaceMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
           <NextIntlClientProvider messages={messages} locale={locale}>

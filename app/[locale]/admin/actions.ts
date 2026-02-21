@@ -71,6 +71,7 @@ export interface ProfileData {
   github: string;
   linkedin: string;
   translations: ProfileTranslationInput[];
+  quests: QuestData[];
 }
 
 export interface ExperienceTranslationInput {
@@ -86,6 +87,17 @@ export interface ExperienceData {
   startDate?: Date | null;
   endDate?: Date | null;
   translations: ExperienceTranslationInput[];
+}
+
+export interface QuestTranslationInput {
+  language: Language;
+  title: string;
+}
+
+export interface QuestData {
+  completed: boolean;
+  order: number;
+  translations: QuestTranslationInput[];
 }
 
 export async function uploadImageAction(formData: FormData) {
@@ -330,32 +342,68 @@ export async function updateProfileAction(data: ProfileData) {
     throw new Error("Unauthorized");
   }
 
-  const { translations, ...profileData } = data;
+  const { translations, quests, ...profileData } = data;
 
   const profile = await prisma.profile.findFirst();
 
   if (profile) {
-    await prisma.profileTranslation.deleteMany({
-      where: { profileId: profile.id },
-    });
-    return await prisma.profile.update({
-      where: { id: profile.id },
-      data: {
-        ...profileData,
-        translations: {
-          create: translations,
+    await prisma.$transaction([
+      prisma.profileTranslation.deleteMany({
+        where: { profileId: profile.id },
+      }),
+      prisma.questTranslation.deleteMany({
+        where: { quest: { profileId: profile.id } },
+      }),
+      prisma.quest.deleteMany({
+        where: { profileId: profile.id },
+      }),
+      prisma.profile.update({
+        where: { id: profile.id },
+        data: {
+          ...profileData,
+          translations: {
+            create: translations,
+          },
+          quests: {
+            create: quests.map((q) => ({
+              completed: q.completed,
+              order: q.order,
+              translations: {
+                create: q.translations.map((t) => ({
+                  language: t.language,
+                  title: t.title,
+                })),
+              },
+            })),
+          },
         },
-      },
-    });
+      }),
+    ]);
+    revalidatePath("/[locale]", "layout");
+    return { success: true };
   } else {
-    return await prisma.profile.create({
+    const newProfile = await prisma.profile.create({
       data: {
         ...profileData,
         translations: {
           create: translations,
         },
+        quests: {
+          create: quests.map((q) => ({
+            completed: q.completed,
+            order: q.order,
+            translations: {
+              create: q.translations.map((t) => ({
+                language: t.language,
+                title: t.title,
+              })),
+            },
+          })),
+        },
       },
     });
+    revalidatePath("/[locale]", "layout");
+    return newProfile;
   }
 }
 
@@ -421,6 +469,104 @@ export async function deleteExperienceAction(id: string) {
   });
 }
 
+// Quest Actions
+export async function createQuestAction(data: QuestData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const profile = await prisma.profile.findFirst();
+  if (!profile)
+    throw new Error("Profil bulunamadı. Lütfen önce profil oluşturun.");
+
+  const { translations, ...questData } = data;
+
+  const quest = await prisma.quest.create({
+    data: {
+      ...questData,
+      profileId: profile.id,
+      translations: {
+        create: translations.map((t) => ({
+          language: t.language,
+          title: t.title,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
+export async function updateQuestAction(id: string, data: QuestData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, ...questData } = data;
+
+  await prisma.questTranslation.deleteMany({ where: { questId: id } });
+
+  const quest = await prisma.quest.update({
+    where: { id },
+    data: {
+      ...questData,
+      translations: {
+        create: translations.map((t) => ({
+          language: t.language,
+          title: t.title,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
+export async function deleteQuestAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const quest = await prisma.quest.delete({
+    where: { id },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
+export async function toggleQuestStatusAction(id: string, completed: boolean) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const quest = await prisma.quest.update({
+    where: { id },
+    data: { completed },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
 export async function exportDatabaseAction() {
   const session = await auth();
   if (
@@ -430,21 +576,26 @@ export async function exportDatabaseAction() {
     throw new Error("Unauthorized");
   }
 
-  const [projects, blogs, profile, experiences, skills] = await Promise.all([
-    prisma.project.findMany({
-      include: { translations: true, technologies: true },
-    }),
-    prisma.blogPost.findMany({
-      include: { translations: true },
-    }),
-    prisma.profile.findFirst({
-      include: { translations: true },
-    }),
-    prisma.workExperience.findMany({
-      include: { translations: true },
-    }),
-    prisma.skill.findMany(),
-  ]);
+  const [projects, blogs, profile, experiences, socialLinks, skills, quests] =
+    await Promise.all([
+      prisma.project.findMany({
+        include: { translations: true, technologies: true },
+      }),
+      prisma.blogPost.findMany({
+        include: { translations: true },
+      }),
+      prisma.profile.findFirst({
+        include: { translations: true },
+      }),
+      prisma.workExperience.findMany({
+        include: { translations: true },
+      }),
+      prisma.socialLink.findMany(),
+      prisma.skill.findMany(),
+      prisma.quest.findMany({
+        include: { translations: true },
+      }),
+    ]);
 
   return {
     timestamp: new Date().toISOString(),
@@ -454,6 +605,8 @@ export async function exportDatabaseAction() {
       profile,
       experiences,
       skills,
+      quests,
+      socialLinks,
     },
   };
 }
@@ -468,7 +621,7 @@ export async function importDatabaseAction(jsonData: string) {
   }
 
   const { data } = JSON.parse(jsonData);
-  const { projects, blogs, profile, experiences, skills } = data;
+  const { projects, blogs, profile, experiences, skills, quests } = data;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -481,6 +634,8 @@ export async function importDatabaseAction(jsonData: string) {
       await tx.profileTranslation.deleteMany();
       await tx.profile.deleteMany();
       await tx.skill.deleteMany();
+      await tx.questTranslation.deleteMany();
+      await tx.quest.deleteMany();
 
       if (skills && skills.length > 0) {
         await tx.skill.createMany({
@@ -496,7 +651,7 @@ export async function importDatabaseAction(jsonData: string) {
       }
       if (profile) {
         const p = profile as ProfileData;
-        await tx.profile.create({
+        const createdProfile = await tx.profile.create({
           data: {
             avatar: p.avatar,
             email: p.email,
@@ -515,6 +670,31 @@ export async function importDatabaseAction(jsonData: string) {
             },
           },
         });
+
+        if (quests && quests.length > 0) {
+          for (const quest of quests as {
+            completed: boolean;
+            order: number;
+            profileId?: string;
+            translations: { language: Language; title: string }[];
+          }[]) {
+            await tx.quest.create({
+              data: {
+                completed: quest.completed,
+                order: quest.order,
+                profileId: createdProfile.id,
+                translations: {
+                  create: quest.translations.map(
+                    (t: { language: Language; title: string }) => ({
+                      language: t.language,
+                      title: t.title,
+                    }),
+                  ),
+                },
+              },
+            });
+          }
+        }
       }
 
       if (experiences && experiences.length > 0) {

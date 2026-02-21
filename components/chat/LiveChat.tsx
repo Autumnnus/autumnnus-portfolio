@@ -5,12 +5,15 @@ import { type SourceItem } from "@/app/api/chat/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatLoading, ChatMessage, Message } from "./ChatMessage";
+
+const STORAGE_KEY = "autumnnus_chat_history";
+const MAX_MESSAGES = 50;
 
 export default function LiveChat() {
   const t = useTranslations("Chat");
@@ -89,19 +92,65 @@ export default function LiveChat() {
     }
   }, [messages, isLoading]);
 
-  // Initial greeting
+  // Persistence: Save messages to localStorage
   useEffect(() => {
-    if (messages.length === 0 && isOpen) {
-      setMessages([
-        {
-          id: "welcome",
-          role: "ai",
-          content: t("greeting"),
-          timestamp: new Date(),
-        },
-      ]);
+    if (messages.length > 0) {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(messages.slice(-MAX_MESSAGES)),
+      );
     }
-  }, [isOpen, t, messages.length]);
+  }, [messages]);
+
+  // Persistence: Load messages from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed: Message[] = JSON.parse(saved);
+        // Revive Date objects
+        const revived = parsed.map((msg) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+        setMessages(revived);
+      } catch (err) {
+        console.error("Failed to parse chat history:", err);
+      }
+    }
+  }, []);
+
+  // Initial greeting (only if no messages exist yet OR only welcome message exists and language changed)
+  useEffect(() => {
+    const isOnlyWelcome = messages.length === 1 && messages[0].id === "welcome";
+    if ((messages.length === 0 || isOnlyWelcome) && isOpen) {
+      const currentGreeting = t("greeting");
+
+      // Update if empty OR if it's the welcome message but content differs (language change)
+      if (messages.length === 0 || messages[0].content !== currentGreeting) {
+        setMessages([
+          {
+            id: "welcome",
+            role: "ai",
+            content: currentGreeting,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    }
+  }, [isOpen, t, messages]);
+
+  const handleNewChat = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    setMessages([
+      {
+        id: "welcome",
+        role: "ai",
+        content: t("greeting"),
+        timestamp: new Date(),
+      },
+    ]);
+  }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,18 +245,29 @@ export default function LiveChat() {
                   </h3>
                   <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                    Powered by Gemini AI
+                    {t("poweredBy") || "Powered by Gemini AI"}
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 hover:bg-muted/50 rounded-full transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-muted/50 rounded-full transition-colors"
+                  onClick={handleNewChat}
+                  title={t("newChat") || "New Chat"}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-muted/50 rounded-full transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Messages */}

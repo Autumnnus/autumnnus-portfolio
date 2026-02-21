@@ -190,6 +190,21 @@ export const ProfileSchema = z.object({
   linkedin: z.string().optional().or(z.literal("")),
 
   translations: z.record(z.enum(languageEnumValues), ProfileTranslationSchema),
+  quests: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        completed: z.boolean().default(false),
+        order: z.number().default(0),
+        translations: z.record(
+          z.enum(languageEnumValues),
+          z.object({
+            title: z.string().default(""),
+          }),
+        ),
+      }),
+    )
+    .default([]),
 });
 
 export type ProfileFormValues = z.infer<typeof ProfileSchema>;

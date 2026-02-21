@@ -19,6 +19,12 @@ export default async function AdminProfilePage() {
     prisma.profile.findFirst({
       include: {
         translations: true,
+        quests: {
+          include: {
+            translations: true,
+          },
+          orderBy: { order: "asc" },
+        },
       },
     }),
     prisma.skill.findMany({ orderBy: { name: "asc" } }),

@@ -23,7 +23,17 @@
     "projectLabel": "Proje",
     "visitorCount": "{count}+ Ziyaretçi",
     "visitorLabel": "Ziyaretçi",
-    "githubActivityTitle": "Kodlama Aktivitesi"
+    "githubActivityTitle": "Kodlama Aktivitesi",
+    "journeyTitle": "Yazılımcının Yolculuğu",
+    "currentQuest": "MEVCUT GÖREV",
+    "statYears": "YIL",
+    "statProjs": "PROJE",
+    "statWins": "ZİYARETÇİ",
+    "statBlogs": "BLOG",
+    "statYearsTooltip": "Profesyonel yazılım geliştirme deneyimi süresi",
+    "statProjsTooltip": "Uçtan uca tamamlanmış ve yayına alınmış projeler",
+    "statWinsTooltip": "Eşsiz ziyaretçi sayısı. Detaylar için tıkla!",
+    "statBlogsTooltip": "Paylaşılan teknik makaleler ve deneyim yazıları"
   },
   "GitHub": {
     "title": "Kod Katkıları",
@@ -107,6 +117,7 @@
     "title": "AutumnAI",
     "greeting": "Merhaba! Ben AutumnAI. Kadir'in çalışmaları hakkında size nasıl yardımcı olabilirim?",
     "placeholder": "Bir soru sorun...",
+    "newChat": "Yeni Sohbet",
     "rateLimitMessage": "Günlük mesaj limitine ulaşıldı. Lütfen yarın tekrar deneyin.",
     "errorMessage": "Bir hata oluştu. Lütfen tekrar deneyin."
   },
@@ -181,6 +192,19 @@
       "deleteConfirm": "Bu linki silmek istediğinize emin misiniz?",
       "deleteError": "Silme başarısız.",
       "addError": "Ekleme başarısız."
+    },
+    "Quests": {
+      "title": "Görevler (Quests)",
+      "description": "Hakkımda bölümündeki mevcut görevleri yönetin.",
+      "add": "Yeni Görev Ekle",
+      "deleteConfirm": "Bu görevi silmek istediğinize emin misiniz?",
+      "deleteError": "Silme başarısız.",
+      "addError": "Ekleme başarısız.",
+      "updateError": "Güncelleme başarısız.",
+      "status": "Durum",
+      "completed": "Tamamlandı",
+      "active": "Devam Ediyor",
+      "questTitle": "Görev Başlığı"
     },
     "Form": {
       "slug": "URL Uzantısı (Slug)",
@@ -283,9 +307,14 @@
       "deleteConfirm": "TÜM embeddingleri silmek istediğinize emin misiniz?",
       "syncSuccess": "Tüm içerik başarıyla senkronize edildi!",
       "syncError": "Senkronizasyon başarısız oldu.",
-      "deleteSuccess": "Tüm embeddingler silindi.",
+      "deleteSuccess": "İçerik başarıyla silindi.",
       "deleteError": "Silme işlemi başarısız oldu.",
-      "loading": "İçerik yükleniyor..."
+      "loading": "İçerik yükleniyor...",
+      "viewDetails": "Detayları Gör",
+      "deleteSingle": "Vektörleri Sil",
+      "chunks": "Vektör Parçaları",
+      "itemDetails": "İçerik Detayları",
+      "noChunks": "Bu içerik için henüz vektör kaydı bulunmuyor."
     },
     "Common": {
       "actions": "Aksiyonlar",
