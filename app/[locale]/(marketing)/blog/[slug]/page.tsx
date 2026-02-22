@@ -10,7 +10,11 @@ interface BlogPostPageProps {
 }
 
 export async function generateStaticParams() {
-  const result = await getBlogPosts({ lang: Language.en, limit: 100 });
+  const result = await getBlogPosts({
+    lang: Language.en,
+    limit: 100,
+    skipAuth: true,
+  });
   return result.items.map((post) => ({
     slug: post.slug,
   }));
@@ -20,7 +24,7 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const post = await getBlogPostBySlug(slug, locale as Language);
+  const post = await getBlogPostBySlug(slug, locale as Language, true);
 
   if (!post) {
     return {

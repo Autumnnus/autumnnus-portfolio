@@ -39,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { items: blogPosts } = await getBlogPosts({
     lang: Language.en,
     limit: 1000, // Fetch all
+    skipAuth: true,
   });
 
   for (const post of blogPosts) {

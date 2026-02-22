@@ -2,6 +2,7 @@ import { generateEmbedding } from "@/lib/embeddings";
 import { prisma } from "@/lib/prisma";
 import { searchSimilar } from "@/lib/vectordb";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
@@ -395,7 +396,7 @@ ${message}`;
         content: response,
         metadata: {
           systemPrompt: systemPrompt,
-          usage: usageMetadata,
+          usage: usageMetadata as unknown as Prisma.InputJsonValue,
         },
       },
     });

@@ -45,6 +45,7 @@ export default async function Home({ params }: HomeProps) {
       lang,
       featured: true,
       limit: 2,
+      skipAuth: true,
     }),
     getProfile(lang),
     getWorkExperiences(lang),

@@ -217,6 +217,7 @@ export async function getBlogPosts({
   search = "",
   tag = "All",
   featured,
+  skipAuth = false,
 }: {
   lang: Language;
   page?: number;
@@ -224,11 +225,20 @@ export async function getBlogPosts({
   search?: string;
   tag?: string;
   featured?: boolean;
+  skipAuth?: boolean;
 }) {
   try {
-    const session = await auth();
-    const isAdmin =
-      session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    let isAdmin = false;
+
+    if (!skipAuth) {
+      try {
+        const session = await auth();
+        isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      } catch {
+        // Fallback for static generation where auth/headers are not available
+        isAdmin = false;
+      }
+    }
 
     const skip = (page - 1) * limit;
 
@@ -325,7 +335,11 @@ export async function getBlogPostById(id: string) {
   }
 }
 
-export async function getBlogPostBySlug(slug: string, lang: Language) {
+export async function getBlogPostBySlug(
+  slug: string,
+  lang: Language,
+  skipAuth = false,
+) {
   try {
     const post = await prisma.blogPost.findUnique({
       where: { slug },
@@ -338,9 +352,15 @@ export async function getBlogPostBySlug(slug: string, lang: Language) {
 
     if (!post) return null;
 
-    const session = await auth();
-    const isAdmin =
-      session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    let isAdmin = false;
+    if (!skipAuth) {
+      try {
+        const session = await auth();
+        isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      } catch {
+        isAdmin = false;
+      }
+    }
 
     if (post.status === "draft" && !isAdmin) {
       return null;
