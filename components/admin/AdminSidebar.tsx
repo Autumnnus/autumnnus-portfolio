@@ -33,7 +33,7 @@ export function AdminSidebar() {
     <div className="flex h-full w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <span className="text-primary">Admin</span>Panel
+          <span className="text-primary">{t("adminPanel")}</span>
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto py-4">

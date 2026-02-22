@@ -1,4 +1,8 @@
+import { useTranslations } from "next-intl";
+
 export default function Loading() {
+  const t = useTranslations("Admin.Embeddings");
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <div className="relative flex flex-col items-center gap-4">
@@ -9,7 +13,7 @@ export default function Loading() {
           <div className="absolute inset-4 rounded-full border-b-2 border-primary opacity-50 animate-spin" />
         </div>
         <div className="text-sm font-medium tracking-widest uppercase animate-pulse text-muted-foreground">
-          Loading
+          {t("loading")}
         </div>
       </div>
     </div>

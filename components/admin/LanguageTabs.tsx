@@ -1,5 +1,6 @@
 import { languageNames } from "@/i18n/routing";
 import { Globe } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface LanguageTabsProps {
@@ -13,6 +14,7 @@ export default function LanguageTabs({
   targetLangs,
   children,
 }: LanguageTabsProps) {
+  const t = useTranslations("Admin.Common");
   const [activeTab, setActiveTab] = useState(sourceLang);
 
   const currentTab =
@@ -47,7 +49,7 @@ export default function LanguageTabs({
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full ml-1 ${currentTab === lang ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}
               >
-                Kaynak
+                {t("source")}
               </span>
             )}
           </button>

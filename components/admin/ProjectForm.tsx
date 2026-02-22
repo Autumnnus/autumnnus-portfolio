@@ -11,7 +11,7 @@ import {
 import {
   generateTranslationAction,
   ProjectContent,
-} from "@/app/admin/ai-actions";
+} from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import Icon from "@/components/common/Icon";
@@ -91,6 +91,7 @@ export default function ProjectForm({
   initialData,
 }: ProjectFormProps) {
   const t = useTranslations("Admin.Form");
+  const commonT = useTranslations("Admin.Common");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
@@ -230,7 +231,7 @@ export default function ProjectForm({
         setter({ url: res.url });
       } catch (err) {
         console.error(err);
-        alert("Yükleme başarısız oldu");
+        alert(t("errorUpload"));
       } finally {
         setLoading(false);
       }
@@ -306,7 +307,7 @@ export default function ProjectForm({
 
   const handleQuickAddSkill = async () => {
     if (!newSkillName || !newSkillIcon) {
-      alert("Lütfen isim ve ikon seçiniz");
+      alert(t("errorFillSkill"));
       return;
     }
 
@@ -327,7 +328,7 @@ export default function ProjectForm({
       setNewSkillIcon("");
     } catch (err) {
       console.error(err);
-      alert("Teknoloji eklenemedi");
+      alert(t("errorAddSkill"));
     } finally {
       setIsAddingSkill(false);
     }
@@ -410,7 +411,7 @@ export default function ProjectForm({
           setValue(`translations.${lang}.keywords` as const, content.keywords);
       });
 
-      alert("Çeviri tamamlandı!");
+      alert(t("translateSuccess"));
     } catch (error) {
       alert(
         "Çeviri başarısız oldu: " +
@@ -482,8 +483,7 @@ export default function ProjectForm({
         router.refresh();
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "İşlem başarısız oldu";
+      const message = err instanceof Error ? err.message : t("errorProcess");
       alert(message);
     } finally {
       setLoading(false);
@@ -768,7 +768,7 @@ export default function ProjectForm({
               <input
                 {...register("imageAlt")}
                 className="w-full p-2 bg-muted rounded border border-border text-xs focus:border-primary outline-hidden"
-                placeholder="Örn: Portfolyo web sitesi ana sayfa görünümü"
+                placeholder={t("imageAltPlaceholder")}
               />
             </div>
           </div>
@@ -812,7 +812,8 @@ export default function ProjectForm({
                 onClick={() => setShowAddSkill(!showAddSkill)}
                 className="text-xs flex items-center gap-1 text-primary font-bold hover:underline"
               >
-                <Plus size={12} /> {showAddSkill ? "Kapat" : t("quickAdd")}
+                <Plus size={12} />{" "}
+                {showAddSkill ? commonT("close") : t("quickAdd")}
               </button>
             </div>
 
@@ -846,7 +847,7 @@ export default function ProjectForm({
                           // Allow click on dropdown items to register before hiding
                           setTimeout(() => setShowIconDropdown(false), 200);
                         }}
-                        placeholder="Örn: React, Tailwind, Supabase..."
+                        placeholder={t("skillSearchPlaceholder")}
                         className="w-full py-2.5 pl-9 pr-10 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
                       />
                       {isSearchingIcons && (
@@ -890,7 +891,7 @@ export default function ProjectForm({
                       <input
                         value={newSkillName}
                         onChange={(e) => setNewSkillName(e.target.value)}
-                        placeholder="Örn: Bun"
+                        placeholder={t("skillNamePlaceholder")}
                         className="w-full p-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
                       />
                     </div>
@@ -904,7 +905,7 @@ export default function ProjectForm({
                           <input
                             value={newSkillIcon}
                             onChange={(e) => setNewSkillIcon(e.target.value)}
-                            placeholder="🚀 veya URL..."
+                            placeholder={t("emojiOrUrl")}
                             className="w-full px-2.5 py-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all pr-10"
                           />
                           {newSkillIcon && (
@@ -979,9 +980,7 @@ export default function ProjectForm({
         <div className="flex justify-between items-center">
           <div>
             <h3 className="text-lg font-bold">{t("gallery")}</h3>
-            <p className="text-xs text-muted-foreground">
-              Proje detay sayfasında görünecek ekstra resimler
-            </p>
+            <p className="text-xs text-muted-foreground">{t("galleryDesc")}</p>
           </div>
           <label className="cursor-pointer px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm font-bold hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-2">
             <Plus size={16} /> {t("gallery")}
@@ -1024,7 +1023,7 @@ export default function ProjectForm({
                   type="button"
                   onClick={() => removeGalleryImage(index)}
                   className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors shadow-lg"
-                  title="Sil"
+                  title={commonT("delete")}
                 >
                   <Trash2 size={18} />
                 </button>
@@ -1040,7 +1039,7 @@ export default function ProjectForm({
                       ? "bg-yellow-500 text-white cursor-default"
                       : "bg-white/20 hover:bg-white/40 text-white"
                   }`}
-                  title="Kapak Resmi Yap"
+                  title={t("makeCover")}
                 >
                   <Star
                     size={18}

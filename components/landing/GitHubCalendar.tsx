@@ -20,6 +20,21 @@ interface Contribution {
   level: number;
 }
 
+const CalendarSkeleton = () => (
+  <div className="flex gap-[4px] animate-pulse overflow-hidden w-full">
+    {Array.from({ length: 52 }).map((_, i) => (
+      <div key={i} className="flex flex-col gap-[4px]">
+        {Array.from({ length: 7 }).map((_, j) => (
+          <div
+            key={j}
+            className="w-[12px] h-[12px] bg-muted/40 rounded-sm"
+          ></div>
+        ))}
+      </div>
+    ))}
+  </div>
+);
+
 export default function GitHubCalendar({
   username = "Autumnnus",
 }: GitHubCalendarProps) {
@@ -58,7 +73,6 @@ export default function GitHubCalendar({
     fetchCalendarData();
   }, [username, selectedYear]);
 
-  // Yılların listesini (butonlar için) sadece bir kere çekiyoruz
   useEffect(() => {
     if (!username) return;
 
@@ -93,65 +107,61 @@ export default function GitHubCalendar({
 
   return (
     <section id="github" className="py-12">
-      {loading ? (
-        <div className="flex justify-center p-4">
-          <div className="animate-pulse flex gap-1">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-3 h-3 bg-muted rounded-sm"></div>
-            ))}
+      <SectionHeading
+        subHeading={t("GitHub.subTitle")}
+        heading={t("GitHub.title")}
+      />
+      <FadeIn delay={0.2}>
+        <div className="border border-border/50 p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">
+              {resolvedTheme === "dark" ? (
+                <Snowflake className="w-6 h-6 text-primary" />
+              ) : (
+                <Leaf className="w-6 h-6 text-primary" />
+              )}
+            </span>
+            <h3 className="text-lg font-bold">{t("GitHub.activityTitle")}</h3>
+            <div className="ml-auto flex flex-wrap gap-1">
+              <button
+                onClick={() => setSelectedYear("last")}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  selectedYear === "last"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 hover:bg-muted text-muted-foreground"
+                }`}
+              >
+                Last Year
+              </button>
+              {years.map((year) => (
+                <button
+                  key={year}
+                  onClick={() => setSelectedYear(year)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                    selectedYear === year
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/50 hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      ) : data.length === 0 ? (
-        <div className="text-center text-muted-foreground">
-          No activity data found
-        </div>
-      ) : (
-        <>
-          <SectionHeading
-            subHeading={t("GitHub.subTitle")}
-            heading={t("GitHub.title")}
-          />
-          <FadeIn delay={0.2}>
-            <div className="border border-border/50 p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">
-                  {resolvedTheme === "dark" ? (
-                    <Snowflake className="w-6 h-6 text-primary" />
-                  ) : (
-                    <Leaf className="w-6 h-6 text-primary" />
-                  )}
-                </span>
-                <h3 className="text-lg font-bold">
-                  {t("GitHub.activityTitle")}
-                </h3>
-                <div className="ml-auto flex flex-wrap gap-1">
-                  <button
-                    onClick={() => setSelectedYear("last")}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                      selectedYear === "last"
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted/50 hover:bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    Last Year
-                  </button>
-                  {years.map((year) => (
-                    <button
-                      key={year}
-                      onClick={() => setSelectedYear(year)}
-                      className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                        selectedYear === year
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-muted/50 hover:bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              <div className="overflow-x-auto pb-2 relative">
+          <div className="overflow-x-auto pb-2 relative min-h-[150px] flex items-end">
+            {data.length === 0 && loading ? (
+              <CalendarSkeleton />
+            ) : data.length === 0 && !loading ? (
+              <div className="text-center w-full text-muted-foreground py-8">
+                No activity data found
+              </div>
+            ) : (
+              <div
+                className={`transition-opacity duration-300 w-full ${
+                  loading ? "opacity-30 pointer-events-none" : "opacity-100"
+                }`}
+              >
                 <ActivityCalendar
                   data={data}
                   theme={theme}
@@ -198,10 +208,24 @@ export default function GitHubCalendar({
                   }}
                 />
               </div>
-            </div>
-          </FadeIn>
-        </>
-      )}
+            )}
+
+            {/* Önceki veri varken yükleme yapılıyorsa ortada ufak bir spinner/pulse göster */}
+            {data.length > 0 && loading && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                <div className="animate-pulse flex gap-1 bg-background/50 p-2 rounded-md backdrop-blur-sm">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-2.5 h-2.5 bg-primary rounded-sm"
+                    ></div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </FadeIn>
     </section>
   );
 }

@@ -231,7 +231,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
               <>
                 <Image
                   src={logo.url}
-                  alt="Logo"
+                  alt={t("logoAlt")}
                   fill
                   className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                   unoptimized
@@ -268,7 +268,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
             <Input
               {...register("company")}
               required
-              placeholder="Örn: Google, Amazon"
+              placeholder={t("companyNamePlaceholder")}
             />
             {errors.company && (
               <p className="text-xs text-red-500">{errors.company.message}</p>
@@ -363,7 +363,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
               <Input
                 {...register(`translations.${lang}.locationType` as const)}
                 required={lang === sourceLang}
-                placeholder="Hibrit, Uzaktan / Hybrid, Remote"
+                placeholder={t("workTypePlaceholder")}
               />
               {errors.translations?.[lang]?.locationType && (
                 <p className="text-xs text-red-500">

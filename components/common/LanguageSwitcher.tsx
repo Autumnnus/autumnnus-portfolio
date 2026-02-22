@@ -3,11 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { languageNames, routing, usePathname, useRouter } from "@/i18n/routing";
 import { Check, ChevronDown, Globe } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
+  const commonT = useTranslations("Admin.Common");
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -51,7 +52,7 @@ export default function LanguageSwitcher() {
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 h-9 px-3 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-95 border border-transparent hover:border-border"
-        aria-label="Select Language"
+        aria-label={commonT("selectLanguage")}
       >
         <Globe className="w-4 h-4 text-muted-foreground" />
         <span className="text-xs font-pixel uppercase tracking-tighter">

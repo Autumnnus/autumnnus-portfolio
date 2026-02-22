@@ -1,5 +1,6 @@
 import { languageNames } from "@/i18n/routing";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 interface MultiLanguageSelectorProps {
@@ -13,6 +14,7 @@ export default function MultiLanguageSelector({
   targetLangs,
   onChange,
 }: MultiLanguageSelectorProps) {
+  const t = useTranslations("Admin.Common");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +56,7 @@ export default function MultiLanguageSelector({
   return (
     <div className="relative" ref={dropdownRef}>
       <label className="text-sm font-bold text-primary block mb-1">
-        Hedef Diller:
+        {t("targetLanguages")}
       </label>
       <button
         type="button"
@@ -63,8 +65,8 @@ export default function MultiLanguageSelector({
       >
         <span className="truncate">
           {targetLangs.length === 0
-            ? "Dil seçiniz..."
-            : `${targetLangs.length} dil seçildi`}
+            ? t("selectLanguage")
+            : t("countLangsSelected", { count: targetLangs.length })}
         </span>
         <ChevronsUpDown className="w-4 h-4 opacity-50" />
       </button>
@@ -77,14 +79,14 @@ export default function MultiLanguageSelector({
               onClick={selectAll}
               className="px-2 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 flex-1"
             >
-              Tümünü Seç
+              {t("selectAll")}
             </button>
             <button
               type="button"
               onClick={clearAll}
               className="px-2 py-1 text-xs bg-destructive/10 text-destructive rounded hover:bg-destructive/20 flex-1"
             >
-              Temizle
+              {t("clear")}
             </button>
           </div>
           <div className="p-1">

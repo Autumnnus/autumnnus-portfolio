@@ -1,12 +1,13 @@
 "use client";
 
-import { generateSeoAction } from "@/app/admin/ai-actions";
+import { generateSeoAction } from "@/app/[locale]/admin/ai-actions";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Loader2, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface SeoPopoverProps {
@@ -28,13 +29,15 @@ export default function SeoPopover({
   language,
   onSeoGenerated,
 }: SeoPopoverProps) {
+  const t = useTranslations("Admin.Form");
+  const commonT = useTranslations("Admin.Common");
   const [context, setContext] = useState("");
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
   const handleGenerate = async () => {
     if (!context || context.length < 30) {
-      alert("Lütfen en az 30 karakter içeren bir bağlam giriniz.");
+      alert(t("seoMinChars"));
       return;
     }
 
@@ -49,10 +52,11 @@ export default function SeoPopover({
       onSeoGenerated(result);
       setOpen(false);
       setContext("");
-      alert("SEO içeriği başarıyla oluşturuldu!");
+      alert(t("seoSuccess"));
     } catch (error) {
       alert(
-        "SEO üretimi başarısız: " +
+        t("seoError") +
+          ": " +
           (error instanceof Error ? error.message : "Bilinmeyen hata"),
       );
     } finally {
@@ -68,24 +72,24 @@ export default function SeoPopover({
           className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 transition-colors"
         >
           <Sparkles className="w-4 h-4" />
-          SEO Optimize
+          {t("seoOptimize")}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-4" align="start">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-bold">İçerik Bağlamı</label>
+            <label className="text-sm font-bold">{t("seoContext")}</label>
             <p className="text-xs text-muted-foreground">
-              Oluşturulacak SEO içeriği için bağlam veya temel bilgi giriniz.
+              {t("seoContextDesc")}
             </p>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
-              placeholder="Örn: Bu yazı Next.js 14 ile modern bir blog uygulaması oluşturma hakkında..."
+              placeholder={t("seoPlaceholder")}
               className="w-full min-h-[120px] p-2 text-sm rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground">
-              {context.length} karakter
+              {context.length} {t("characters")}
             </p>
           </div>
 
@@ -98,7 +102,7 @@ export default function SeoPopover({
               }}
               className="px-3 py-1.5 text-sm font-medium rounded-md hover:bg-muted transition-colors"
             >
-              İptal
+              {commonT("cancel")}
             </button>
             <button
               type="button"
@@ -109,12 +113,12 @@ export default function SeoPopover({
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Oluşturuluyor...
+                  {t("generating")}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  Oluştur
+                  {t("generate")}
                 </>
               )}
             </button>

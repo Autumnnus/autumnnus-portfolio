@@ -252,7 +252,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     setLoading(true);
 
     try {
-      // Upload cover image if it's new
       let finalCoverImage = data.coverImage || "";
       if (coverImage?.file) {
         finalCoverImage = await uploadSingleFile(
@@ -342,7 +341,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                 if ((value as FieldError).message) {
                   return (
                     <li key={key}>
-                      İçerik Hatası: {(value as FieldError).message}
+                      {t("contentError")}: {(value as FieldError).message}
                     </li>
                   );
                 }
@@ -371,9 +370,9 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                     .map(([field, err]) => {
                       const fieldName =
                         field === "title"
-                          ? "Başlık"
+                          ? t("title")
                           : field === "content"
-                            ? "İçerik"
+                            ? t("content")
                             : field;
                       return `${fieldName} (${err?.message || "Geçersiz"})`;
                     });
@@ -393,7 +392,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
               return (
                 <li key={key}>
                   {key === "slug"
-                    ? "URL Uzantısı"
+                    ? t("slug")
                     : key.charAt(0).toUpperCase() + key.slice(1)}
                   : {err?.message || "Geçersiz değer"}
                 </li>
@@ -468,13 +467,13 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Kapak Görseli</label>
+            <label className="text-sm font-medium">{t("coverImage")}</label>
             <div className="relative aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors">
               {coverImage ? (
                 <>
                   <Image
                     src={coverImage.url}
-                    alt="Cover"
+                    alt={t("coverAlt")}
                     fill
                     className="object-cover"
                     unoptimized
@@ -532,7 +531,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-primary">
-                Kaynak Dil:
+                {t("sourceLanguage")}:
               </span>
               <select
                 value={sourceLang}
@@ -565,12 +564,11 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             ) : (
               <Sparkles className="w-4 h-4" />
             )}
-            Seçilen Dillerde Çevir
+            {t("translateInSelectedLangs")}
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Kaynak dildeki alanları doldurduktan sonra, en az bir hedef dil seçip
-          çeviri yapabilirsiniz.
+          {t("translateInSelectedLangsDesc")}
         </p>
       </div>
 
@@ -662,7 +660,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             <div className="space-y-4 pt-4 border-t border-border/50">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <FileText size={12} /> {t("fullDescription")} (HTML)
+                  <FileText size={12} /> {t("fullDescription")} {t("htmlLabel")}
                 </label>
                 <TipTapEditor
                   content={
@@ -710,7 +708,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                       `translations.${lang}.keywords` as const,
                     )?.join(", ")}
                     className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
-                    placeholder="anahtar, kelimeler"
+                    placeholder={t("keywordsPlaceholder")}
                   />
                 </div>
               </div>

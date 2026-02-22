@@ -3,6 +3,8 @@
 import {
   deleteLiveChatGreetingAction,
   getLiveChatConfigAction,
+  GreetingTranslationInput,
+  LiveChatConfigData,
   LiveChatGreetingInput,
   resetLiveChatSoundAction,
   updateLiveChatConfigAction,
@@ -26,7 +28,6 @@ import { Language } from "@prisma/client";
 import {
   Globe,
   Layout,
-  MessageSquare,
   Music,
   Plus,
   Power,
@@ -35,12 +36,26 @@ import {
   Volume2,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import LanguageTabs from "./LanguageTabs";
 
+interface LiveChatGreetingWithId extends LiveChatGreetingInput {
+  id: string;
+}
+
+interface LiveChatConfigDataExtended extends Omit<
+  LiveChatConfigData,
+  "greetings"
+> {
+  greetings: LiveChatGreetingWithId[];
+}
+
 export default function LiveChatSettings() {
-  const [config, setConfig] = useState<any>(null);
+  const t = useTranslations("Admin.LiveChat");
+  const commonT = useTranslations("Admin.Common");
+  const [config, setConfig] = useState<LiveChatConfigDataExtended | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [newPath, setNewPath] = useState("");
@@ -80,7 +95,7 @@ export default function LiveChatSettings() {
         });
         return true;
       },
-      config.isEnabled ? "Live Chat kapatıldı" : "Live Chat açıldı",
+      config.isEnabled ? t("close") : t("open"),
     );
 
     if (success) {
@@ -93,17 +108,17 @@ export default function LiveChatSettings() {
     if (!newPath.trim() || !config) return;
 
     if (!newPath.startsWith("/")) {
-      toast.error("Yol '/' ile başlamalıdır");
+      toast.error(t("errorPathStart"));
       return;
     }
 
     if (config.allowedPaths.includes(newPath)) {
-      toast.error("Bu yol zaten ekli");
+      toast.error(t("errorPathExists"));
       return;
     }
 
     if (config.excludedPaths.includes(newPath)) {
-      toast.error("Bu yol engellenen sayfalar listesinde mevcut");
+      toast.error(t("errorPathBlocked"));
       return;
     }
 
@@ -115,7 +130,7 @@ export default function LiveChatSettings() {
         excludedPaths: config.excludedPaths,
       });
       return true;
-    }, "Yol eklendi");
+    }, t("successPathAdded"));
 
     if (success) {
       setConfig({ ...config, allowedPaths: updatedPaths });
@@ -135,7 +150,7 @@ export default function LiveChatSettings() {
         excludedPaths: config.excludedPaths,
       });
       return true;
-    }, "Yol kaldırıldı");
+    }, t("successPathRemoved"));
 
     if (success) {
       setConfig({ ...config, allowedPaths: updatedPaths });
@@ -147,17 +162,17 @@ export default function LiveChatSettings() {
     if (!newExcludedPath.trim() || !config) return;
 
     if (!newExcludedPath.startsWith("/")) {
-      toast.error("Yol '/' ile başlamalıdır");
+      toast.error(t("errorPathStart"));
       return;
     }
 
     if (config.excludedPaths.includes(newExcludedPath)) {
-      toast.error("Bu yol zaten engellenenlerde ekli");
+      toast.error(t("errorPathBlocked"));
       return;
     }
 
     if (config.allowedPaths.includes(newExcludedPath)) {
-      toast.error("Bu yol görünür sayfalar listesinde mevcut");
+      toast.error(t("errorPathVisible"));
       return;
     }
 
@@ -169,7 +184,7 @@ export default function LiveChatSettings() {
         excludedPaths: updatedPaths,
       });
       return true;
-    }, "Yol engellenenlere eklendi");
+    }, t("successPathBlocked"));
 
     if (success) {
       setConfig({ ...config, excludedPaths: updatedPaths });
@@ -189,7 +204,7 @@ export default function LiveChatSettings() {
         excludedPaths: updatedPaths,
       });
       return true;
-    }, "Engel kaldırıldı");
+    }, t("successBlockRemoved"));
 
     if (success) {
       setConfig({ ...config, excludedPaths: updatedPaths });
@@ -199,12 +214,12 @@ export default function LiveChatSettings() {
 
   const handleSaveGreeting = async () => {
     if (!greetingForm.pathname.trim()) {
-      toast.error("Lütfen bir yol (pathname) girin");
+      toast.error(t("errorEnterPath"));
       return;
     }
 
     if (!greetingForm.pathname.startsWith("/")) {
-      toast.error("Yol '/' ile başlamalıdır");
+      toast.error(t("errorPathStart"));
       return;
     }
 
@@ -220,20 +235,20 @@ export default function LiveChatSettings() {
           text: "",
         })),
       });
-      toast.success("Karşılama mesajı kaydedildi");
+      toast.success(t("successGreetingSaved"));
     } catch {
-      toast.error("Kaydedilirken hata oluştu");
+      toast.error(t("errorGreetingSave"));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleEditGreeting = (greeting: any) => {
+  const handleEditGreeting = (greeting: LiveChatGreetingWithId) => {
     setGreetingForm({
       pathname: greeting.pathname,
       translations: Object.keys(languageNames).map((lang) => {
         const trans = greeting.translations.find(
-          (t: any) => t.language === lang,
+          (trans: GreetingTranslationInput) => trans.language === lang,
         );
         return {
           language: lang as Language,
@@ -245,13 +260,12 @@ export default function LiveChatSettings() {
   };
 
   const handleDeleteGreeting = async (id: string) => {
-    if (!confirm("Bu karşılama mesajını silmek istediğinize emin misiniz?"))
-      return;
+    if (!confirm(t("confirmDeleteGreeting"))) return;
     setIsSaving(true);
     const success = await handleAction(async () => {
       await deleteLiveChatGreetingAction(id);
       return true;
-    }, "Karşılama mesajı silindi");
+    }, t("successGreetingDeleted"));
 
     if (success) {
       await fetchConfig();
@@ -267,7 +281,7 @@ export default function LiveChatSettings() {
     if (!file) return;
 
     if (!file.type.startsWith("audio/")) {
-      toast.error("Lütfen bir ses dosyası seçin");
+      toast.error(t("errorSelectAudio"));
       return;
     }
 
@@ -278,9 +292,9 @@ export default function LiveChatSettings() {
       formData.append("type", type);
       await uploadLiveChatSoundAction(formData);
       await fetchConfig();
-      toast.success("Ses yüklendi");
-    } catch (err) {
-      toast.error("Ses yüklenirken hata oluştu");
+      toast.success(t("successSoundUploaded"));
+    } catch {
+      toast.error(t("errorSoundUpload"));
     } finally {
       setIsUploadingSound(null);
     }
@@ -291,16 +305,16 @@ export default function LiveChatSettings() {
     try {
       await resetLiveChatSoundAction(type);
       await fetchConfig();
-      toast.success("Ses varsayılana sıfırlandı");
-    } catch (err) {
-      toast.error("Sıfırlanırken hata oluştu");
+      toast.success(t("successSoundReset"));
+    } catch {
+      toast.error(t("errorSoundReset"));
     } finally {
       setIsUploadingSound(null);
     }
   };
 
-  if (isLoading) {
-    return <div className="p-8 text-center">Yükleniyor...</div>;
+  if (isLoading || !config) {
+    return <div className="p-8 text-center">{commonT("loading")}</div>;
   }
 
   return (
@@ -314,12 +328,9 @@ export default function LiveChatSettings() {
                 <Power
                   className={`w-5 h-5 ${config.isEnabled ? "text-green-500" : "text-red-500"}`}
                 />
-                Live Chat Durumu
+                {t("status")}
               </CardTitle>
-              <CardDescription>
-                Live Chat&apos;i tüm site genelinde açıp kapatabilir veya
-                belirli sayfalarda görünmesini sağlayabilirsiniz.
-              </CardDescription>
+              <CardDescription>{t("statusDesc")}</CardDescription>
             </div>
             <Button
               variant={config.isEnabled ? "destructive" : "default"}
@@ -327,7 +338,7 @@ export default function LiveChatSettings() {
               disabled={isSaving}
               className="px-8"
             >
-              {config.isEnabled ? "Kapat" : "Aç"}
+              {config.isEnabled ? commonT("close") : commonT("open")}
             </Button>
           </div>
         </CardHeader>
@@ -339,12 +350,11 @@ export default function LiveChatSettings() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Layout className="w-5 h-5 text-primary" />
-              Görüneceği Sayfalar
+              {t("visiblePages")}
             </CardTitle>
             <CardDescription>
-              Hangi sayfalarda widget'ın görüneceğini belirleyin.{" "}
-              <strong>DİL ÖN EKİ OLMADAN</strong> giriniz (örn: /blog). Boş
-              bırakılırsa tüm sayfalarda görünür.
+              {t("visiblePagesDesc")} <strong>{t("noPrefixNote")}</strong>{" "}
+              {t("visiblePagesDesc_note")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -367,7 +377,7 @@ export default function LiveChatSettings() {
               {newPath && (
                 <div className="flex flex-wrap gap-2 items-center text-[10px] bg-primary/5 p-2 rounded-lg border border-primary/10 animate-in fade-in slide-in-from-top-1">
                   <span className="font-bold text-primary uppercase">
-                    Eşleşecek Sayfalar:
+                    {t("matchingPages")}
                   </span>
                   <div className="flex gap-2">
                     {["tr", "en"].map((lang) => (
@@ -388,7 +398,7 @@ export default function LiveChatSettings() {
                 onClick={handleAddPath}
                 disabled={isSaving || !newPath.trim()}
               >
-                <Plus className="w-4 h-4 mr-2" /> Sayfa Ekle
+                <Plus className="w-4 h-4 mr-2" /> {t("addPage")}
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 pt-2">
@@ -397,7 +407,7 @@ export default function LiveChatSettings() {
                   variant="outline"
                   className="text-muted-foreground px-3 py-1"
                 >
-                  Tüm Sayfalar
+                  {t("allPages")}
                 </Badge>
               ) : (
                 config.allowedPaths.map((path: string) => (
@@ -426,11 +436,11 @@ export default function LiveChatSettings() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <X className="w-5 h-5 text-destructive" />
-              Görünmeyecek Sayfalar
+              {t("excludedPages")}
             </CardTitle>
             <CardDescription>
-              Widget&apos;ın <strong>KESİNLİKLE</strong> görünmeyeceği sayfalar.
-              Bu ayar görünür sayfalardan daha önceliklidir.
+              {t("excludedPagesDesc")} <strong>{t("noPrefixNote")}</strong>{" "}
+              {t("excludedPagesDesc_note")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -458,19 +468,19 @@ export default function LiveChatSettings() {
                 onClick={handleAddExcludedPath}
                 disabled={isSaving || !newExcludedPath.trim()}
               >
-                <Plus className="w-4 h-4 mr-2" /> Sayfayı Engelle
+                <Plus className="w-4 h-4 mr-2" /> {t("blockPage")}
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 pt-2">
               {!config.excludedPaths || config.excludedPaths.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">
-                  Herhangi bir engel yok.
+                  {commonT("noResults")}
                 </p>
               ) : (
                 config.excludedPaths.map((path: string) => (
                   <Badge
                     key={path}
-                    variant="destructive"
+                    variant="outline"
                     className="flex items-center gap-1 pl-3 pr-1 py-1 bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20"
                   >
                     {path}
@@ -494,31 +504,26 @@ export default function LiveChatSettings() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                Karşılama Mesajları
+                {t("greetingMessages")}
               </CardTitle>
-              <CardDescription>
-                Sayfaya özel ilk AI baloncuğu mesajları.{" "}
-                <strong>DİL ÖN EKİ OLMADAN</strong> giriniz (örn: /blog veya ana
-                sayfa için /).
-              </CardDescription>
+              <CardDescription>{t("greetingMessagesDesc")}</CardDescription>
             </div>
             <Button
               size="sm"
               onClick={() => setIsAddingGreeting(true)}
               disabled={isAddingGreeting}
             >
-              <Plus className="w-4 h-4 mr-2" /> Yeni
+              <Plus className="w-4 h-4 mr-2" /> {commonT("new")}
             </Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {!config.greetings || config.greetings.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4 italic">
-                  Henüz özel karşılama mesajı yok.
+                  {t("noGreetings")}
                 </p>
               ) : (
-                config.greetings.map((g: any) => (
+                config.greetings.map((g: LiveChatGreetingWithId) => (
                   <div
                     key={g.id}
                     className="flex items-center justify-between p-3 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors group"
@@ -528,8 +533,10 @@ export default function LiveChatSettings() {
                         {g.pathname}
                       </code>
                       <span className="text-xs text-muted-foreground truncate max-w-[150px]">
-                        {g.translations.find((t: any) => t.language === "tr")
-                          ?.text || "..."}
+                        {g.translations.find(
+                          (trans: GreetingTranslationInput) =>
+                            trans.language === "tr",
+                        )?.text || "..."}
                       </span>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -563,12 +570,9 @@ export default function LiveChatSettings() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Music className="w-5 h-5 text-primary" />
-            Ses Ayarları
+            {t("soundSettings")}
           </CardTitle>
-          <CardDescription>
-            Bildirim ve mesaj seslerini buradan özelleştirebilirsiniz. Boş
-            bırakılırsa varsayılan sesler kullanılır.
-          </CardDescription>
+          <CardDescription>{t("soundSettingsDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -577,7 +581,7 @@ export default function LiveChatSettings() {
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-primary" />
-                  Ping (Gelen Mesaj)
+                  {t("pingSound")}
                 </Label>
                 {config.pingSoundUrl && (
                   <Button
@@ -587,7 +591,7 @@ export default function LiveChatSettings() {
                     onClick={() => handleResetSound("ping")}
                     disabled={isUploadingSound === "ping"}
                   >
-                    Varsayılana Dön
+                    {t("resetToDefault")}
                   </Button>
                 )}
               </div>
@@ -609,9 +613,7 @@ export default function LiveChatSettings() {
                   />
                 )}
                 <p className="text-[10px] text-muted-foreground italic">
-                  {!config.pingSoundUrl
-                    ? "Varsayılan: /assets/sounds/ping.mp3"
-                    : "Özel ses yüklendi (MinIO)"}
+                  {!config.pingSoundUrl ? t("defaultSound") : t("customSound")}
                 </p>
               </div>
             </div>
@@ -621,7 +623,7 @@ export default function LiveChatSettings() {
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-primary" />
-                  Bildirim (Karşılama/Hata)
+                  {t("notificationSound")}
                 </Label>
                 {config.notificationSoundUrl && (
                   <Button
@@ -631,7 +633,7 @@ export default function LiveChatSettings() {
                     onClick={() => handleResetSound("notification")}
                     disabled={isUploadingSound === "notification"}
                   >
-                    Varsayılana Dön
+                    {t("resetToDefault")}
                   </Button>
                 )}
               </div>
@@ -654,8 +656,8 @@ export default function LiveChatSettings() {
                 )}
                 <p className="text-[10px] text-muted-foreground italic">
                   {!config.notificationSoundUrl
-                    ? "Varsayılan: /assets/sounds/notification.mp3"
-                    : "Özel ses yüklendi (MinIO)"}
+                    ? t("defaultSound")
+                    : t("customSound")}
                 </p>
               </div>
             </div>
@@ -667,14 +669,14 @@ export default function LiveChatSettings() {
       {isAddingGreeting && (
         <Card className="border-primary/30 shadow-lg bg-background/50 backdrop-blur animate-in slide-in-from-bottom-4 duration-300">
           <CardHeader className="border-b border-border/50 bg-muted/20">
-            <CardTitle className="text-lg">Karşılama Mesajı Düzenle</CardTitle>
+            <CardTitle className="text-lg">{t("editGreeting")}</CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
             <div className="space-y-4 max-w-md">
               <div className="space-y-2">
-                <Label>Sayfa Yolu (Pathname)</Label>
+                <Label>{t("pathname")}</Label>
                 <div className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider font-bold">
-                  Dil ön eki otomatik eklenir
+                  {t("autoPrefixNote")}
                 </div>
                 <div className="relative group">
                   <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 bg-muted rounded border border-border pointer-events-none group-focus-within:border-primary/50 transition-colors z-10">
@@ -684,7 +686,7 @@ export default function LiveChatSettings() {
                     </span>
                   </div>
                   <Input
-                    placeholder="örn: / veya /blog"
+                    placeholder={t("pathPlaceholder")}
                     value={greetingForm.pathname}
                     onChange={(e) =>
                       setGreetingForm({
@@ -698,7 +700,7 @@ export default function LiveChatSettings() {
                 {greetingForm.pathname && (
                   <div className="text-[10px] text-muted-foreground bg-muted/30 p-2 rounded flex flex-wrap gap-2 items-center">
                     <span className="font-semibold italic">
-                      Tüm dillerde geçerli olur:
+                      {t("allLanguagesNote")}
                     </span>
                     {["tr", "en"].map((lang) => (
                       <code key={lang} className="bg-background px-1">
@@ -714,7 +716,7 @@ export default function LiveChatSettings() {
             </div>
 
             <div className="space-y-4">
-              <Label>Mesaj İçeriği (Dillere Göre)</Label>
+              <Label>{t("messageContent")}</Label>
               <LanguageTabs
                 sourceLang="tr"
                 targetLangs={Object.keys(languageNames).filter(
@@ -724,7 +726,11 @@ export default function LiveChatSettings() {
                 {(lang) => (
                   <div className="space-y-4" key={lang}>
                     <Input
-                      placeholder={`${languageNames[lang]} karşılama mesajı...`}
+                      placeholder={t("greetingPlaceholder", {
+                        name:
+                          languageNames[lang as keyof typeof languageNames] ||
+                          lang,
+                      })}
                       value={
                         greetingForm.translations.find(
                           (t) => t.language === lang,
@@ -759,10 +765,10 @@ export default function LiveChatSettings() {
                 variant="ghost"
                 onClick={() => setIsAddingGreeting(false)}
               >
-                İptal
+                {commonT("cancel")}
               </Button>
               <Button onClick={handleSaveGreeting} disabled={isSaving}>
-                <Save className="w-4 h-4 mr-2" /> Kaydet
+                <Save className="w-4 h-4 mr-2" /> {commonT("save")}
               </Button>
             </div>
           </CardContent>

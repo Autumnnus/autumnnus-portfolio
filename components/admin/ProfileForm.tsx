@@ -273,7 +273,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                   <>
                     <Image
                       src={avatar.url}
-                      alt="Avatar"
+                      alt={t("avatarAlt")}
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                       unoptimized
@@ -429,7 +429,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               <input
                 {...register(`translations.${lang}.name` as const)}
                 className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                placeholder="Adınız Soyadınız"
+                placeholder={t("namePlaceholder")}
               />
               {errors.translations?.[lang]?.name && (
                 <p className="text-xs text-red-500">
@@ -445,7 +445,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               <input
                 {...register(`translations.${lang}.title` as const)}
                 className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                placeholder="Örn: Full Stack Developer"
+                placeholder={t("titlePlaceholder")}
               />
               {errors.translations?.[lang]?.title && (
                 <p className="text-xs text-red-500">
@@ -461,7 +461,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               <input
                 {...register(`translations.${lang}.greetingText` as const)}
                 className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                placeholder="Örn: Merhaba, ben"
+                placeholder={t("greetingPlaceholder")}
               />
               {errors.translations?.[lang]?.greetingText && (
                 <p className="text-xs text-red-500">
@@ -477,7 +477,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               <textarea
                 {...register(`translations.${lang}.description` as const)}
                 className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[100px]"
-                placeholder="Kısa biyografi özeti"
+                placeholder={t("descPlaceholder")}
               />
               {errors.translations?.[lang]?.description && (
                 <p className="text-xs text-red-500">
@@ -493,7 +493,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               <input
                 {...register(`translations.${lang}.aboutTitle` as const)}
                 className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                placeholder="Örn: Hakkımda"
+                placeholder={t("aboutTitlePlaceholder")}
               />
               {errors.translations?.[lang]?.aboutTitle && (
                 <p className="text-xs text-red-500">
@@ -509,7 +509,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               <textarea
                 {...register(`translations.${lang}.aboutDescription` as const)}
                 className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[150px]"
-                placeholder="Detaylı biyografiniz"
+                placeholder={t("aboutDescPlaceholder")}
               />
               {errors.translations?.[lang]?.aboutDescription && (
                 <p className="text-xs text-red-500">
@@ -527,10 +527,8 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h3 className="text-xl font-bold">Mevcut Görevler (Quests)</h3>
-            <p className="text-sm text-muted-foreground">
-              Hakkımda bölümünde görünecek görev listesi
-            </p>
+            <h3 className="text-xl font-bold">{t("questsTitle")}</h3>
+            <p className="text-sm text-muted-foreground">{t("questsDesc")}</p>
           </div>
           <button
             type="button"
@@ -547,7 +545,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-bold hover:bg-primary/20 transition-all"
           >
             <Plus size={16} />
-            Görev Ekle
+            {t("addQuest")}
           </button>
         </div>
 
@@ -572,29 +570,29 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                   className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                 />
                 <span className="text-sm font-bold uppercase text-muted-foreground">
-                  Görev #{index + 1}
+                  {t("questNumber")} #{index + 1}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-muted-foreground">
-                    Başlık (TR)
+                    {t("titleTr")}
                   </label>
                   <input
                     {...register(`quests.${index}.translations.tr.title`)}
                     className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                    placeholder="Görev başlığı"
+                    placeholder={t("questPlaceholderTr")}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-muted-foreground">
-                    Title (EN)
+                    {t("titleEn")}
                   </label>
                   <input
                     {...register(`quests.${index}.translations.en.title`)}
                     className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                    placeholder="Quest title"
+                    placeholder={t("questPlaceholderEn")}
                   />
                 </div>
               </div>
@@ -603,7 +601,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
           {fields.length === 0 && (
             <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl text-muted-foreground">
-              Henüz görev eklenmemiş.
+              {t("noQuests")}
             </div>
           )}
         </div>
