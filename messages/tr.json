@@ -198,6 +198,7 @@
       }
     },
     "LiveChat": {
+      "customSound": "Özel ses yüklendi (MinIO)",
       "status": "Live Chat Durumu",
       "statusDesc": "Live Chat'i tüm site genelinde açıp kapatabilir veya belirli sayfalarda görünmesini sağlayabilirsiniz.",
       "visiblePages": "Görüneceği Sayfalar",
@@ -214,7 +215,7 @@
       "blockPage": "Sayfayı Engelle",
       "noBlocks": "Herhangi bir engel yok.",
       "greetingMessages": "Karşılama Mesajları",
-      "greetingMessagesDesc": "Sayfaya özel ilk AI baloncuğu mesajları.",
+      "greetingMessagesDesc": "Sayfaya özel ilk AI baloncuğu mesajları. Tüm sayfalar için '/*' kullanın.",
       "new": "Yeni",
       "noGreetings": "Henüz özel karşılama mesajı yok.",
       "editGreeting": "Karşılama Mesajı Düzenle",
@@ -312,7 +313,8 @@
       "add": "Yeni Link Ekle",
       "deleteConfirm": "Bu linki silmek istediğinize emin misiniz?",
       "deleteError": "Silme başarısız.",
-      "addError": "Ekleme başarısız."
+      "addError": "Ekleme başarısız.",
+      "iconPlaceholder": "İkon URL..."
     },
     "Quests": {
       "title": "Görevler (Quests)",
@@ -418,10 +420,8 @@
       "questsDesc": "Hakkımda bölümünde görünecek görev listesi",
       "addQuest": "Görev Ekle",
       "questNumber": "Görev #",
-      "titleTr": "Başlık (TR)",
-      "titleEn": "Title (EN)",
-      "questPlaceholderTr": "Görev başlığı",
-      "questPlaceholderEn": "Quest title",
+      "questTitle": "Görev Başlığı",
+      "questPlaceholder": "Görev başlığı...",
       "noQuests": "Henüz görev eklenmemiş.",
       "namePlaceholder": "Adınız Soyadınız",
       "titlePlaceholder": "Örn: Full Stack Developer",
@@ -500,6 +500,7 @@
     },
     "Common": {
       "actions": "Aksiyonlar",
+      "new": "Yeni",
       "close": "Kapat",
       "selectLanguage": "Dil Seç",
       "countLangsSelected": "{count} dil seçildi",

@@ -153,21 +153,69 @@ export type BlogFormValues = z.infer<typeof BlogSchema>;
 // --- Experience ---
 
 const ExperienceTranslationSchema = z.object({
-  role: z.string(),
-  description: z.string(),
-  locationType: z.string(),
+  role: z.string().optional().default(""),
+  description: z.string().optional().default(""),
+  locationType: z.string().optional().default(""),
 });
 
 export const ExperienceSchema = z.object({
   company: z.string().min(1, "Şirket adı zorunludur"),
   logo: z.string().optional().or(z.literal("")),
-  startDate: z.string().optional().or(z.literal("")), // Input type="date" returns string
+  startDate: z.string().optional().or(z.literal("")),
   endDate: z.string().optional().or(z.literal("")),
 
-  translations: z.record(
-    z.enum(languageEnumValues),
-    ExperienceTranslationSchema,
-  ),
+  translations: z
+    .record(
+      z.enum(languageEnumValues),
+      z.preprocess((val) => val || {}, ExperienceTranslationSchema.optional()),
+    )
+    .superRefine((data, ctx) => {
+      // En az bir dilin doldurulduğunu kontrol et
+      const hasAnyFilled = Object.values(data).some(
+        (t) => t && t.role && t.role.trim() !== "",
+      );
+
+      if (!hasAnyFilled) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "En az bir dilde deneyim detaylarını doldurmalısınız.",
+          path: [],
+        });
+      }
+
+      // Eğer bir dilde herhangi bir alan doldurulmuşsa, diğerleri de o dil için zorunlu
+      Object.entries(data).forEach(([lang, t]) => {
+        if (!t) return;
+        const anyField =
+          (t.role && t.role.trim() !== "") ||
+          (t.description && t.description.trim() !== "") ||
+          (t.locationType && t.locationType.trim() !== "");
+
+        if (anyField) {
+          if (!t.role || t.role.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Pozisyon zorunludur",
+              path: [lang, "role"],
+            });
+          }
+          if (!t.description || t.description.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Açıklama zorunludur",
+              path: [lang, "description"],
+            });
+          }
+          if (!t.locationType || t.locationType.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Çalışma tipi zorunludur",
+              path: [lang, "locationType"],
+            });
+          }
+        }
+      });
+    }),
 });
 
 export type ExperienceFormValues = z.infer<typeof ExperienceSchema>;
@@ -175,12 +223,12 @@ export type ExperienceFormValues = z.infer<typeof ExperienceSchema>;
 // --- Profile ---
 
 const ProfileTranslationSchema = z.object({
-  name: z.string(),
-  title: z.string(),
-  greetingText: z.string(),
-  description: z.string(),
-  aboutTitle: z.string(),
-  aboutDescription: z.string(),
+  name: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+  greetingText: z.string().optional().default(""),
+  description: z.string().optional().default(""),
+  aboutTitle: z.string().optional().default(""),
+  aboutDescription: z.string().optional().default(""),
 });
 
 export const ProfileSchema = z.object({
@@ -189,19 +237,101 @@ export const ProfileSchema = z.object({
   github: z.string().optional().or(z.literal("")),
   linkedin: z.string().optional().or(z.literal("")),
 
-  translations: z.record(z.enum(languageEnumValues), ProfileTranslationSchema),
+  translations: z
+    .record(
+      z.enum(languageEnumValues),
+      z.preprocess((val) => val || {}, ProfileTranslationSchema.optional()),
+    )
+    .superRefine((data, ctx) => {
+      // En az bir dilin tam doldurulmuş olduğunu kontrol et
+      const hasAnyFilled = Object.values(data).some(
+        (t) => t && t.name && t.name.trim() !== "",
+      );
+
+      if (!hasAnyFilled) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "En az bir dilde profil detaylarını doldurmalısınız.",
+          path: [],
+        });
+      }
+
+      // Seçilen bir dilde eğer herhangi bir alan doldurulmuşsa, diğer hepsinin de doldurulması zorunlu
+      Object.entries(data).forEach(([lang, t]) => {
+        if (!t) return;
+
+        const anyFieldFilled =
+          (t.name && t.name.trim() !== "") ||
+          (t.title && t.title.trim() !== "") ||
+          (t.greetingText && t.greetingText.trim() !== "") ||
+          (t.description && t.description.trim() !== "") ||
+          (t.aboutTitle && t.aboutTitle.trim() !== "") ||
+          (t.aboutDescription && t.aboutDescription.trim() !== "");
+
+        if (anyFieldFilled) {
+          if (!t.name || t.name.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "İsim zorunludur",
+              path: [lang, "name"],
+            });
+          }
+          if (!t.title || t.title.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Ünvan zorunludur",
+              path: [lang, "title"],
+            });
+          }
+          if (!t.greetingText || t.greetingText.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Karşılama metni zorunludur",
+              path: [lang, "greetingText"],
+            });
+          }
+          if (!t.description || t.description.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Açıklama zorunludur",
+              path: [lang, "description"],
+            });
+          }
+          if (!t.aboutTitle || t.aboutTitle.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Hakkında başlığı zorunludur",
+              path: [lang, "aboutTitle"],
+            });
+          }
+          if (!t.aboutDescription || t.aboutDescription.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Hakkında açıklaması zorunludur",
+              path: [lang, "aboutDescription"],
+            });
+          }
+        }
+      });
+    }),
   quests: z
     .array(
       z.object({
         id: z.string().optional(),
         completed: z.boolean().default(false),
         order: z.number().default(0),
-        translations: z.record(
-          z.enum(languageEnumValues),
-          z.object({
-            title: z.string().default(""),
-          }),
-        ),
+        translations: z
+          .record(
+            z.enum(languageEnumValues),
+            z.preprocess(
+              (val) => val || {},
+              z.object({
+                title: z.string().optional().or(z.literal("")),
+              }),
+            ),
+          )
+          .optional()
+          .default({}),
       }),
     )
     .default([]),

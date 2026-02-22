@@ -18,13 +18,19 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Resolver, useFieldArray, useForm } from "react-hook-form";
+import {
+  FieldError,
+  FieldErrors,
+  Resolver,
+  useFieldArray,
+  useForm,
+} from "react-hook-form";
 import { toast } from "sonner";
 
-// Helper to transform array translations to object keyed by language
-const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
-  const result: Record<string, Omit<ProfileTranslationInput, "language">> = {};
+type TranslationFields = Omit<ProfileTranslationInput, "language">;
 
+const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
+  const result: Record<string, TranslationFields> = {};
   translations.forEach((t) => {
     result[t.language] = {
       name: t.name,
@@ -77,6 +83,49 @@ interface ImageData {
   file?: File;
 }
 
+type QuestTranslationErrors = FieldErrors<{
+  title: string;
+}>;
+
+type QuestError = {
+  completed?: FieldError;
+  order?: FieldError;
+  translations?: Record<string, QuestTranslationErrors> & {
+    root?: FieldError;
+    message?: string;
+  };
+  root?: FieldError;
+  message?: string;
+};
+const getQuestErrorMessage = (qErr: QuestError, idx: number): string => {
+  const translations = qErr.translations;
+  if (!translations) {
+    if (qErr.root?.message) return `Görev #${idx + 1}: ${qErr.root.message}`;
+    if (qErr.message) return `Görev #${idx + 1}: ${qErr.message}`;
+    return `Görev #${idx + 1}: Hata var`;
+  }
+
+  if ("root" in translations && translations.root?.message) {
+    return `Görev #${idx + 1}: ${translations.root.message}`;
+  }
+
+  if ("message" in translations && typeof translations.message === "string") {
+    return `Görev #${idx + 1}: ${translations.message}`;
+  }
+
+  const langsWithErrors =
+    translations && typeof translations === "object"
+      ? Object.keys(translations).filter(
+          (k) => k !== "message" && k !== "root" && k !== "ref",
+        )
+      : [];
+  if (langsWithErrors.length > 0) {
+    return `Görev #${idx + 1}: Eksik diller -> ${langsWithErrors.map((l) => l.toUpperCase()).join(", ")}`;
+  }
+
+  return `Görev #${idx + 1}: Hata var`;
+};
+
 export default function ProfileForm({ initialData }: ProfileFormProps) {
   const t = useTranslations("Admin.Form");
   const router = useRouter();
@@ -109,7 +158,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     name: "quests",
   });
 
-  // Sync state with initialData when it changes (after router.refresh())
   useEffect(() => {
     if (initialData?.avatar) {
       setAvatar({ url: initialData.avatar });
@@ -127,13 +175,12 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     formState: { errors },
   } = form;
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const previewUrl = URL.createObjectURL(file);
     setAvatar({ url: previewUrl, file });
-    setValue("avatar", previewUrl, { shouldDirty: true }); // We'll handle file upload separately on submit but set url for validation/tracking
+    setValue("avatar", previewUrl, { shouldDirty: true });
   };
 
   const uploadSingleFile = async (file: File, path: string) => {
@@ -183,11 +230,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         },
       });
 
-      // Update target inputs
       Object.entries(translations).forEach(([lang, content]) => {
-        const c = content as Omit<ProfileTranslationInput, "language">;
+        const c = content as TranslationFields;
         if (!c) return;
-
         setValue(`translations.${lang}.name`, c.name);
         setValue(`translations.${lang}.title`, c.title);
         setValue(`translations.${lang}.greetingText`, c.greetingText);
@@ -210,21 +255,20 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   const onSubmitAction = async (data: ProfileFormValues) => {
     let finalAvatar = data.avatar || "";
-    // If a new file was selected (avatar state has file), upload it
     if (avatar?.file) {
       finalAvatar = await uploadSingleFile(avatar.file, "profile");
     }
 
     const translationsArray = Object.entries(data.translations)
-      .filter(([, t]) => t.name && t.name.trim() !== "")
+      .filter(([, t]) => t && t.name && t.name.trim() !== "")
       .map(([lang, t]) => ({
         language: lang as Language,
-        name: t.name,
-        title: t.title,
-        greetingText: t.greetingText,
-        description: t.description,
-        aboutTitle: t.aboutTitle,
-        aboutDescription: t.aboutDescription,
+        name: t!.name!,
+        title: t!.title!,
+        greetingText: t!.greetingText!,
+        description: t!.description!,
+        aboutTitle: t!.aboutTitle!,
+        aboutDescription: t!.aboutDescription!,
       }));
 
     const submitData = {
@@ -237,10 +281,10 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         completed: q.completed,
         order: q.order,
         translations: Object.entries(q.translations)
-          .filter(([, t]) => t.title && t.title.trim() !== "")
+          .filter(([, t]) => t && t.title && t.title.trim() !== "")
           .map(([lang, t]) => ({
             language: lang as Language,
-            title: t.title,
+            title: t!.title || "",
           })),
       })),
     };
@@ -256,13 +300,117 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     onSuccess: () => {
       router.refresh();
     },
+    onInvalid: (errors) => {
+      console.log("FORM VALIDATION ERRORS:", JSON.stringify(errors, null, 2));
+      const errMsgs: string[] = [];
+      if (errors.email) errMsgs.push("E-posta adresi hatalı veya boş.");
+      if (errors.translations) {
+        const transError = errors.translations;
+        if ("message" in transError && typeof transError.message === "string") {
+          errMsgs.push(transError.message);
+        } else {
+          const langsWithErrors = Object.keys(errors.translations);
+          if (langsWithErrors.length > 0) {
+            errMsgs.push(
+              `Eksik diller: ${langsWithErrors.map((l) => l.toUpperCase()).join(", ")} sekmesindeki zorunlu alanları kontrol edin.`,
+            );
+          }
+        }
+      }
+      if (hasQuestErrors) {
+        errMsgs.push("Görevler (Quests) bölümünde eksik alanlar var.");
+      }
+
+      if (errMsgs.length > 0) {
+        toast.error("Formda Hatalar Var", {
+          description: "Lütfen yukarıdaki kırmızı hata listesini kontrol edin.",
+        });
+      }
+    },
   });
+
+  const hasQuestErrors =
+    errors.quests &&
+    (Array.isArray(errors.quests)
+      ? errors.quests.some((q) => q !== undefined)
+      : true);
+
+  const translationRootMessage =
+    errors.translations &&
+    "message" in errors.translations &&
+    typeof errors.translations.message === "string"
+      ? errors.translations.message
+      : null;
 
   return (
     <form
       onSubmit={handleFormSubmit}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
+      {Object.keys(errors).length > 0 && (
+        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm animate-in fade-in slide-in-from-top-2">
+          <p className="font-bold mb-2">Form Doğrulama Hataları:</p>
+          <ul className="list-disc list-inside space-y-1">
+            {errors.email && <li>E-posta: {errors.email.message}</li>}
+            {errors.translations && (
+              <>
+                {translationRootMessage && (
+                  <li>Profil Detayları: {translationRootMessage}</li>
+                )}
+                {Object.entries(errors.translations).map(
+                  ([lang, langErrors]) => {
+                    if (lang === "message" || lang === "root" || lang === "ref")
+                      return null;
+                    const langName =
+                      languageNames[lang as keyof typeof languageNames] ||
+                      lang.toUpperCase();
+                    const subErrors = langErrors
+                      ? Object.keys(langErrors as Record<string, unknown>)
+                          .length
+                      : 0;
+                    if (subErrors > 0) {
+                      return (
+                        <li key={lang}>
+                          <strong>{langName} Sekmesi:</strong> {subErrors} adet
+                          eksik alan var.
+                        </li>
+                      );
+                    }
+                    return null;
+                  },
+                )}
+              </>
+            )}
+            {hasQuestErrors &&
+              (() => {
+                const questMsgs: string[] = [];
+                if (Array.isArray(errors.quests)) {
+                  errors.quests.forEach((qErr, idx) => {
+                    if (!qErr) return;
+                    questMsgs.push(
+                      getQuestErrorMessage(qErr as QuestError, idx),
+                    );
+                  });
+                } else if (
+                  errors.quests &&
+                  "message" in errors.quests &&
+                  typeof errors.quests.message === "string"
+                ) {
+                  questMsgs.push(errors.quests.message);
+                } else {
+                  questMsgs.push("Görevler listesinde hata var.");
+                }
+
+                return (
+                  <li>
+                    <strong>Görevler:</strong> {questMsgs.join(" | ")}
+                  </li>
+                );
+              })()}
+          </ul>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="flex flex-col items-center sm:items-start gap-6 mb-8 group">
@@ -278,7 +426,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                       unoptimized
                     />
-                    {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
                       <label className="cursor-pointer p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-colors">
                         <ImagePlus size={20} className="text-white" />
@@ -319,7 +466,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                 )}
               </div>
 
-              {/* Badge Effect */}
               {avatar && (
                 <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground p-2 rounded-full shadow-lg">
                   <Sparkles size={16} className="animate-pulse" />
@@ -377,7 +523,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
       <div className="h-px bg-border/50" />
 
-      {/* Translation Controls */}
       <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -523,7 +668,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
       <div className="h-px bg-border/50" />
 
-      {/* Quests Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -536,10 +680,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               append({
                 completed: false,
                 order: fields.length,
-                translations: {
-                  tr: { title: "" },
-                  en: { title: "" },
-                },
+                translations: {},
               })
             }
             className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-bold hover:bg-primary/20 transition-all"
@@ -574,27 +715,31 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">
-                    {t("titleTr")}
-                  </label>
-                  <input
-                    {...register(`quests.${index}.translations.tr.title`)}
-                    className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                    placeholder={t("questPlaceholderTr")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">
-                    {t("titleEn")}
-                  </label>
-                  <input
-                    {...register(`quests.${index}.translations.en.title`)}
-                    className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                    placeholder={t("questPlaceholderEn")}
-                  />
-                </div>
+              <div className="space-y-4">
+                <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
+                  {(lang) => (
+                    <div className="space-y-2" key={lang}>
+                      <label className="text-xs font-bold uppercase text-muted-foreground">
+                        {t("questTitle")} ({lang.toUpperCase()})
+                      </label>
+                      <input
+                        {...register(
+                          `quests.${index}.translations.${lang}.title` as const,
+                        )}
+                        className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        placeholder={t("questPlaceholder")}
+                      />
+                      {errors.quests?.[index]?.translations?.[lang]?.title && (
+                        <p className="text-xs text-red-500">
+                          {
+                            errors.quests[index]?.translations![lang]?.title
+                              ?.message
+                          }
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </LanguageTabs>
               </div>
             </div>
           ))}

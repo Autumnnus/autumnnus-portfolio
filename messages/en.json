@@ -214,7 +214,7 @@
       "blockPage": "Block Page",
       "noBlocks": "No blocks active.",
       "greetingMessages": "Greeting Messages",
-      "greetingMessagesDesc": "Initial AI bubble messages specific to pages.",
+      "greetingMessagesDesc": "Initial AI bubble messages specific to pages. Use '/*' for all pages.",
       "new": "New",
       "noGreetings": "No custom greeting messages yet.",
       "editGreeting": "Edit Greeting Message",
@@ -247,6 +247,7 @@
       "errorSoundUpload": "Error occurred while uploading sound",
       "successSoundReset": "Sound reset to default",
       "errorSoundReset": "Error occurred while resetting",
+      "customSound": "Custom sound uploaded (MinIO)",
       "greetingPlaceholder": "{name} greeting message..."
     },
     "Editor": {
@@ -311,6 +312,7 @@
       "iconLabel": "Icon (URL or Base64)",
       "add": "Add New Link",
       "deleteConfirm": "Are you sure you want to delete this link?",
+      "iconPlaceholder": "Icon URL...",
       "deleteError": "Deletion failed.",
       "addError": "Addition failed."
     },
@@ -417,10 +419,8 @@
       "questsDesc": "Quest list to appear in the About section",
       "addQuest": "Add Quest",
       "questNumber": "Quest #",
-      "titleTr": "Title (TR)",
-      "titleEn": "Title (EN)",
-      "questPlaceholderTr": "Quest title",
-      "questPlaceholderEn": "Quest title",
+      "questTitle": "Quest Title",
+      "questPlaceholder": "Quest title...",
       "noQuests": "No quests added yet.",
       "namePlaceholder": "Your Name and Surname",
       "titlePlaceholder": "Ex: Full Stack Developer",
@@ -498,6 +498,7 @@
     },
     "Common": {
       "actions": "Actions",
+      "new": "New",
       "close": "Close",
       "selectLanguage": "Select Language",
       "countLangsSelected": "{count} languages selected",

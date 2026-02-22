@@ -75,7 +75,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   );
 
   const form = useForm<ExperienceFormValues>({
-    resolver: zodResolver(ExperienceSchema),
+    resolver: zodResolver(ExperienceSchema) as any,
     defaultValues: {
       company: initialData?.company || "",
       logo: initialData?.logo || "",
@@ -183,12 +183,12 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     }
 
     const translationsArray = Object.entries(data.translations)
-      .filter(([, t]) => t.role && t.role.trim() !== "")
+      .filter(([, t]) => t && t.role && t.role.trim() !== "")
       .map(([lang, t]) => ({
         language: lang as Language,
-        role: t.role,
-        description: t.description,
-        locationType: t.locationType,
+        role: t!.role!,
+        description: t!.description || "",
+        locationType: t!.locationType || "",
       }));
 
     const submitData = {
@@ -215,13 +215,86 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
       router.push("/admin/experience");
       router.refresh();
     },
+    onInvalid: (errors) => {
+      console.log("EXPERIENCE FORM ERRORS:", JSON.stringify(errors, null, 2));
+      const errMsgs: string[] = [];
+      if (errors.company) errMsgs.push("Şirket adı zorunludur.");
+
+      if (errors.translations) {
+        const transError = errors.translations as any;
+        // Search for root or specific language errors
+        if (transError.message) {
+          errMsgs.push(transError.message);
+        } else {
+          const langsWithErrors = Object.keys(errors.translations).filter(
+            (k) => k !== "message" && k !== "root" && k !== "ref",
+          );
+          if (langsWithErrors.length > 0) {
+            errMsgs.push(
+              `Eksik diller: ${langsWithErrors.map((l) => l.toUpperCase()).join(", ")} sekmesindeki zorunlu alanları kontrol edin.`,
+            );
+          }
+        }
+      }
+
+      if (errMsgs.length > 0) {
+        toast.error("Formda Hatalar Var", {
+          description: "Lütfen yukarıdaki kırmızı hata listesini kontrol edin.",
+        });
+      }
+    },
   });
+
+  const translationRootMessage =
+    errors.translations &&
+    "message" in errors.translations &&
+    typeof errors.translations.message === "string"
+      ? errors.translations.message
+      : null;
 
   return (
     <form
       onSubmit={handleFormSubmit}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
+      {Object.keys(errors).length > 0 && (
+        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm animate-in fade-in slide-in-from-top-2">
+          <p className="font-bold mb-2">Form Doğrulama Hataları:</p>
+          <ul className="list-disc list-inside space-y-1">
+            {errors.company && <li>Şirket: {errors.company.message}</li>}
+            {errors.translations && (
+              <>
+                {translationRootMessage && (
+                  <li>Deneyim Detayları: {translationRootMessage}</li>
+                )}
+                {Object.entries(errors.translations).map(
+                  ([lang, langErrors]) => {
+                    if (lang === "message" || lang === "root" || lang === "ref")
+                      return null;
+                    const langName =
+                      languageNames[lang as keyof typeof languageNames] ||
+                      lang.toUpperCase();
+                    const subErrors =
+                      langErrors && typeof langErrors === "object"
+                        ? Object.keys(langErrors as Record<string, unknown>)
+                            .length
+                        : 0;
+                    if (subErrors > 0) {
+                      return (
+                        <li key={lang}>
+                          <strong>{langName} Sekmesi:</strong> {subErrors} adet
+                          eksik alan var.
+                        </li>
+                      );
+                    }
+                    return null;
+                  },
+                )}
+              </>
+            )}
+          </ul>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         <div className="space-y-2">
           <label className="text-sm font-medium">{t("companyLogo")}</label>

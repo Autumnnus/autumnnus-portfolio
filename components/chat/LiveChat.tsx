@@ -112,7 +112,7 @@ export default function LiveChat() {
               (g: { pathname: string }) => g.pathname === lPath,
             ) ||
             data.greetings.find(
-              (g: { pathname: string }) => g.pathname === "/",
+              (g: { pathname: string }) => g.pathname === "/*",
             );
 
           if (currentPathGreeting) {
