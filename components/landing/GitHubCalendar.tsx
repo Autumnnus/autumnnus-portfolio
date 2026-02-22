@@ -131,7 +131,7 @@ export default function GitHubCalendar({
                     : "bg-muted/50 hover:bg-muted text-muted-foreground"
                 }`}
               >
-                Last Year
+                {t("GitHub.lastYear")}
               </button>
               {years.map((year) => (
                 <button
@@ -154,7 +154,7 @@ export default function GitHubCalendar({
               <CalendarSkeleton />
             ) : data.length === 0 && !loading ? (
               <div className="text-center w-full text-muted-foreground py-8">
-                No activity data found
+                {t("GitHub.noData")}
               </div>
             ) : (
               <div

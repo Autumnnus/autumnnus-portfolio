@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 
@@ -14,6 +15,7 @@ export default function CodeBlock({
   language,
   filename,
 }: CodeBlockProps) {
+  const t = useTranslations("Common");
   const [highlightedCode, setHighlightedCode] = useState<string>("");
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function CodeBlock({
       />
       {!highlightedCode && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm animate-pulse">
-          <span className="font-pixel text-[10px]">Loading Code...</span>
+          <span className="font-pixel text-[10px]">{t("loadingCode")}</span>
         </div>
       )}
     </div>

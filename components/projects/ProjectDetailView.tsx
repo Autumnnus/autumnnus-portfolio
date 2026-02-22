@@ -121,7 +121,7 @@ export default function ProjectDetailView({
                       {project.technologies[0]?.icon ? (
                         <Icon
                           src={project.technologies[0].icon}
-                          alt="Project Tech"
+                          alt={t("techAlt")}
                           size={64}
                           className="drop-shadow-2xl"
                         />

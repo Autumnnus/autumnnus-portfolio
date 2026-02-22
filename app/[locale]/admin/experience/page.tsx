@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import Container from "@/components/common/Container";
 import { prisma } from "@/lib/prisma";
 import { Briefcase, Pencil, Plus, Trash2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -16,6 +17,8 @@ export default async function AdminExperiencePage() {
     redirect("/");
   }
 
+  const t = await getTranslations("Admin.Dashboard.experience");
+  const tCommon = await getTranslations("Admin.Common");
   const experiences = await prisma.workExperience.findMany({
     include: {
       translations: {
@@ -33,17 +36,15 @@ export default async function AdminExperiencePage() {
             <Briefcase className="w-8 h-8 text-blue-500" />
           </div>
           <div>
-            <h1 className="text-4xl font-bold">Deneyimler</h1>
-            <p className="text-muted-foreground mt-1">
-              İş deneyimlerini yönet.
-            </p>
+            <h1 className="text-4xl font-bold">{t("title")}</h1>
+            <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
           </div>
         </div>
         <Link
           href="/admin/experience/new"
           className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
         >
-          <Plus className="w-5 h-5" /> Yeni Ekle
+          <Plus className="w-5 h-5" /> {t("new")}
         </Link>
       </div>
 
@@ -76,7 +77,7 @@ export default async function AdminExperiencePage() {
                   {exp.startDate ? new Date(exp.startDate).getFullYear() : ""} -{" "}
                   {exp.endDate
                     ? new Date(exp.endDate).getFullYear()
-                    : "Devam Ediyor"}
+                    : t("ongoing")}
                 </p>
               </div>
             </div>
@@ -85,7 +86,7 @@ export default async function AdminExperiencePage() {
               <Link
                 href={`/admin/experience/${exp.id}`}
                 className="p-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-all"
-                title="Düzenle"
+                title={tCommon("edit")}
               >
                 <Pencil className="w-5 h-5" />
               </Link>
@@ -98,7 +99,7 @@ export default async function AdminExperiencePage() {
                 <button
                   type="submit"
                   className="p-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-red-500 hover:text-white transition-all"
-                  title="Sil"
+                  title={tCommon("delete")}
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -109,7 +110,7 @@ export default async function AdminExperiencePage() {
 
         {experiences.length === 0 && (
           <div className="text-center py-20 bg-muted/20 border-2 border-dashed border-border rounded-xl">
-            <p className="text-muted-foreground">Henüz deneyim eklenmedi.</p>
+            <p className="text-muted-foreground">{t("noResults")}</p>
           </div>
         )}
       </div>

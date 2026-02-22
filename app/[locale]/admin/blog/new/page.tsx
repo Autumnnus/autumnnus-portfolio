@@ -1,9 +1,12 @@
 import BlogForm from "@/components/admin/BlogForm";
 import Container from "@/components/common/Container";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
-export default function NewBlogPage() {
+export default async function NewBlogPage() {
+  const t = await getTranslations("Admin.Dashboard.blog");
+
   return (
     <Container className="py-12">
       <div className="mb-8">
@@ -11,9 +14,9 @@ export default function NewBlogPage() {
           href="/admin/blog"
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all"
         >
-          <ArrowLeft size={20} /> Blog Yönetimine Dön
+          <ArrowLeft size={20} /> {t("backToManage")}
         </Link>
-        <h1 className="text-4xl font-bold mt-4">Yeni Blog Yazısı Ekle</h1>
+        <h1 className="text-4xl font-bold mt-4">{t("addNewTitle")}</h1>
       </div>
 
       <BlogForm />

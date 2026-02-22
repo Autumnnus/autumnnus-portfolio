@@ -17,6 +17,7 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   const t = useTranslations("Common");
+  const tProjects = useTranslations("Projects");
   const getStatusColor = (status: Project["status"]) => {
     switch (status) {
       case "Completed":
@@ -81,7 +82,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
                 {project.technologies[0]?.icon ? (
                   <Icon
                     src={project.technologies[0].icon}
-                    alt="Main Tech"
+                    alt={tProjects("mainTechAlt")}
                     size={32}
                     className="opacity-80 group-hover:opacity-100 transition-opacity"
                   />

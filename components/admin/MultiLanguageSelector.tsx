@@ -14,7 +14,7 @@ export default function MultiLanguageSelector({
   targetLangs,
   onChange,
 }: MultiLanguageSelectorProps) {
-  const t = useTranslations("Admin.Common");
+  const t = useTranslations("Admin.Form");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

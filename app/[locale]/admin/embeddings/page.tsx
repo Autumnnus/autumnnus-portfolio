@@ -75,7 +75,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function EmbeddingsPage() {
   const t = useTranslations("Admin.Embeddings");
   const tNav = useTranslations("Admin.Navigation");
-  const tCommon = useTranslations("Common");
+  const tCommon = useTranslations("Admin.Common");
   const { data: stats, mutate: mutateStats } = useSWR<EmbeddingStats>(
     "/api/admin/embeddings",
     fetcher,

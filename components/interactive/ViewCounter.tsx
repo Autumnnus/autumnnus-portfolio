@@ -3,6 +3,7 @@
 
 import { CommentItemType, incrementView } from "@/app/actions";
 import { Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 interface ViewCounterProps {
@@ -16,6 +17,7 @@ export default function ViewCounter({
   itemType,
   initialViews = 0,
 }: ViewCounterProps) {
+  const t = useTranslations("Common");
   const [views, setViews] = useState(initialViews);
   const [hasRecorded, setHasRecorded] = useState(false);
 
@@ -46,7 +48,7 @@ export default function ViewCounter({
   return (
     <div
       className="flex items-center gap-1 text-sm text-muted-foreground"
-      title="Views"
+      title={t("views")}
     >
       <Eye className="w-4 h-4" />
       <span>{views}</span>

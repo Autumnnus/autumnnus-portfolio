@@ -41,7 +41,9 @@
     "activityTitle": "GitHub Activity",
     "tooltip": "{countText} on {date}",
     "noContributions": "No contributions",
-    "contributionCount": "{count, plural, one {# contribution} other {# contributions}}"
+    "contributionCount": "{count, plural, one {# contribution} other {# contributions}}",
+    "lastYear": "Last Year",
+    "noData": "No activity data found"
   },
   "Projects": {
     "title": "Featured Projects",
@@ -62,7 +64,13 @@
     "liveDemo": "Live Demo",
     "sourceCode": "Source Code",
     "next": "Next Project",
-    "related": "Related Projects"
+    "related": "Related Projects",
+    "filters": "Filters",
+    "previous": "Previous",
+    "prevSlide": "Previous slide",
+    "nextSlide": "Next slide",
+    "mainTechAlt": "Main Tech",
+    "techAlt": "Project Tech"
   },
   "Blog": {
     "title": "Latest Posts",
@@ -78,7 +86,12 @@
     "signInButton": "Sign in with Google",
     "signedInAs": "Signed in as",
     "postComment": "Post Comment",
-    "noCommentsYet": "No comments yet. Be the first to comment!"
+    "noCommentsYet": "No comments yet. Be the first to comment!",
+    "filters": "Filters",
+    "allTags": "All Tags",
+    "searchPlaceholder": "Search posts...",
+    "previous": "Previous",
+    "next": "Next"
   },
   "Work": {
     "title": "Experience",
@@ -119,7 +132,9 @@
     "placeholder": "Ask a question...",
     "newChat": "New Chat",
     "rateLimitMessage": "Daily message limit reached. Please try again tomorrow.",
-    "errorMessage": "An error occurred. Please try again."
+    "errorMessage": "An error occurred. Please try again.",
+    "sources": "Sources",
+    "liveDemo": "Live Demo"
   },
   "Admin": {
     "Dashboard": {
@@ -129,18 +144,31 @@
         "title": "Projects",
         "description": "Add new projects, edit or delete existing ones.",
         "manage": "Manage",
-        "new": "Add New"
+        "new": "Add New",
+        "pageTitle": "Manage Projects",
+        "newProject": "New Project",
+        "backToDashboard": "Back to Dashboard",
+        "addNewTitle": "Add New Project",
+        "editTitle": "Edit Project",
+        "backToProjects": "Back to Projects"
       },
       "blog": {
         "title": "Blog Posts",
         "description": "Share your thoughts and technical articles.",
         "manage": "Manage",
-        "new": "Add New"
+        "new": "Add New",
+        "pageTitle": "Manage Blog Posts",
+        "newPost": "New Post",
+        "backToManage": "Back to Blog Management",
+        "addNewTitle": "Add New Blog Post",
+        "editTitle": "Edit Blog Post"
       },
       "profile": {
         "title": "Profile & About",
         "description": "Update personal info, avatar, and about me sections.",
-        "edit": "Edit"
+        "edit": "Edit",
+        "infoTitle": "Profile Information",
+        "extraSettings": "Extra Settings"
       },
       "livechat": {
         "title": "Live Chat",
@@ -153,7 +181,10 @@
         "manage": "Manage",
         "new": "Add New",
         "edit": "Edit Experience",
-        "noResults": "No experiences added yet."
+        "noResults": "No experiences added yet.",
+        "subtitle": "Manage work experiences.",
+        "ongoing": "Present",
+        "addNewTitle": "Add New Experience"
       }
     },
     "LiveChat": {
@@ -208,6 +239,23 @@
       "errorSoundReset": "Error occurred while resetting",
       "greetingPlaceholder": "{name} greeting message..."
     },
+    "Editor": {
+      "bold": "Bold (Ctrl+B)",
+      "italic": "Italic (Ctrl+I)",
+      "underline": "Underline (Ctrl+U)",
+      "strikethrough": "Strikethrough",
+      "code": "Code",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "bulletList": "Bullet List",
+      "orderedList": "Ordered List",
+      "blockquote": "Blockquote",
+      "addLink": "Add Link",
+      "addImage": "Add Image",
+      "undo": "Undo (Ctrl+Z)",
+      "redo": "Redo (Ctrl+Y)"
+    },
     "Header": {
       "backToHome": "Back to Home",
       "title": "Admin Panel",
@@ -240,7 +288,8 @@
       "add": "Add New Skill",
       "deleteConfirm": "Are you sure you want to delete \"{name}\"? (Connections with projects will also be broken)",
       "deleteError": "Deletion failed.",
-      "addError": "Addition failed."
+      "addError": "Addition failed.",
+      "delete": "Delete"
     },
     "SocialLinks": {
       "title": "Social Media Links",
@@ -290,6 +339,8 @@
       "autoTranslate": "Auto Translate (AI)",
       "sourceLanguage": "Source Language",
       "targetLanguages": "Target Languages",
+      "selectLanguage": "Select Language",
+      "countLangsSelected": "{count} languages selected",
       "translate": "Translate",
       "translating": "Translating...",
       "translateSuccess": "Translation completed!",
@@ -385,7 +436,9 @@
       "pingSound": "Ping (Incoming Message)",
       "notificationSound": "Notification (Greeting/Error)",
       "defaultSound": "Default system sound",
-      "customSound": "Custom sound uploaded (MinIO)"
+      "customSound": "Custom sound uploaded (MinIO)",
+      "selectAll": "Select All",
+      "clear": "Clear"
     },
     "Navigation": {
       "dashboard": "Dashboard",
@@ -446,8 +499,6 @@
       "deleteError": "Deletion failed.",
       "source": "Source",
       "target": "Target",
-      "selectAll": "Select All",
-      "clear": "Clear",
       "open": "Open",
       "on": "On",
       "off": "Off"
@@ -487,7 +538,8 @@
       "toggle": "Toggle Theme",
       "winterToAutumn": "Winter -> Autumn",
       "autumnToWinter": "Autumn -> Winter"
-    }
+    },
+    "loadingCode": "Loading Code..."
   },
   "Comments": {
     "title": "Comments",

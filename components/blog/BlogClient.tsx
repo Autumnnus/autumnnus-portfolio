@@ -4,11 +4,16 @@ import BlogCard from "@/components/blog/BlogCard";
 import Container from "@/components/common/Container";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/Input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { BlogPost } from "@/types/contents";
-import { Search } from "lucide-react";
+import { Filter, Loader2, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 
 interface BlogClientProps {
   initialData: {
@@ -38,35 +43,53 @@ export default function BlogClient({
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.query);
-  const [prevQuery, setPrevQuery] = useState(searchParams.query);
+  const [searchQuery, setSearchQuery] = useState(searchParams.query || "");
+  const [pushedQuery, setPushedQuery] = useState(searchParams.query || "");
 
-  if (searchParams.query !== prevQuery) {
-    setPrevQuery(searchParams.query);
-    setSearchQuery(searchParams.query);
+  const updateFilters = useCallback(
+    (updates: Partial<typeof searchParams>) => {
+      const params = new URLSearchParams();
+      const newParams = {
+        ...searchParams,
+        ...updates,
+        page: updates.page || 1,
+      };
+
+      if (newParams.query) params.set("query", newParams.query);
+      if (newParams.tag && newParams.tag !== "All")
+        params.set("tag", newParams.tag);
+      if (newParams.page > 1) params.set("page", newParams.page.toString());
+
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`);
+      });
+    },
+    [searchParams, pathname, router],
+  );
+
+  // Eğer yükleme işlemi yoksa ve URL bizim push'ladığımızdan farklıysa (Örn: Geri tuşu) input'u eşitle
+  const currentUrlQuery = searchParams.query || "";
+  if (!isPending && currentUrlQuery !== pushedQuery) {
+    setSearchQuery(currentUrlQuery);
+    setPushedQuery(currentUrlQuery);
   }
 
-  const updateFilters = (updates: Partial<typeof searchParams>) => {
-    const params = new URLSearchParams();
-    const newParams = { ...searchParams, ...updates, page: updates.page || 1 };
+  useEffect(() => {
+    // 500ms'lik gecikme ile optimize edilmiş arama
+    const timer = setTimeout(() => {
+      if (searchQuery !== pushedQuery) {
+        if (searchQuery.length >= 2 || searchQuery.length === 0) {
+          setPushedQuery(searchQuery);
+          updateFilters({ query: searchQuery, page: 1 });
+        }
+      }
+    }, 500);
 
-    if (newParams.query) params.set("query", newParams.query);
-    if (newParams.tag && newParams.tag !== "All")
-      params.set("tag", newParams.tag);
-    if (newParams.page > 1) params.set("page", newParams.page.toString());
-
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateFilters({ query: searchQuery, page: 1 });
-  };
+    return () => clearTimeout(timer);
+  }, [searchQuery, pushedQuery, updateFilters]);
 
   return (
-    <Container className={`py-12 sm:py-20 ${isPending ? "opacity-70" : ""}`}>
+    <Container className="py-12 sm:py-20 transition-all duration-500 ease-in-out">
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
@@ -78,49 +101,98 @@ export default function BlogClient({
       </div>
 
       {/* Search and Filters */}
-      <div className="space-y-8 mb-12">
-        {/* Search Input */}
-        <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            placeholder={t("searchPlaceholder") || "Search posts..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 text-lg rounded-full border-primary/20 focus-visible:ring-primary"
-          />
-        </form>
-
-        <div className="h-px bg-border/50" />
-
-        {/* Popular Tags */}
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold mb-6">
-            {t("popularTags")}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={searchParams.tag === "All" ? "default" : "outline"}
-              className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-              onClick={() => updateFilters({ tag: "All" })}
+      <div className="space-y-6 mb-12">
+        <div className="flex flex-col sm:flex-row gap-4 items-center max-w-3xl mx-auto">
+          {/* Search Input */}
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="relative flex-1 w-full"
+          >
+            <div
+              className={`absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-opacity duration-300 ${isPending ? "opacity-100" : "opacity-100"}`}
             >
-              {t("allTags") || "All Tags"}
-            </Badge>
-            {filters.tags.map((tag) => (
-              <Badge
-                key={tag.name}
-                variant={searchParams.tag === tag.name ? "default" : "outline"}
-                className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                onClick={() => updateFilters({ tag: tag.name })}
-              >
-                {tag.name} ({tag.count})
-              </Badge>
-            ))}
-          </div>
+              {isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              ) : (
+                <Search className="w-5 h-5" />
+              )}
+            </div>
+            <Input
+              placeholder={t("searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-14 text-base sm:text-lg rounded-2xl border-primary/20 bg-background/50 backdrop-blur-xl focus-visible:ring-primary shadow-sm transition-all hover:shadow-md"
+            />
+          </form>
+
+          {/* Filters Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="h-14 px-6 rounded-2xl border border-primary/20 bg-background/50 backdrop-blur-xl shadow-sm transition-all hover:shadow-md hover:bg-primary/5 flex items-center gap-2 font-medium shrink-0 w-full sm:w-auto justify-center">
+                <Filter className="w-5 h-5 text-primary" />
+                <span className="text-foreground">{t("filters")}</span>
+                {searchParams.tag !== "All" && (
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs ml-1.5 font-bold">
+                    1
+                  </span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[calc(100vw-2rem)] sm:w-[380px] p-6 rounded-2xl shadow-xl border-primary/20"
+              align="end"
+              sideOffset={8}
+            >
+              <div className="flex flex-col gap-8">
+                {/* Popular Tags */}
+                <div>
+                  <h3 className="text-base font-semibold mb-4 text-foreground/90 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    {t("popularTags")}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge
+                      variant={
+                        searchParams.tag === "All" ? "default" : "outline"
+                      }
+                      className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
+                        searchParams.tag === "All"
+                          ? "shadow-sm"
+                          : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
+                      }`}
+                      onClick={() => updateFilters({ tag: "All" })}
+                    >
+                      {t("allTags")}
+                    </Badge>
+                    {filters.tags.map((tag) => (
+                      <Badge
+                        key={tag.name}
+                        variant={
+                          searchParams.tag === tag.name ? "default" : "outline"
+                        }
+                        className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
+                          searchParams.tag === tag.name
+                            ? "shadow-sm"
+                            : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
+                        }`}
+                        onClick={() => updateFilters({ tag: tag.name })}
+                      >
+                        {tag.name}{" "}
+                        <span className="opacity-70 ml-1">({tag.count})</span>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
       {/* Blog Section */}
-      <div>
+      <div
+        className={`transition-all duration-500 ease-in-out ${isPending ? "opacity-50 blur-[2px] pointer-events-none translate-y-2" : "opacity-100 blur-0 translate-y-0"}`}
+      >
         <div className="flex items-baseline gap-3 mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold">{t("viewAll")}</h2>
           <span className="text-muted-foreground text-sm">
@@ -143,7 +215,7 @@ export default function BlogClient({
               onClick={() => updateFilters({ page: searchParams.page - 1 })}
               className="px-6 py-2 bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t("previous") || "Previous"}
+              {t("previous")}
             </button>
             <span className="text-sm font-medium">
               {searchParams.page} / {initialData.totalPages}
@@ -155,7 +227,7 @@ export default function BlogClient({
               onClick={() => updateFilters({ page: searchParams.page + 1 })}
               className="px-6 py-2 bg-muted text-muted-foreground rounded-full hover:bg-primary hover:text-primary-foreground transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t("next") || "Next"}
+              {t("next")}
             </button>
           </div>
         )}

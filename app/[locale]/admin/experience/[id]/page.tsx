@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import ExperienceForm, { Experience } from "@/components/admin/ExperienceForm";
 import Container from "@/components/common/Container";
 import { prisma } from "@/lib/prisma";
+import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 
 export default async function EditExperiencePage({
@@ -18,12 +19,15 @@ export default async function EditExperiencePage({
     redirect("/");
   }
 
-  const experience = await prisma.workExperience.findUnique({
-    where: { id },
-    include: {
-      translations: true,
-    },
-  });
+  const [experience, t] = await Promise.all([
+    prisma.workExperience.findUnique({
+      where: { id },
+      include: {
+        translations: true,
+      },
+    }),
+    getTranslations("Admin.Dashboard.experience"),
+  ]);
 
   if (!experience) {
     notFound();
@@ -31,7 +35,7 @@ export default async function EditExperiencePage({
 
   return (
     <Container className="py-12">
-      <h1 className="text-3xl font-bold mb-8">Deneyimi Düzenle</h1>
+      <h1 className="text-3xl font-bold mb-8">{t("edit")}</h1>
       <ExperienceForm initialData={experience as Experience} />
     </Container>
   );

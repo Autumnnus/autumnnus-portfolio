@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import ExperienceForm from "@/components/admin/ExperienceForm";
 import Container from "@/components/common/Container";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export default async function NewExperiencePage() {
@@ -12,9 +13,11 @@ export default async function NewExperiencePage() {
     redirect("/");
   }
 
+  const t = await getTranslations("Admin.Dashboard.experience");
+
   return (
     <Container className="py-12">
-      <h1 className="text-3xl font-bold mb-8">Yeni Deneyim Ekle</h1>
+      <h1 className="text-3xl font-bold mb-8">{t("addNewTitle")}</h1>
       <ExperienceForm />
     </Container>
   );

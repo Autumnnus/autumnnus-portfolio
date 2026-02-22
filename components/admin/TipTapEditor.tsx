@@ -25,6 +25,7 @@ import {
   Underline as UnderlineIcon,
   Undo,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 interface TipTapEditorProps {
@@ -40,6 +41,8 @@ export default function TipTapEditor({
   placeholder = "İçeriğinizi buraya yazın...",
   uploadPath = "blog/images",
 }: TipTapEditorProps) {
+  const t = useTranslations("Admin.Editor");
+  const tForm = useTranslations("Admin.Form");
   const [uploading, setUploading] = useState(false);
 
   const editor = useEditor({
@@ -124,7 +127,7 @@ export default function TipTapEditor({
 
   if (!editor) {
     return (
-      <div className="p-4 text-muted-foreground">Editör yükleniyor...</div>
+      <div className="p-4 text-muted-foreground">{tForm("loadingEditor")}</div>
     );
   }
 
@@ -136,7 +139,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("bold") ? "bg-muted" : ""}`}
-          title="Kalın (Ctrl+B)"
+          title={t("bold")}
         >
           <Bold size={18} />
         </button>
@@ -144,7 +147,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("italic") ? "bg-muted" : ""}`}
-          title="İtalik (Ctrl+I)"
+          title={t("italic")}
         >
           <Italic size={18} />
         </button>
@@ -152,7 +155,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("underline") ? "bg-muted" : ""}`}
-          title="Altı Çizili (Ctrl+U)"
+          title={t("underline")}
         >
           <UnderlineIcon size={18} />
         </button>
@@ -160,7 +163,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleStrike().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("strike") ? "bg-muted" : ""}`}
-          title="Üstü Çizili"
+          title={t("strikethrough")}
         >
           <Strikethrough size={18} />
         </button>
@@ -168,7 +171,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleCode().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("code") ? "bg-muted" : ""}`}
-          title="Kod"
+          title={t("code")}
         >
           <Code size={18} />
         </button>
@@ -181,7 +184,7 @@ export default function TipTapEditor({
             editor.chain().focus().toggleHeading({ level: 1 }).run()
           }
           className={`p-2 rounded hover:bg-muted ${editor.isActive("heading", { level: 1 }) ? "bg-muted" : ""}`}
-          title="Başlık 1"
+          title={t("heading1")}
         >
           <Heading1 size={18} />
         </button>
@@ -191,7 +194,7 @@ export default function TipTapEditor({
             editor.chain().focus().toggleHeading({ level: 2 }).run()
           }
           className={`p-2 rounded hover:bg-muted ${editor.isActive("heading", { level: 2 }) ? "bg-muted" : ""}`}
-          title="Başlık 2"
+          title={t("heading2")}
         >
           <Heading2 size={18} />
         </button>
@@ -201,7 +204,7 @@ export default function TipTapEditor({
             editor.chain().focus().toggleHeading({ level: 3 }).run()
           }
           className={`p-2 rounded hover:bg-muted ${editor.isActive("heading", { level: 3 }) ? "bg-muted" : ""}`}
-          title="Başlık 3"
+          title={t("heading3")}
         >
           <Heading3 size={18} />
         </button>
@@ -212,7 +215,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("bulletList") ? "bg-muted" : ""}`}
-          title="Madde İşaretli Liste"
+          title={t("bulletList")}
         >
           <List size={18} />
         </button>
@@ -220,7 +223,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("orderedList") ? "bg-muted" : ""}`}
-          title="Numaralı Liste"
+          title={t("orderedList")}
         >
           <ListOrdered size={18} />
         </button>
@@ -228,7 +231,7 @@ export default function TipTapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("blockquote") ? "bg-muted" : ""}`}
-          title="Alıntı"
+          title={t("blockquote")}
         >
           <Quote size={18} />
         </button>
@@ -239,7 +242,7 @@ export default function TipTapEditor({
           type="button"
           onClick={setLink}
           className={`p-2 rounded hover:bg-muted ${editor.isActive("link") ? "bg-muted" : ""}`}
-          title="Link Ekle"
+          title={t("addLink")}
         >
           <LinkIcon size={18} />
         </button>
@@ -248,7 +251,7 @@ export default function TipTapEditor({
           onClick={handleImageUpload}
           disabled={uploading}
           className="p-2 rounded hover:bg-muted disabled:opacity-50"
-          title="Resim Ekle"
+          title={t("addImage")}
         >
           {uploading ? (
             <Loader2 size={18} className="animate-spin" />
@@ -264,7 +267,7 @@ export default function TipTapEditor({
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
           className="p-2 rounded hover:bg-muted disabled:opacity-50"
-          title="Geri Al (Ctrl+Z)"
+          title={t("undo")}
         >
           <Undo size={18} />
         </button>
@@ -273,7 +276,7 @@ export default function TipTapEditor({
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
           className="p-2 rounded hover:bg-muted disabled:opacity-50"
-          title="İleri Al (Ctrl+Y)"
+          title={t("redo")}
         >
           <Redo size={18} />
         </button>

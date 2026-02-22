@@ -6,7 +6,6 @@ import {
   updateBlogAction,
   uploadImageAction,
 } from "@/app/[locale]/admin/actions";
-import { BlogContent, generateTranslationAction } from "@/app/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { languageNames } from "@/i18n/routing";
@@ -35,6 +34,7 @@ import {
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
+import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import { useTranslations } from "next-intl";
 
 // Helper to update translations

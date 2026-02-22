@@ -4,6 +4,7 @@ import { type SourceItem } from "@/app/api/chat/route";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ExternalLink, Github, Globe } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 interface SourceCardProps {
@@ -12,6 +13,7 @@ interface SourceCardProps {
 }
 
 export function SourceCard({ source, className }: SourceCardProps) {
+  const t = useTranslations("Chat");
   return (
     <Link href={source.url} className={cn("group block", className)}>
       <div className="flex gap-3 rounded-xl border border-border/60 bg-card/50 p-3 transition-all hover:border-primary/40 hover:bg-card hover:shadow-sm">
@@ -89,7 +91,7 @@ export function SourceCard({ source, className }: SourceCardProps) {
                   className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Globe className="h-3 w-3" />
-                  <span>Live Demo</span>
+                  <span>{t("liveDemo")}</span>
                 </a>
               )}
             </div>
@@ -105,12 +107,13 @@ interface SourceListProps {
 }
 
 export function SourceList({ sources }: SourceListProps) {
+  const t = useTranslations("Chat");
   if (sources.length === 0) return null;
 
   return (
     <div className="mt-2 flex flex-col gap-2 border-t border-border/30 pt-2">
       <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-        Kaynaklar
+        {t("sources")}
       </p>
       <div className="flex flex-col gap-1.5">
         {sources.map((source) => (

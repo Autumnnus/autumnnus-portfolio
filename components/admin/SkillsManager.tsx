@@ -129,7 +129,7 @@ export default function SkillsManager({
               onClick={() => handleDelete(skill.id, skill.name)}
               disabled={loadingId === skill.id}
               className="p-1 text-red-500 hover:bg-red-500/10 rounded-full transition-colors shrink-0"
-              title="Sil"
+              title={t("delete")}
             >
               {loadingId === skill.id ? (
                 <Loader2 className="w-3 h-3 animate-spin" />

@@ -41,7 +41,9 @@
     "activityTitle": "GitHub Aktivitesi",
     "tooltip": "{countText} {date} tarihinde",
     "noContributions": "Katkı yok",
-    "contributionCount": "{count} katkı"
+    "contributionCount": "{count} katkı",
+    "lastYear": "Son Yıl",
+    "noData": "Aktivite verisi bulunamadı"
   },
   "Projects": {
     "title": "Öne Çıkan Projeler",
@@ -62,7 +64,13 @@
     "liveDemo": "Canlı Demo",
     "sourceCode": "Kaynak Kod",
     "next": "Sonraki Proje",
-    "related": "İlgili Projeler"
+    "related": "İlgili Projeler",
+    "filters": "Filtreler",
+    "previous": "Önceki",
+    "prevSlide": "Önceki slayt",
+    "nextSlide": "Sonraki slayt",
+    "mainTechAlt": "Ana Teknoloji",
+    "techAlt": "Proje Teknolojisi"
   },
   "Blog": {
     "title": "Son Yazılar",
@@ -78,7 +86,12 @@
     "signInButton": "Google ile Giriş Yap",
     "signedInAs": "Giriş yapıldı:",
     "postComment": "Yorum Paylaş",
-    "noCommentsYet": "Henüz yorum yok. İlk yorumu siz yapın!"
+    "noCommentsYet": "Henüz yorum yok. İlk yorumu siz yapın!",
+    "filters": "Filtreler",
+    "allTags": "Tüm Etiketler",
+    "searchPlaceholder": "Yazılarda ara...",
+    "previous": "Önceki",
+    "next": "Sonraki"
   },
   "Work": {
     "title": "Deneyimler",
@@ -119,7 +132,9 @@
     "placeholder": "Bir soru sorun...",
     "newChat": "Yeni Sohbet",
     "rateLimitMessage": "Günlük mesaj limitine ulaşıldı. Lütfen yarın tekrar deneyin.",
-    "errorMessage": "Bir hata oluştu. Lütfen tekrar deneyin."
+    "errorMessage": "Bir hata oluştu. Lütfen tekrar deneyin.",
+    "sources": "Kaynaklar",
+    "liveDemo": "Canlı Demo"
   },
   "Admin": {
     "Dashboard": {
@@ -129,18 +144,31 @@
         "title": "Projeler",
         "description": "Yeni projeler ekle, mevcutları düzenle veya sil.",
         "manage": "Yönet",
-        "new": "Yeni Ekle"
+        "new": "Yeni Ekle",
+        "pageTitle": "Projeleri Yönet",
+        "newProject": "Yeni Proje",
+        "backToDashboard": "Dashboard'a Dön",
+        "addNewTitle": "Yeni Proje Ekle",
+        "editTitle": "Projeyi Düzenle",
+        "backToProjects": "Projelere Dön"
       },
       "blog": {
         "title": "Blog Yazıları",
         "description": "Düşüncelerini ve teknik yazılarını paylaş.",
         "manage": "Yönet",
-        "new": "Yeni Ekle"
+        "new": "Yeni Ekle",
+        "pageTitle": "Blog Yazılarını Yönet",
+        "newPost": "Yeni Yazı",
+        "backToManage": "Blog Yönetimine Dön",
+        "addNewTitle": "Yeni Blog Yazısı Ekle",
+        "editTitle": "Blog Yazısını Düzenle"
       },
       "profile": {
         "title": "Profil & Hakkımda",
         "description": "Kişisel bilgilerini, avatarını ve hakkımda yazılarını güncelle.",
-        "edit": "Düzenle"
+        "edit": "Düzenle",
+        "infoTitle": "Profil Bilgileri",
+        "extraSettings": "Ekstra Ayarlar"
       },
       "livechat": {
         "title": "Live Chat",
@@ -153,7 +181,10 @@
         "manage": "Yönet",
         "new": "Yeni Ekle",
         "edit": "Deneyimi Düzenle",
-        "noResults": "Henüz deneyim eklenmedi."
+        "noResults": "Henüz deneyim eklenmedi.",
+        "subtitle": "İş deneyimlerini yönet.",
+        "ongoing": "Devam Ediyor",
+        "addNewTitle": "Yeni Deneyim Ekle"
       }
     },
     "LiveChat": {
@@ -208,6 +239,23 @@
       "errorSoundReset": "Sıfırlanırken hata oluştu",
       "greetingPlaceholder": "{name} karşılama mesajı..."
     },
+    "Editor": {
+      "bold": "Kalın (Ctrl+B)",
+      "italic": "İtalik (Ctrl+I)",
+      "underline": "Altı Çizili (Ctrl+U)",
+      "strikethrough": "Üstü Çizili",
+      "code": "Kod",
+      "heading1": "Başlık 1",
+      "heading2": "Başlık 2",
+      "heading3": "Başlık 3",
+      "bulletList": "Madde İşaretli Liste",
+      "orderedList": "Numaralı Liste",
+      "blockquote": "Alıntı",
+      "addLink": "Link Ekle",
+      "addImage": "Resim Ekle",
+      "undo": "Geri Al (Ctrl+Z)",
+      "redo": "İleri Al (Ctrl+Y)"
+    },
     "Header": {
       "backToHome": "Ana Sayfaya Dön",
       "title": "Admin Paneli",
@@ -240,7 +288,8 @@
       "add": "Yeni Yetenek Ekle",
       "deleteConfirm": "\"{name}\" yeteneğini silmek istediğinize emin misiniz? (Projelerle olan bağlantıları da koparılacak)",
       "deleteError": "Silme başarısız.",
-      "addError": "Ekleme başarısız."
+      "addError": "Ekleme başarısız.",
+      "delete": "Sil"
     },
     "SocialLinks": {
       "title": "Sosyal Medya Linkleri",
@@ -291,6 +340,8 @@
       "autoTranslate": "Otomatik Çevir (Yapay Zeka)",
       "sourceLanguage": "Kaynak Dil",
       "targetLanguages": "Hedef Diller",
+      "selectLanguage": "Dil Seç",
+      "countLangsSelected": "{count} dil seçildi",
       "translate": "Çevir",
       "translating": "Çevriliyor...",
       "translateSuccess": "Çeviri tamamlandı!",
@@ -386,7 +437,8 @@
       "pingSound": "Ping (Gelen Mesaj)",
       "notificationSound": "Bildirim (Karşılama/Hata)",
       "defaultSound": "Varsayılan sistem sesi",
-      "customSound": "Özel ses yüklendi (MinIO)"
+      "customSound": "Özel ses yüklendi (MinIO)",
+      "selectAll": "Tümünü Seç"
     },
     "Navigation": {
       "dashboard": "Panel",
@@ -397,7 +449,8 @@
       "embeddings": "Embeddings",
       "settings": "Ayarlar",
       "signOut": "Oturumu Kapat",
-      "adminPanel": "ADMİN PANELİ"
+      "adminPanel": "ADMİN PANELİ",
+      "clear": "Temizle"
     },
     "Embeddings": {
       "title": "Vektör Veri (Embeddings)",
@@ -447,8 +500,6 @@
       "deleteError": "Silme başarısız.",
       "source": "Kaynak",
       "target": "Hedef",
-      "selectAll": "Tümünü Seç",
-      "clear": "Temizle",
       "open": "Aç",
       "on": "Açık",
       "off": "Kapalı"
@@ -488,7 +539,8 @@
       "toggle": "Temayı Değiştir",
       "winterToAutumn": "Kış -> Sonbahar",
       "autumnToWinter": "Sonbahar -> Kış"
-    }
+    },
+    "loadingCode": "Kod yükleniyor..."
   },
   "Comments": {
     "title": "Yorumlar",

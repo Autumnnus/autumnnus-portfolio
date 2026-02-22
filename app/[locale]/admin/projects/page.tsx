@@ -3,9 +3,12 @@ import AdminProjectList from "@/components/admin/AdminProjectList";
 import Container from "@/components/common/Container";
 import { Language } from "@prisma/client";
 import { ArrowLeft, Plus } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 export default async function AdminProjectsPage() {
+  const t = await getTranslations("Admin.Dashboard.projects");
+  const tNav = await getTranslations("Admin.Navigation");
   const result = await getProjects({
     lang: Language.tr, // Admin listesi için Türkçe başlıkları çekiyoruz
     limit: 100,
@@ -19,15 +22,15 @@ export default async function AdminProjectsPage() {
             href="/admin"
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all"
           >
-            <ArrowLeft size={20} /> Dashboard
+            <ArrowLeft size={20} /> {tNav("dashboard")}
           </Link>
-          <h1 className="text-4xl font-bold mt-4">Projeleri Yönet</h1>
+          <h1 className="text-4xl font-bold mt-4">{t("pageTitle")}</h1>
         </div>
         <Link
           href="/admin/projects/new"
           className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-2"
         >
-          <Plus size={20} /> Yeni Proje
+          <Plus size={20} /> {t("newProject")}
         </Link>
       </div>
 
