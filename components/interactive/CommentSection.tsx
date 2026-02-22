@@ -32,30 +32,26 @@ import * as z from "zod";
 
 const createCommentSchema = (t: any) =>
   z.object({
-    authorName: z
-      .string()
-      .min(
-        2,
-        t("authorNameMin", {
-          defaultMessage: "Name must be at least 2 characters.",
-        }),
-      ),
+    authorName: z.string().min(
+      2,
+      t("authorNameMin", {
+        defaultMessage: "Name must be at least 2 characters.",
+      }),
+    ),
     authorEmail: z
       .string()
       .email(
         t("authorEmailInvalid", { defaultMessage: "Invalid email address." }),
       ),
-    content: z
-      .string()
-      .min(
-        2,
-        t("contentMin", {
-          defaultMessage: "Comment must be at least 2 characters.",
-        }),
-      ),
+    content: z.string().min(
+      2,
+      t("contentMin", {
+        defaultMessage: "Comment must be at least 2 characters.",
+      }),
+    ),
   });
 
-type CommentFormValues = z.infer<typeof commentSchema>;
+type CommentFormValues = z.infer<ReturnType<typeof createCommentSchema>>;
 
 interface Comment {
   id: string;

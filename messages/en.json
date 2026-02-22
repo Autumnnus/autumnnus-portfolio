@@ -317,6 +317,7 @@
     },
     "Form": {
       "slug": "URL Slug",
+      "clear": "Clear",
       "loadingEditor": "Loading editor...",
       "status": "Status",
       "category": "Category",
@@ -362,6 +363,9 @@
       "save": "Save",
       "creating": "Creating...",
       "updating": "Updating...",
+      "saveSuccess": "Changes saved successfully.",
+      "createSuccess": "Created successfully.",
+      "validationErrorTitle": "Please check the required fields.",
       "validationError": "Please correct the errors in the form.",
       "uploadSuccess": "Upload successful.",
       "uploadError": "Upload failed.",
@@ -437,8 +441,7 @@
       "notificationSound": "Notification (Greeting/Error)",
       "defaultSound": "Default system sound",
       "customSound": "Custom sound uploaded (MinIO)",
-      "selectAll": "Select All",
-      "clear": "Clear"
+      "selectAll": "Select All"
     },
     "Navigation": {
       "dashboard": "Dashboard",

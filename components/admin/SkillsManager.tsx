@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function SkillsManager({
   initialSkills,
@@ -89,9 +90,10 @@ export default function SkillsManager({
       setSkills([...skills, newSkill]);
       setNewName("");
       setNewIcon("");
+      toast.success("Yetenek eklendi."); // We can rely on default toast since it's a simple manager
       router.refresh();
     } catch (error) {
-      alert(t("addError") + ": " + (error as Error).message);
+      toast.error(t("addError") + ": " + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -103,9 +105,10 @@ export default function SkillsManager({
     try {
       await deleteSkillAction(id);
       setSkills(skills.filter((s) => s.id !== id));
+      toast.success("Yetenek silindi.");
       router.refresh();
     } catch (error) {
-      alert(t("deleteError") + ": " + (error as Error).message);
+      toast.error(t("deleteError") + ": " + (error as Error).message);
     } finally {
       setLoadingId(null);
     }

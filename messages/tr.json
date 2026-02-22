@@ -317,6 +317,7 @@
     },
     "Form": {
       "slug": "URL Uzantısı (Slug)",
+      "clear": "Temizle",
       "contentError": "İçerik Hatası",
       "loadingEditor": "Editör yükleniyor...",
       "status": "Durum",
@@ -363,6 +364,9 @@
       "save": "Kaydet",
       "creating": "Oluşturuluyor...",
       "updating": "Güncelleniyor...",
+      "saveSuccess": "Değişiklikler başarıyla kaydedildi.",
+      "createSuccess": "Başarıyla oluşturuldu.",
+      "validationErrorTitle": "Lütfen zorunlu alanları kontrol edin.",
       "validationError": "Lütfen formdaki hataları düzeltiniz.",
       "uploadSuccess": "Yükleme başarılı.",
       "uploadError": "Yükleme başarısız.",

@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function SocialLinksManager({
   initialLinks,
@@ -92,9 +93,10 @@ export default function SocialLinksManager({
       setNewName("");
       setNewHref("");
       setNewIcon("");
+      toast.success("Bağlantı eklendi.");
       router.refresh();
     } catch (error) {
-      alert(t("addError") + ": " + (error as Error).message);
+      toast.error(t("addError") + ": " + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -106,9 +108,10 @@ export default function SocialLinksManager({
     try {
       await deleteSocialLinkAction(id);
       setLinks(links.filter((l) => l.id !== id));
+      toast.success("Bağlantı silindi.");
       router.refresh();
     } catch (error) {
-      alert(t("deleteError") + ": " + (error as Error).message);
+      toast.error(t("deleteError") + ": " + (error as Error).message);
     } finally {
       setLoadingId(null);
     }

@@ -8,6 +8,7 @@ import {
 import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
+import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames } from "@/i18n/routing";
 import { ProfileFormValues, ProfileSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,7 +79,6 @@ interface ImageData {
 export default function ProfileForm({ initialData }: ProfileFormProps) {
   const t = useTranslations("Admin.Form");
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<ImageData | null>(
     initialData?.avatar ? { url: initialData.avatar } : null,
   );
@@ -206,61 +206,59 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     }
   };
 
-  const onSubmit = async (data: ProfileFormValues) => {
-    setLoading(true);
-
-    try {
-      let finalAvatar = data.avatar || "";
-      // If a new file was selected (avatar state has file), upload it
-      if (avatar?.file) {
-        finalAvatar = await uploadSingleFile(avatar.file, "profile");
-      }
-
-      const translationsArray = Object.entries(data.translations)
-        .filter(([, t]) => t.name && t.name.trim() !== "")
-        .map(([lang, t]) => ({
-          language: lang as Language,
-          name: t.name,
-          title: t.title,
-          greetingText: t.greetingText,
-          description: t.description,
-          aboutTitle: t.aboutTitle,
-          aboutDescription: t.aboutDescription,
-        }));
-
-      const submitData = {
-        avatar: finalAvatar,
-        email: data.email,
-        github: data.github || "",
-        linkedin: data.linkedin || "",
-        translations: translationsArray,
-        quests: data.quests.map((q) => ({
-          completed: q.completed,
-          order: q.order,
-          translations: Object.entries(q.translations)
-            .filter(([, t]) => t.title && t.title.trim() !== "")
-            .map(([lang, t]) => ({
-              language: lang as Language,
-              title: t.title,
-            })),
-        })),
-      };
-
-      await updateProfileAction(submitData);
-      alert(t("translateSuccess")); // Reusing translateSuccess or should add updateSuccess
-      router.refresh();
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "İşlem başarısız oldu";
-      alert(message);
-    } finally {
-      setLoading(false);
+  const onSubmitAction = async (data: ProfileFormValues) => {
+    let finalAvatar = data.avatar || "";
+    // If a new file was selected (avatar state has file), upload it
+    if (avatar?.file) {
+      finalAvatar = await uploadSingleFile(avatar.file, "profile");
     }
+
+    const translationsArray = Object.entries(data.translations)
+      .filter(([, t]) => t.name && t.name.trim() !== "")
+      .map(([lang, t]) => ({
+        language: lang as Language,
+        name: t.name,
+        title: t.title,
+        greetingText: t.greetingText,
+        description: t.description,
+        aboutTitle: t.aboutTitle,
+        aboutDescription: t.aboutDescription,
+      }));
+
+    const submitData = {
+      avatar: finalAvatar,
+      email: data.email,
+      github: data.github || "",
+      linkedin: data.linkedin || "",
+      translations: translationsArray,
+      quests: data.quests.map((q) => ({
+        completed: q.completed,
+        order: q.order,
+        translations: Object.entries(q.translations)
+          .filter(([, t]) => t.title && t.title.trim() !== "")
+          .map(([lang, t]) => ({
+            language: lang as Language,
+            title: t.title,
+          })),
+      })),
+    };
+
+    await updateProfileAction(submitData);
+    return true;
   };
+
+  const { loading, handleSubmit: handleFormSubmit } = useAdminForm({
+    form,
+    onSubmitAction,
+    successMessage: t("saveSuccess"),
+    onSuccess: () => {
+      router.refresh();
+    },
+  });
 
   return (
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
+      onSubmit={handleFormSubmit}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

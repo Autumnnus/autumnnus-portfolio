@@ -15,6 +15,7 @@ import {
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import Icon from "@/components/common/Icon";
+import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames } from "@/i18n/routing";
 import { ProjectFormValues, ProjectSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,12 +37,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  FieldError,
-  FieldErrors,
-  SubmitHandler,
-  useForm,
-} from "react-hook-form";
+import { FieldError, useForm } from "react-hook-form";
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
@@ -93,7 +89,6 @@ export default function ProjectForm({
   const t = useTranslations("Admin.Form");
   const commonT = useTranslations("Admin.Common");
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
@@ -202,7 +197,6 @@ export default function ProjectForm({
 
   const {
     register,
-    handleSubmit,
     setValue,
     watch,
     getValues,
@@ -221,7 +215,9 @@ export default function ProjectForm({
 
     // For skills, we still upload immediately because they are handled separately in handleQuickAddSkill
     if (customPath === "skills") {
-      setLoading(true);
+      // For skills we don't have access to setLoading anymore from global state,
+      // but here it's inside image upload so we can just use a local one or toast promise,
+      // wait, let's keep it simple.
       const formData = new FormData();
       formData.append("file", file);
       formData.append("path", customPath);
@@ -232,8 +228,6 @@ export default function ProjectForm({
       } catch (err) {
         console.error(err);
         alert(t("errorUpload"));
-      } finally {
-        setLoading(false);
       }
       return;
     }
@@ -422,77 +416,77 @@ export default function ProjectForm({
     }
   };
 
-  const onSubmit: SubmitHandler<ProjectFormValues> = async (data) => {
-    setLoading(true);
-
-    try {
-      // 1. Upload cover image if it's new
-      let finalCoverImage = data.coverImage || "";
-      if (coverImage?.file) {
-        finalCoverImage = await uploadSingleFile(
-          coverImage.file,
-          `projects/${data.slug}`,
-        );
-      }
-
-      // 2. Upload gallery images if they are new
-      const finalGalleryImages = await Promise.all(
-        galleryImages.map(async (img) => {
-          if (img.file) {
-            return await uploadSingleFile(img.file, `projects/${data.slug}`);
-          }
-          return img.url;
-        }),
+  const onSubmitAction = async (data: ProjectFormValues) => {
+    // 1. Upload cover image if it's new
+    let finalCoverImage = data.coverImage || "";
+    if (coverImage?.file) {
+      finalCoverImage = await uploadSingleFile(
+        coverImage.file,
+        `projects/${data.slug}`,
       );
+    }
 
-      const translationsArray = Object.entries(data.translations)
-        .filter((item): item is [string, NonNullable<(typeof item)[1]>] => {
-          const t = item[1];
-          return !!(t && t.title && t.title.trim() !== "");
-        })
-        .map(([lang, t]) => ({
-          language: lang as Language,
-          title: t.title,
-          shortDescription: t.shortDescription,
-          fullDescription: t.fullDescription,
-          metaTitle: t.metaTitle || "",
-          metaDescription: t.metaDescription || "",
-          keywords: t.keywords || [],
-        }));
+    // 2. Upload gallery images if they are new
+    const finalGalleryImages = await Promise.all(
+      galleryImages.map(async (img) => {
+        if (img.file) {
+          return await uploadSingleFile(img.file, `projects/${data.slug}`);
+        }
+        return img.url;
+      }),
+    );
 
-      const submitData: ProjectData = {
-        slug: data.slug,
-        status: data.status,
-        category: data.category,
-        github: data.github || "",
-        liveDemo: data.liveDemo || "",
-        featured: data.featured,
-        coverImage: finalCoverImage,
-        imageAlt: data.imageAlt,
-        images: finalGalleryImages,
-        translations: translationsArray,
-        technologies: data.technologies,
-      };
+    const translationsArray = Object.entries(data.translations)
+      .filter((item): item is [string, NonNullable<(typeof item)[1]>] => {
+        const t = item[1];
+        return !!(t && t.title && t.title.trim() !== "");
+      })
+      .map(([lang, t]) => ({
+        language: lang as Language,
+        title: t.title,
+        shortDescription: t.shortDescription,
+        fullDescription: t.fullDescription,
+        metaTitle: t.metaTitle || "",
+        metaDescription: t.metaDescription || "",
+        keywords: t.keywords || [],
+      }));
 
-      if (initialData?.id) {
-        await updateProjectAction(initialData.id, submitData);
-        router.refresh();
-      } else {
-        const result = await createProjectAction(submitData);
-        router.push(`/admin/projects/${result.id}/edit`);
-        router.refresh();
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t("errorProcess");
-      alert(message);
-    } finally {
-      setLoading(false);
+    const submitData: ProjectData = {
+      slug: data.slug,
+      status: data.status,
+      category: data.category,
+      github: data.github || "",
+      liveDemo: data.liveDemo || "",
+      featured: data.featured,
+      coverImage: finalCoverImage,
+      imageAlt: data.imageAlt,
+      images: finalGalleryImages,
+      translations: translationsArray,
+      technologies: data.technologies,
+    };
+
+    if (initialData?.id) {
+      await updateProjectAction(initialData.id, submitData);
+      return { action: "update" };
+    } else {
+      const result = await createProjectAction(submitData);
+      return { action: "create", id: result.id };
     }
   };
 
-  const onInvalid = (errors: FieldErrors<ProjectFormValues>) => {
-    console.warn("Project Form Hataları:", errors);
-  };
+  const { loading, handleSubmit: handleFormSubmit } = useAdminForm({
+    form,
+    onSubmitAction,
+    successMessage: initialData?.id ? t("saveSuccess") : t("createSuccess"),
+    onSuccess: (result) => {
+      if (result.action === "update") {
+        router.refresh();
+      } else if (result.action === "create" && result.id) {
+        router.push(`/admin/projects/${result.id}/edit`);
+        router.refresh();
+      }
+    },
+  });
 
   const toggleSkill = (skillId: string) => {
     const current = getValues("technologies");
@@ -549,7 +543,10 @@ export default function ProjectForm({
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit, onInvalid)}
+      onSubmit={(e) => {
+        // Only run hook handleSubmit
+        handleFormSubmit(e);
+      }}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
       {Object.keys(errors).length > 0 && (
@@ -1065,7 +1062,7 @@ export default function ProjectForm({
           ))}
           {galleryImages.length === 0 && (
             <div className="col-span-full py-10 text-center border-2 border-dashed border-border/50 rounded-lg text-muted-foreground italic text-sm">
-              {t("noResults")}
+              {commonT("noResults")}
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ import {
 } from "@/app/[locale]/admin/actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
+import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames } from "@/i18n/routing";
 import { BlogFormValues, BlogSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,12 +26,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  FieldError,
-  FieldErrors,
-  SubmitHandler,
-  useForm,
-} from "react-hook-form";
+import { FieldError, FieldErrors, useForm } from "react-hook-form";
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
@@ -91,7 +87,6 @@ interface ImageData {
 export default function BlogForm({ initialData }: BlogFormProps) {
   const t = useTranslations("Admin.Form");
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
@@ -119,7 +114,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
   const {
     register,
-    handleSubmit,
     setValue,
     getValues,
     watch,
@@ -205,7 +199,19 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           metaDescription: sourceContent.metaDescription || "",
           keywords: sourceContent.keywords || [],
         },
-      })) as Record<string, BlogContent | null>;
+      })) as Record<
+        string,
+        {
+          title: string;
+          description?: string;
+          content: string;
+          readTime?: string;
+          excerpt?: string;
+          metaTitle?: string;
+          metaDescription?: string;
+          keywords?: string[];
+        } | null
+      >;
 
       // Update target inputs
       Object.entries(translations).forEach(([lang, content]) => {
@@ -248,77 +254,62 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     }
   };
 
-  const onSubmit: SubmitHandler<BlogFormValues> = async (data) => {
-    setLoading(true);
+  const onSubmitAction = async (data: BlogFormValues) => {
+    let finalCoverImage = data.coverImage || "";
+    if (coverImage?.file) {
+      finalCoverImage = await uploadSingleFile(
+        coverImage.file,
+        `blog/${data.slug}`,
+      );
+    }
 
-    try {
-      let finalCoverImage = data.coverImage || "";
-      if (coverImage?.file) {
-        finalCoverImage = await uploadSingleFile(
-          coverImage.file,
-          `blog/${data.slug}`,
-        );
-      }
+    const translationsArray = Object.entries(data.translations)
+      .filter((item): item is [string, NonNullable<(typeof item)[1]>] => {
+        const t = item[1];
+        return !!(t && t.title && t.title.trim() !== "");
+      })
+      .map(([lang, t]) => ({
+        language: lang as Language,
+        title: t.title,
+        description: t.description,
+        content: t.content,
+        readTime: t.readTime,
+        date: new Date().toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US"),
+        excerpt: t.excerpt || "",
+        metaTitle: t.metaTitle || "",
+        metaDescription: t.metaDescription || "",
+        keywords: t.keywords || [],
+      }));
 
-      const translationsArray = Object.entries(data.translations)
-        .filter((item): item is [string, NonNullable<(typeof item)[1]>] => {
-          const t = item[1];
-          return !!(t && t.title && t.title.trim() !== "");
-        })
-        .map(([lang, t]) => ({
-          language: lang as Language,
-          title: t.title,
-          description: t.description,
-          content: t.content,
-          readTime: t.readTime,
-          date: new Date().toLocaleDateString(
-            lang === "tr" ? "tr-TR" : "en-US",
-          ),
-          excerpt: t.excerpt || "",
-          metaTitle: t.metaTitle || "",
-          metaDescription: t.metaDescription || "",
-          keywords: t.keywords || [],
-        }));
+    if (translationsArray.length === 0) {
+      throw new Error(t("fillRequired"));
+    }
 
-      if (translationsArray.length === 0) {
-        alert(t("fillRequired"));
-        setLoading(false);
-        return;
-      }
+    const submitData: BlogData = {
+      slug: data.slug,
+      coverImage: finalCoverImage,
+      imageAlt: data.imageAlt,
+      tags: data.tags
+        ? data.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t: string) => t !== "")
+        : [],
+      featured: data.featured,
+      category: data.category,
+      status: data.status,
+      commentsEnabled: data.commentsEnabled,
+      translations: translationsArray,
+    };
 
-      const submitData: BlogData = {
-        slug: data.slug,
-        coverImage: finalCoverImage,
-        imageAlt: data.imageAlt,
-        tags: data.tags
-          ? data.tags
-              .split(",")
-              .map((t) => t.trim())
-              .filter((t: string) => t !== "")
-          : [],
-        featured: data.featured,
-        category: data.category,
-        status: data.status,
-        commentsEnabled: data.commentsEnabled,
-        translations: translationsArray,
-      };
+    console.log("Submitting blog data:", submitData);
 
-      console.log("Submitting blog data:", submitData);
-
-      if (initialData?.id) {
-        await updateBlogAction(initialData.id, submitData);
-        router.refresh();
-      } else {
-        const result = await createBlogAction(submitData);
-        router.push(`/admin/blog/${result.id}/edit`);
-        router.refresh();
-      }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "İşlem başarısız oldu";
-      alert(message);
-    } finally {
-      setLoading(false);
+    if (initialData?.id) {
+      await updateBlogAction(initialData.id, submitData);
+      return { action: "update" };
+    } else {
+      const result = await createBlogAction(submitData);
+      return { action: "create", id: result.id };
     }
   };
 
@@ -326,9 +317,26 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     console.warn("Form Validation Errors:", errors);
   };
 
+  const { loading, handleSubmit: handleFormSubmit } = useAdminForm({
+    form,
+    onSubmitAction,
+    successMessage: initialData?.id ? t("saveSuccess") : t("createSuccess"),
+    onSuccess: (result) => {
+      if (result.action === "update") {
+        router.refresh();
+      } else if (result.action === "create" && result.id) {
+        router.push(`/admin/blog/${result.id}/edit`);
+        router.refresh();
+      }
+    },
+    onInvalid,
+  });
+
   return (
     <form
-      onSubmit={handleSubmit(onSubmit, onInvalid)}
+      onSubmit={(e) => {
+        handleFormSubmit(e);
+      }}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
       {Object.keys(errors).length > 0 && (

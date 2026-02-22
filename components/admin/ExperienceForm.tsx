@@ -5,10 +5,11 @@ import {
   updateExperienceAction,
   uploadImageAction,
 } from "@/app/[locale]/admin/actions";
-import { generateTranslationAction } from "@/app/admin/ai-actions";
+import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { Input } from "@/components/ui/Input";
+import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames } from "@/i18n/routing";
 import { ExperienceFormValues, ExperienceSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +23,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 // Helper to update translations
 const transformTranslationsToObject = (
@@ -63,7 +64,6 @@ const formatDateForInput = (date?: string | Date | null) => {
 export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   const t = useTranslations("Admin.Form");
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
   const [targetLangs, setTargetLangs] = useState<string[]>([]);
@@ -88,7 +88,6 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
   const {
     register,
-    handleSubmit,
     setValue,
     getValues,
     formState: { errors },
@@ -175,52 +174,50 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     }
   };
 
-  const onSubmit: SubmitHandler<ExperienceFormValues> = async (data) => {
-    setLoading(true);
+  const onSubmitAction = async (data: ExperienceFormValues) => {
+    let finalLogo = data.logo || "";
+    if (logo?.file) {
+      finalLogo = await uploadSingleFile(logo.file, "experience");
+    }
 
-    try {
-      let finalLogo = data.logo || "";
-      if (logo?.file) {
-        finalLogo = await uploadSingleFile(logo.file, "experience");
-      }
+    const translationsArray = Object.entries(data.translations)
+      .filter(([, t]) => t.role && t.role.trim() !== "")
+      .map(([lang, t]) => ({
+        language: lang as Language,
+        role: t.role,
+        description: t.description,
+        locationType: t.locationType,
+      }));
 
-      const translationsArray = Object.entries(data.translations)
-        .filter(([, t]) => t.role && t.role.trim() !== "")
-        .map(([lang, t]) => ({
-          language: lang as Language,
-          role: t.role,
-          description: t.description,
-          locationType: t.locationType,
-        }));
+    const submitData = {
+      company: data.company,
+      logo: finalLogo,
+      startDate: data.startDate ? new Date(data.startDate) : null,
+      endDate: data.endDate ? new Date(data.endDate) : null,
+      translations: translationsArray,
+    };
 
-      const submitData = {
-        company: data.company,
-        logo: finalLogo,
-        startDate: data.startDate ? new Date(data.startDate) : null,
-        endDate: data.endDate ? new Date(data.endDate) : null,
-        translations: translationsArray,
-      };
+    if (initialData?.id) {
+      await updateExperienceAction(initialData.id, submitData);
+    } else {
+      await createExperienceAction(submitData);
+    }
+    return true;
+  };
 
-      if (initialData?.id) {
-        await updateExperienceAction(initialData.id, submitData);
-      } else {
-        await createExperienceAction(submitData);
-      }
-
+  const { loading, handleSubmit: handleFormSubmit } = useAdminForm({
+    form,
+    onSubmitAction,
+    successMessage: initialData?.id ? t("saveSuccess") : t("createSuccess"),
+    onSuccess: () => {
       router.push("/admin/experience");
       router.refresh();
-      alert(t("translateSuccess")); // Reusing translateSuccess for now
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t("translateError");
-      alert(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleFormSubmit}
       className="space-y-8 max-w-4xl mx-auto pb-20"
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
