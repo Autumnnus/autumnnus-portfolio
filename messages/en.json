@@ -253,6 +253,7 @@
       "blockquote": "Blockquote",
       "addLink": "Add Link",
       "addImage": "Add Image",
+      "codeBlock": "Code Block",
       "undo": "Undo (Ctrl+Z)",
       "redo": "Redo (Ctrl+Y)"
     },
@@ -485,6 +486,8 @@
     },
     "Common": {
       "actions": "Actions",
+      "selectLanguage": "Select Language",
+      "countLangsSelected": "{count} languages selected",
       "project": "Project",
       "status": "Status",
       "category": "Category",
@@ -542,10 +545,14 @@
       "winterToAutumn": "Winter -> Autumn",
       "autumnToWinter": "Autumn -> Winter"
     },
-    "loadingCode": "Loading Code..."
+    "loadingCode": "Loading Code...",
+    "copyCode": "Copy Code"
   },
   "Comments": {
     "title": "Comments",
+    "authorNameMin": "Name must be at least 2 characters.",
+    "contentMin": "Comment must be at least 2 characters.",
+    "authorEmailInvalid": "Invalid email address.",
     "writePlaceholder": "Write a comment...",
     "noComments": "No comments yet. Be the first to share your thoughts!",
     "signInRequired": "You need to sign in to post comments. This creates a unique identity for you in this browser.",

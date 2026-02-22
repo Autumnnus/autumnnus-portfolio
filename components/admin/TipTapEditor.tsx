@@ -1,15 +1,18 @@
 "use client";
 
 import { uploadImageAction } from "@/app/[locale]/admin/actions";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { common, createLowlight } from "lowlight";
 import {
   Bold,
-  Code,
+  Code as CodeIcon,
+  CodeXml,
   Heading1,
   Heading2,
   Heading3,
@@ -27,6 +30,33 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const lowlight = createLowlight(common);
+
+const languages = [
+  { label: "Typescript", value: "typescript" },
+  { label: "Javascript", value: "javascript" },
+  { label: "HTML", value: "html" },
+  { label: "CSS", value: "css" },
+  { label: "Python", value: "python" },
+  { label: "JSON", value: "json" },
+  { label: "Bash", value: "bash" },
+  { label: "SQL", value: "sql" },
+  { label: "C++", value: "cpp" },
+  { label: "C#", value: "csharp" },
+  { label: "Go", value: "go" },
+  { label: "Rust", value: "rust" },
+  { label: "PHP", value: "php" },
+  { label: "Markdown", value: "markdown" },
+];
 
 interface TipTapEditorProps {
   content: string;
@@ -48,7 +78,16 @@ export default function TipTapEditor({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: "typescript",
+        HTMLAttributes: {
+          class: "bg-[#121212] p-4 rounded-lg font-mono text-sm my-4 hljs",
+        },
+      }),
       Underline,
       Image.configure({
         HTMLAttributes: {
@@ -69,6 +108,10 @@ export default function TipTapEditor({
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
+    onTransaction: () => {
+      // Force a re-render to update toolbar state on every single change
+      setSelectionCounter((s) => s + 1);
+    },
     editorProps: {
       attributes: {
         class:
@@ -76,6 +119,8 @@ export default function TipTapEditor({
       },
     },
   });
+
+  const setSelectionCounter = useState(0)[1];
 
   const handleImageUpload = async () => {
     const input = document.createElement("input");
@@ -173,8 +218,53 @@ export default function TipTapEditor({
           className={`p-2 rounded hover:bg-muted ${editor.isActive("code") ? "bg-muted" : ""}`}
           title={t("code")}
         >
-          <Code size={18} />
+          <CodeIcon size={18} />
         </button>
+
+        <div className="flex items-center gap-1 bg-muted/20 rounded-md px-1">
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            className={`p-2 rounded hover:bg-muted ${editor.isActive("codeBlock") ? "bg-muted" : ""}`}
+            title={t("codeBlock")}
+          >
+            <CodeXml size={18} />
+          </button>
+
+          {editor.isActive("codeBlock") && (
+            <div className="flex items-center border-l border-border pl-1 py-1">
+              <Select
+                value={
+                  editor.getAttributes("codeBlock").language || "typescript"
+                }
+                onValueChange={(value) => {
+                  editor
+                    .chain()
+                    .focus()
+                    .updateAttributes("codeBlock", { language: value })
+                    .run();
+                  // Force immediate UI update for the select input
+                  setSelectionCounter((s) => s + 1);
+                }}
+              >
+                <SelectTrigger className="h-7 w-[110px] text-[10px] bg-transparent border-none ring-offset-0 focus:ring-0 px-2 uppercase font-bold tracking-tighter">
+                  <SelectValue placeholder="Lang" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {languages.map((lang) => (
+                    <SelectItem
+                      key={lang.value}
+                      value={lang.value}
+                      className="text-xs"
+                    >
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
 
         <div className="w-px h-6 bg-border my-auto mx-1" />
 
@@ -284,6 +374,86 @@ export default function TipTapEditor({
 
       {/* Editor Content */}
       <EditorContent editor={editor} />
+
+      <style jsx global>{`
+        .hljs-comment,
+        .hljs-quote {
+          color: #6a737d;
+        }
+
+        .hljs-variable,
+        .hljs-template-variable,
+        .hljs-attribute,
+        .hljs-tag,
+        .hljs-name,
+        .hljs-regexp,
+        .hljs-link,
+        .hljs-selector-id,
+        .hljs-selector-class {
+          color: #f97583;
+        }
+
+        .hljs-number,
+        .hljs-meta,
+        .hljs-built_in,
+        .hljs-builtin-name,
+        .hljs-literal,
+        .hljs-type,
+        .hljs-params {
+          color: #ffab70;
+        }
+
+        .hljs-string,
+        .hljs-symbol,
+        .hljs-bullet {
+          color: #85e89d;
+        }
+
+        .hljs-title,
+        .hljs-section {
+          color: #ffea7f;
+        }
+
+        .hljs-keyword,
+        .hljs-selector-tag {
+          color: #79c0ff;
+        }
+
+        .hljs-emphasis {
+          font-style: italic;
+        }
+
+        .hljs-strong {
+          font-weight: 700;
+        }
+
+        .hljs-addition {
+          color: #22863a;
+          background-color: #f0fff4;
+        }
+
+        .hljs-deletion {
+          color: #b31d28;
+          background-color: #ffeef0;
+        }
+
+        .ProseMirror pre {
+          background: #121212 !important;
+          color: #e1e4e8 !important;
+          padding: 1.25rem !important;
+          border-radius: 0.5rem !important;
+          font-family:
+            ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+            "Liberation Mono", "Courier New", monospace !important;
+        }
+
+        .ProseMirror code {
+          color: inherit;
+          padding: 0;
+          background: none;
+          font-size: 0.8rem;
+        }
+      `}</style>
     </div>
   );
 }

@@ -253,6 +253,7 @@
       "blockquote": "Alıntı",
       "addLink": "Link Ekle",
       "addImage": "Resim Ekle",
+      "codeBlock": "Kod Bloğu",
       "undo": "Geri Al (Ctrl+Z)",
       "redo": "İleri Al (Ctrl+Y)"
     },
@@ -487,6 +488,8 @@
     },
     "Common": {
       "actions": "Aksiyonlar",
+      "selectLanguage": "Dil Seç",
+      "countLangsSelected": "{count} dil seçildi",
       "project": "Proje",
       "status": "Durum",
       "category": "Kategori",
@@ -544,10 +547,14 @@
       "winterToAutumn": "Kış -> Sonbahar",
       "autumnToWinter": "Sonbahar -> Kış"
     },
-    "loadingCode": "Kod yükleniyor..."
+    "loadingCode": "Kod yükleniyor...",
+    "copyCode": "Kodu Kopyala"
   },
   "Comments": {
     "title": "Yorumlar",
+    "authorNameMin": "İsim en az 2 karakter olmalıdır.",
+    "authorEmailInvalid": "Geçersiz e-posta adresi.",
+    "contentMin": "Yorum en az 2 karakter olmalıdır.",
     "writePlaceholder": "Bir yorum yaz...",
     "noComments": "Henüz yorum yok. İlk yorumu siz yapan olun!",
     "signInRequired": "Yorum yapmak için giriş yapmalısınız. Bu, bu tarayıcıda sizin için benzersiz bir kimlik oluşturur.",
