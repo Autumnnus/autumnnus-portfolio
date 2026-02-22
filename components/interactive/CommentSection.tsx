@@ -28,6 +28,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as z from "zod";
 
 const createCommentSchema = (t: any) =>
@@ -145,7 +146,7 @@ export default function CommentSection({
 
   const onSubmit = async (values: CommentFormValues) => {
     if (!isDev && !turnstileToken) {
-      alert(t("securityVerification"));
+      toast.error(t("securityVerification"));
       return;
     }
 
@@ -199,11 +200,11 @@ export default function CommentSection({
         setReplyTo(null);
         setTurnstileToken("");
       } else {
-        alert(result.error || t("postCommentError"));
+        toast.error(result.error || t("postCommentError"));
       }
     } catch (error) {
       console.error("Error posting comment:", error);
-      alert(t("errorOccurred"));
+      toast.error(t("errorOccurred"));
     } finally {
       setSubmitting(false);
     }

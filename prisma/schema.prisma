@@ -293,3 +293,23 @@ model LiveChatGreetingTranslation {
 
   @@unique([greetingId, language])
 }
+
+model AiChatSession {
+  id        String          @id @default(uuid())
+  ipAddress String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  messages  AiChatMessage[]
+
+  @@index([ipAddress])
+}
+
+model AiChatMessage {
+  id        String        @id @default(uuid())
+  sessionId String
+  role      String        // "user" or "ai"
+  content   String
+  metadata  Json?         // To store raw Gemini request/response details
+  createdAt DateTime      @default(now())
+  session   AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}

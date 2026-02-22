@@ -70,7 +70,9 @@
     "prevSlide": "Previous slide",
     "nextSlide": "Next slide",
     "mainTechAlt": "Main Tech",
-    "techAlt": "Project Tech"
+    "techAlt": "Project Tech",
+    "draft": "Draft",
+    "published": "Published"
   },
   "Blog": {
     "title": "Latest Posts",
@@ -91,7 +93,9 @@
     "allTags": "All Tags",
     "searchPlaceholder": "Search posts...",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "draft": "Draft",
+    "published": "Published"
   },
   "Work": {
     "title": "Experience",
@@ -150,7 +154,8 @@
         "backToDashboard": "Back to Dashboard",
         "addNewTitle": "Add New Project",
         "editTitle": "Edit Project",
-        "backToProjects": "Back to Projects"
+        "backToProjects": "Back to Projects",
+        "searchPlaceholder": "Search projects..."
       },
       "blog": {
         "title": "Blog Posts",
@@ -161,7 +166,8 @@
         "newPost": "New Post",
         "backToManage": "Back to Blog Management",
         "addNewTitle": "Add New Blog Post",
-        "editTitle": "Edit Blog Post"
+        "editTitle": "Edit Blog Post",
+        "searchPlaceholder": "Search posts..."
       },
       "profile": {
         "title": "Profile & About",
@@ -185,6 +191,10 @@
         "subtitle": "Manage work experiences.",
         "ongoing": "Present",
         "addNewTitle": "Add New Experience"
+      },
+      "aiLogs": {
+        "title": "AI Logs",
+        "description": "Manage and view AI chat conversations."
       }
     },
     "LiveChat": {
@@ -266,7 +276,8 @@
       "profile": "Profile",
       "embeddings": "Embeddings",
       "liveChat": "Live Chat",
-      "signOut": "Sign Out"
+      "signOut": "Sign Out",
+      "aiLogs": "AI Logs"
     },
     "Database": {
       "title": "Full Backup Management",
@@ -451,6 +462,7 @@
       "experience": "Experience",
       "profile": "Profile",
       "embeddings": "Embeddings",
+      "aiLogs": "AI Logs",
       "settings": "Settings",
       "signOut": "Sign Out",
       "adminPanel": "ADMIN PANEL"
@@ -486,6 +498,7 @@
     },
     "Common": {
       "actions": "Actions",
+      "close": "Close",
       "selectLanguage": "Select Language",
       "countLangsSelected": "{count} languages selected",
       "project": "Project",
@@ -572,6 +585,7 @@
     "name": "Name",
     "email": "Email",
     "comment": "Comment",
-    "yourReplyTo": "Your reply to {name}"
+    "yourReplyTo": "Your reply to {name}",
+    "delete": "Delete"
   }
 }

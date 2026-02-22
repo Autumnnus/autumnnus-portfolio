@@ -9,6 +9,7 @@ import {
 import { Loader2, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface SeoPopoverProps {
   type: "blog" | "project";
@@ -37,7 +38,7 @@ export default function SeoPopover({
 
   const handleGenerate = async () => {
     if (!context || context.length < 30) {
-      alert(t("seoMinChars"));
+      toast.error(t("seoMinChars"));
       return;
     }
 
@@ -52,9 +53,9 @@ export default function SeoPopover({
       onSeoGenerated(result);
       setOpen(false);
       setContext("");
-      alert(t("seoSuccess"));
+      toast.success(t("seoSuccess"));
     } catch (error) {
-      alert(
+      toast.error(
         t("seoError") +
           ": " +
           (error instanceof Error ? error.message : "Bilinmeyen hata"),

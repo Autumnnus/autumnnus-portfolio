@@ -308,15 +308,15 @@ export default function LiveChat() {
 
   const handleNewChat = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
-    setMessages([
-      {
-        id: "welcome",
-        role: "ai",
-        content: t("greeting"),
-        timestamp: new Date(),
-      },
-    ]);
-  }, [t]);
+    const welcomeMsg: Message = {
+      id: "welcome",
+      role: "ai",
+      content: teaserText || t("greeting"),
+      timestamp: new Date(),
+    };
+    playedMessageIdsRef.current = new Set(["welcome"]);
+    setMessages([welcomeMsg]);
+  }, [t, teaserText]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

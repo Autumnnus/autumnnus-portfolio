@@ -1,17 +1,24 @@
 import { getBlogPosts } from "@/app/actions";
 import AdminBlogList from "@/components/admin/AdminBlogList";
+import AdminSearch from "@/components/admin/AdminSearch";
 import Container from "@/components/common/Container";
 import { Language } from "@prisma/client";
 import { ArrowLeft, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
-export default async function AdminBlogPage() {
+export default async function AdminBlogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ query?: string }>;
+}) {
+  const { query } = await searchParams;
   const t = await getTranslations("Admin.Dashboard.blog");
   const tNav = await getTranslations("Admin.Navigation");
   const result = await getBlogPosts({
     lang: Language.tr,
     limit: 100,
+    search: query,
   });
 
   return (
@@ -34,6 +41,7 @@ export default async function AdminBlogPage() {
         </Link>
       </div>
 
+      <AdminSearch placeholder={t("searchPlaceholder") || "Yazılarda ara..."} />
       <AdminBlogList posts={result.items} />
     </Container>
   );

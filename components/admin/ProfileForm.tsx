@@ -19,6 +19,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Resolver, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 // Helper to transform array translations to object keyed by language
 const transformTranslationsToObject = (translations: ProfileTranslation[]) => {
@@ -145,7 +146,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert(t("translateError"));
+      toast.error(t("translateError"));
       return;
     }
 
@@ -163,7 +164,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         !sourceContent.aboutTitle ||
         !sourceContent.aboutDescription
       ) {
-        alert(t("fillRequired"));
+        toast.error(t("fillRequired"));
         setIsTranslating(false);
         return;
       }
@@ -195,10 +196,11 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         setValue(`translations.${lang}.aboutDescription`, c.aboutDescription);
       });
 
-      alert(t("translateSuccess"));
+      toast.success(t("translateSuccess"));
     } catch (error) {
-      alert(
-        "Çeviri başarısız oldu: " +
+      toast.error(
+        t("translateError") +
+          ": " +
           (error instanceof Error ? error.message : "Bilinmeyen hata"),
       );
     } finally {

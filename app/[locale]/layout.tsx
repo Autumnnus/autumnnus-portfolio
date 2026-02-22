@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Press_Start_2P, Space_Grotesk, Space_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "../globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -70,6 +71,7 @@ export default async function LocaleLayout({
               disableTransitionOnChange
             >
               <div className="flex-1 flex flex-col">{children}</div>
+              <Toaster position="bottom-right" richColors />
             </ThemeProvider>
           </NextIntlClientProvider>
         </AuthProvider>

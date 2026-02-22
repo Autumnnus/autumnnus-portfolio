@@ -64,6 +64,12 @@ export default function AdminHeader() {
           >
             {t("liveChat")}
           </Link>
+          <Link
+            href="/admin/ai-logs"
+            className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1"
+          >
+            {t("aiLogs") || "AI Logs"}
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">

@@ -3,6 +3,7 @@
 import {
   createProjectAction,
   createSkillAction,
+  deleteSkillAction,
   fetchGithubReposAction,
   ProjectData,
   updateProjectAction,
@@ -38,6 +39,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FieldError, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
@@ -97,6 +99,7 @@ export default function ProjectForm({
   );
   const [availableSkills, setAvailableSkills] =
     useState<Skill[]>(initialSkills);
+  const [skillListFilter, setSkillListFilter] = useState("");
 
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [newSkillName, setNewSkillName] = useState("");
@@ -140,7 +143,7 @@ export default function ProjectForm({
       setRepos(fetchedRepos);
       setShowRepoModal(true);
     } catch (err: unknown) {
-      alert(
+      toast.error(
         (err as Error).message || t("fetchRepos") + " " + t("translateError"),
       );
     } finally {
@@ -227,7 +230,7 @@ export default function ProjectForm({
         setter({ url: res.url });
       } catch (err) {
         console.error(err);
-        alert(t("errorUpload"));
+        toast.error(t("errorUpload"));
       }
       return;
     }
@@ -301,7 +304,30 @@ export default function ProjectForm({
 
   const handleQuickAddSkill = async () => {
     if (!newSkillName || !newSkillIcon) {
-      alert(t("errorFillSkill"));
+      toast.info(t("errorFillSkill"));
+      return;
+    }
+
+    // Check if skill already exists in availableSkills to avoid Prisma P2002
+    const normalizedKey = newSkillName.toUpperCase().replace(/\s+/g, "_");
+    const existing = availableSkills.find(
+      (s) =>
+        s.key === normalizedKey ||
+        s.name.toLowerCase() === newSkillName.toLowerCase(),
+    );
+
+    if (existing) {
+      // If it exists, just select it if not already selected
+      const currentSkills = getValues("technologies");
+      if (!currentSkills.includes(existing.id)) {
+        setValue("technologies", [...currentSkills, existing.id]);
+        toast.success(`"${existing.name}" zaten mevcut, listeye eklendi.`);
+      } else {
+        toast.info(`"${existing.name}" zaten seçili.`);
+      }
+      setShowAddSkill(false);
+      setNewSkillName("");
+      setNewSkillIcon("");
       return;
     }
 
@@ -320,11 +346,34 @@ export default function ProjectForm({
       setShowAddSkill(false);
       setNewSkillName("");
       setNewSkillIcon("");
+      toast.success(`"${newSkill.name}" başarıyla oluşturuldu ve eklendi.`);
     } catch (err) {
       console.error(err);
-      alert(t("errorAddSkill"));
+      toast.error(t("errorAddSkill") + ": " + (err as Error).message);
     } finally {
       setIsAddingSkill(false);
+    }
+  };
+
+  const handleDeleteSkill = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm(commonT("deleteConfirm"))) return;
+
+    try {
+      await deleteSkillAction(id);
+      setAvailableSkills((prev) => prev.filter((s) => s.id !== id));
+      // Also remove from selected if it was selected
+      const current = getValues("technologies");
+      if (current.includes(id)) {
+        setValue(
+          "technologies",
+          current.filter((tid) => tid !== id),
+        );
+      }
+      toast.success("Teknoloji kalıcı olarak silindi.");
+    } catch (err) {
+      console.error(err);
+      toast.error(commonT("deleteError"));
     }
   };
 
@@ -338,7 +387,7 @@ export default function ProjectForm({
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert("Lütfen en az bir hedef dil seçiniz.");
+      toast.info("Lütfen en az bir hedef dil seçiniz.");
       return;
     }
 
@@ -360,7 +409,7 @@ export default function ProjectForm({
           if (!sourceContent.shortDescription) missing.push("Kısa Açıklama");
           if (!sourceContent.fullDescription) missing.push("Tam Açıklama");
         }
-        alert(
+        toast.warning(
           `Lütfen kaynak dildeki (${sourceLang.toUpperCase()}) şu alanları doldurunuz: ${missing.join(", ")}`,
         );
         setIsTranslating(false);
@@ -405,9 +454,9 @@ export default function ProjectForm({
           setValue(`translations.${lang}.keywords` as const, content.keywords);
       });
 
-      alert(t("translateSuccess"));
+      toast.success(t("translateSuccess"));
     } catch (error) {
-      alert(
+      toast.error(
         "Çeviri başarısız oldu: " +
           (error instanceof Error ? error.message : "Bilinmeyen hata"),
       );
@@ -951,22 +1000,64 @@ export default function ProjectForm({
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto p-3 bg-muted/30 rounded-xl border border-border/50">
-              {availableSkills.map((skill) => (
+            {/* Skill List Search */}
+            <div className="relative mb-3">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <Search size={14} />
+              </div>
+              <input
+                type="text"
+                value={skillListFilter}
+                onChange={(e) => setSkillListFilter(e.target.value)}
+                placeholder={
+                  t("skillSearchPlaceholder") || "Teknolojilerde ara..."
+                }
+                className="w-full py-2 pl-9 pr-4 text-xs bg-muted/30 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
+              />
+              {skillListFilter && (
                 <button
-                  key={skill.id}
                   type="button"
-                  onClick={() => toggleSkill(skill.id)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2.5 border-2 ${
-                    selectedSkills.includes(skill.id)
-                      ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 -translate-y-0.5"
-                      : "bg-card border-border/50 text-muted-foreground hover:border-primary/50 hover:bg-muted/50"
-                  }`}
+                  onClick={() => setSkillListFilter("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <Icon src={skill.icon} alt={skill.name} size={16} />
-                  {skill.name}
+                  <X size={14} />
                 </button>
-              ))}
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto p-3 bg-muted/30 rounded-xl border border-border/50">
+              {availableSkills
+                .filter((s) =>
+                  s.name.toLowerCase().includes(skillListFilter.toLowerCase()),
+                )
+                .map((skill) => (
+                  <div key={skill.id} className="relative group/skill">
+                    <button
+                      type="button"
+                      onClick={() => toggleSkill(skill.id)}
+                      className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2.5 border-2 pr-8 ${
+                        selectedSkills.includes(skill.id)
+                          ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 -translate-y-0.5"
+                          : "bg-card border-border/50 text-muted-foreground hover:border-primary/50 hover:bg-muted/50"
+                      }`}
+                    >
+                      <Icon
+                        src={skill.icon || "/images/default-tech.png"}
+                        alt={skill.name}
+                        size={16}
+                      />
+                      {skill.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteSkill(e, skill.id)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-red-500 opacity-0 group-hover/skill:opacity-100 transition-opacity bg-background/50 rounded-full"
+                      title={commonT("delete")}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
         </div>

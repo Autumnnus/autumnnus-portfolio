@@ -226,9 +226,17 @@ export async function getBlogPosts({
   featured?: boolean;
 }) {
   try {
+    const session = await auth();
+    const isAdmin =
+      session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
     const skip = (page - 1) * limit;
 
     const andConditions: Prisma.BlogPostWhereInput[] = [];
+
+    if (!isAdmin) {
+      andConditions.push({ status: "published" });
+    }
 
     if (featured !== undefined) {
       andConditions.push({ featured });
@@ -279,6 +287,7 @@ export async function getBlogPosts({
         content: translation.content || "",
         readTime: translation.readTime || "",
         date: translation.date || "",
+        status: p.status,
       };
     });
 
@@ -328,6 +337,14 @@ export async function getBlogPostBySlug(slug: string, lang: Language) {
     });
 
     if (!post) return null;
+
+    const session = await auth();
+    const isAdmin =
+      session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+    if (post.status === "draft" && !isAdmin) {
+      return null;
+    }
 
     const translation = post.translations[0] || {};
     return {

@@ -1,17 +1,24 @@
 import { getProjects } from "@/app/actions";
 import AdminProjectList from "@/components/admin/AdminProjectList";
+import AdminSearch from "@/components/admin/AdminSearch";
 import Container from "@/components/common/Container";
 import { Language } from "@prisma/client";
 import { ArrowLeft, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
-export default async function AdminProjectsPage() {
+export default async function AdminProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ query?: string }>;
+}) {
+  const { query } = await searchParams;
   const t = await getTranslations("Admin.Dashboard.projects");
   const tNav = await getTranslations("Admin.Navigation");
   const result = await getProjects({
     lang: Language.tr, // Admin listesi için Türkçe başlıkları çekiyoruz
     limit: 100,
+    search: query,
   });
 
   return (
@@ -34,6 +41,9 @@ export default async function AdminProjectsPage() {
         </Link>
       </div>
 
+      <AdminSearch
+        placeholder={t("searchPlaceholder") || "Projelerde ara..."}
+      />
       <AdminProjectList projects={result.items} />
     </Container>
   );

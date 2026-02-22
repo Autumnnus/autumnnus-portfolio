@@ -69,8 +69,13 @@ export default function BlogPostView({ post }: { post: BlogPost }) {
       {/* Title and Description */}
       <FadeIn delay={0.4}>
         <div className="space-y-4 mb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight flex items-center gap-3">
             {post.title}
+            {post.status === "draft" && (
+              <span className="bg-amber-500/10 text-amber-500 text-sm py-1 px-3 rounded-full uppercase font-bold tracking-tighter border border-amber-500/20 shadow-sm whitespace-nowrap">
+                {t("draft")}
+              </span>
+            )}
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground">
             {post.description}

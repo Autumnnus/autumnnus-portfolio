@@ -70,7 +70,9 @@
     "prevSlide": "Önceki slayt",
     "nextSlide": "Sonraki slayt",
     "mainTechAlt": "Ana Teknoloji",
-    "techAlt": "Proje Teknolojisi"
+    "techAlt": "Proje Teknolojisi",
+    "draft": "Taslak",
+    "published": "Yayınlandı"
   },
   "Blog": {
     "title": "Son Yazılar",
@@ -91,7 +93,9 @@
     "allTags": "Tüm Etiketler",
     "searchPlaceholder": "Yazılarda ara...",
     "previous": "Önceki",
-    "next": "Sonraki"
+    "next": "Sonraki",
+    "draft": "Taslak",
+    "published": "Yayınlandı"
   },
   "Work": {
     "title": "Deneyimler",
@@ -150,7 +154,8 @@
         "backToDashboard": "Dashboard'a Dön",
         "addNewTitle": "Yeni Proje Ekle",
         "editTitle": "Projeyi Düzenle",
-        "backToProjects": "Projelere Dön"
+        "backToProjects": "Projelere Dön",
+        "searchPlaceholder": "Projelerde ara..."
       },
       "blog": {
         "title": "Blog Yazıları",
@@ -161,7 +166,8 @@
         "newPost": "Yeni Yazı",
         "backToManage": "Blog Yönetimine Dön",
         "addNewTitle": "Yeni Blog Yazısı Ekle",
-        "editTitle": "Blog Yazısını Düzenle"
+        "editTitle": "Blog Yazısını Düzenle",
+        "searchPlaceholder": "Yazılarda ara..."
       },
       "profile": {
         "title": "Profil & Hakkımda",
@@ -185,6 +191,10 @@
         "subtitle": "İş deneyimlerini yönet.",
         "ongoing": "Devam Ediyor",
         "addNewTitle": "Yeni Deneyim Ekle"
+      },
+      "aiLogs": {
+        "title": "Yapay Zeka Kayıtları",
+        "description": "Yapay zeka (AI) sohbet görüşmelerini yönetin ve görüntüleyin."
       }
     },
     "LiveChat": {
@@ -266,7 +276,8 @@
       "profile": "Profil",
       "embeddings": "Vektör Veri",
       "liveChat": "Live Chat",
-      "signOut": "Çıkış Yap"
+      "signOut": "Çıkış Yap",
+      "aiLogs": "AI Kayıtları"
     },
     "Database": {
       "title": "Tam Yedekleme Yönetimi",
@@ -452,6 +463,7 @@
       "experience": "Deneyim",
       "profile": "Profil",
       "embeddings": "Embeddings",
+      "aiLogs": "AI Kayıtları",
       "settings": "Ayarlar",
       "signOut": "Oturumu Kapat",
       "adminPanel": "ADMİN PANELİ",
@@ -488,6 +500,7 @@
     },
     "Common": {
       "actions": "Aksiyonlar",
+      "close": "Kapat",
       "selectLanguage": "Dil Seç",
       "countLangsSelected": "{count} dil seçildi",
       "project": "Proje",
@@ -574,6 +587,7 @@
     "name": "İsim",
     "email": "E-posta",
     "comment": "Yorum",
-    "yourReplyTo": "{name} kişisine yanıtınız"
+    "yourReplyTo": "{name} kişisine yanıtınız",
+    "delete": "Sil"
   }
 }

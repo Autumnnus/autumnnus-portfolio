@@ -9,12 +9,14 @@ interface CodeBlockProps {
   code: string;
   language: string;
   filename?: string;
+  wrap?: boolean;
 }
 
 export default function CodeBlock({
   code,
   language,
   filename,
+  wrap = false,
 }: CodeBlockProps) {
   const t = useTranslations("Common");
   const [highlightedCode, setHighlightedCode] = useState<string>("");
@@ -100,6 +102,8 @@ export default function CodeBlock({
           font-size: 0.875rem !important;
           line-height: 1.7 !important;
           overflow-x: auto !important;
+          white-space: ${wrap ? "pre-wrap" : "pre"} !important;
+          word-break: ${wrap ? "break-word" : "normal"} !important;
         }
         .dark .shiki {
           background-color: transparent !important;

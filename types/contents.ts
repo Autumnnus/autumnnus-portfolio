@@ -93,6 +93,7 @@ export interface BlogPost {
   tags: string[];
   featured?: boolean;
   content: string;
+  status?: string;
 }
 
 export interface WorkExperience {

@@ -64,6 +64,7 @@ export async function generateMetadata({
         [locale]: url,
       },
     },
+    robots: post.status === "draft" ? "noindex, nofollow" : "index, follow",
   };
 }
 

@@ -6,6 +6,7 @@ import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { toast } from "sonner";
 
 interface BlogListProps {
   posts: {
@@ -28,7 +29,7 @@ export default function AdminBlogList({ posts }: BlogListProps) {
         await deleteBlogAction(id);
         router.refresh();
       } catch {
-        alert(t("deleteError"));
+        toast.error(t("deleteError"));
       }
     });
   };

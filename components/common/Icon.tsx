@@ -18,12 +18,20 @@ export default function Icon({
 }: IconProps) {
   const [mounted, setMounted] = useState(false);
 
+  const [error, setError] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const isUrl =
-    typeof src !== "string" || src.startsWith("http") || src.startsWith("/");
+    typeof src !== "string" ||
+    src.startsWith("http") ||
+    src.startsWith("/") ||
+    src.startsWith("assets/") ||
+    src.startsWith("data:") ||
+    src.includes(".") ||
+    src.includes("/");
 
   if (!mounted) {
     return (
@@ -34,18 +42,22 @@ export default function Icon({
     );
   }
 
-  if (isUrl) {
+  // Use fallback if error occurred or src is missing
+  const finalSrc = error || !src ? "/images/default-tech.png" : src;
+
+  if (isUrl || error) {
     return (
       <div
         className={`relative inline-block ${className}`}
         style={{ width: size, height: size }}
       >
         <Image
-          src={src}
+          src={finalSrc}
           alt={alt}
           fill
           className="object-contain"
           unoptimized
+          onError={() => setError(true)}
         />
       </div>
     );

@@ -9,6 +9,7 @@ import {
   FolderOpen,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Settings,
   User,
 } from "lucide-react";
@@ -26,6 +27,7 @@ export function AdminSidebar() {
     { name: t("experience"), href: "/admin/experience", icon: Briefcase },
     { name: t("profile"), href: "/admin/profile", icon: User },
     { name: t("embeddings"), href: "/admin/embeddings", icon: BrainCircuit },
+    { name: t("aiLogs"), href: "/admin/ai-logs", icon: MessageSquare },
     { name: t("settings"), href: "/admin/settings", icon: Settings },
   ];
 

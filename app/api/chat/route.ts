@@ -300,6 +300,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Find or create AI Chat Session for this IP
+    const recentSession = await prisma.aiChatSession.findFirst({
+      where: { ipAddress: ip },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    let sessionId = recentSession?.id;
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+
+    if (
+      !recentSession ||
+      new Date().getTime() - recentSession.updatedAt.getTime() > TWO_HOURS_MS
+    ) {
+      const newSession = await prisma.aiChatSession.create({
+        data: { ipAddress: ip },
+      });
+      sessionId = newSession.id;
+    } else {
+      // Update the session's updatedAt timestamp
+      await prisma.aiChatSession.update({
+        where: { id: sessionId },
+        data: { updatedAt: new Date() },
+      });
+    }
+
+    // Log the user's message
+    await prisma.aiChatMessage.create({
+      data: {
+        sessionId: sessionId!,
+        role: "user",
+        content: message,
+      },
+    });
+
     const queryEmbedding = await generateEmbedding(message);
     const similarChunks = await searchSimilar(queryEmbedding, locale, 8, 0.55);
 
@@ -346,6 +380,25 @@ ${message}`;
 
     const result = await model.generateContent(systemPrompt);
     const response = result.response.text();
+
+    let usageMetadata = null;
+    try {
+      usageMetadata = result.response.usageMetadata;
+    } catch (_e) {
+      // ignore
+    }
+
+    await prisma.aiChatMessage.create({
+      data: {
+        sessionId: sessionId!,
+        role: "ai",
+        content: response,
+        metadata: {
+          systemPrompt: systemPrompt,
+          usage: usageMetadata,
+        },
+      },
+    });
 
     // Only return sources when they are genuinely relevant (project or blog)
     const relevantSources = sources.filter(

@@ -32,6 +32,7 @@ import TipTapEditor from "./TipTapEditor";
 
 import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 // Helper to update translations
 const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
@@ -159,7 +160,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert(t("translateError"));
+      toast.error(t("translateError"));
       return;
     }
 
@@ -178,7 +179,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           if (!sourceContent.title) missing.push("Başlık");
           if (!sourceContent.content) missing.push("İçerik");
         }
-        alert(
+        toast.error(
           `${t("fillRequired")} (${sourceLang.toUpperCase()}): ${missing.join(", ")}`,
         );
         setIsTranslating(false);
@@ -242,9 +243,9 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           setValue(`translations.${lang}.keywords` as const, content.keywords);
       });
 
-      alert(t("translateSuccess"));
+      toast.success(t("translateSuccess"));
     } catch (error) {
-      alert(
+      toast.error(
         t("translateError") +
           ": " +
           (error instanceof Error ? error.message : "Bilinmeyen hata"),

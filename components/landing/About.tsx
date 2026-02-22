@@ -32,16 +32,17 @@ export default function About({
   const description = data?.aboutDescription || t("description");
 
   const handleVisitorClick = () => {
-    // Scroll to footer
-    const footer = document.querySelector("footer");
-    if (footer) {
-      footer.scrollIntoView({ behavior: "smooth" });
-      // Trigger badge animation after a small delay to let scroll finish
-      setTimeout(() => {
-        const event = new CustomEvent("trigger-visitor-badge");
-        window.dispatchEvent(event);
-      }, 800);
-    }
+    // Scroll to the absolute bottom of the page
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
+
+    // Trigger badge animation after a small delay to let scroll finish
+    setTimeout(() => {
+      const event = new CustomEvent("trigger-visitor-badge");
+      window.dispatchEvent(event);
+    }, 700);
   };
 
   const quests = data?.quests ?? [];

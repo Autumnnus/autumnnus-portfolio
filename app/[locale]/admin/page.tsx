@@ -134,6 +134,30 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
+        {/* AI Logs */}
+        <div className="p-8 bg-card border border-border rounded-xl space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-indigo-500/10 rounded-lg">
+              <Plus className="w-8 h-8 text-indigo-500" />
+            </div>
+            <h2 className="text-2xl font-bold">
+              {t("aiLogs.title") || "AI Logs"}
+            </h2>
+          </div>
+          <p className="text-muted-foreground">
+            {t("aiLogs.description") ||
+              "Manage and view AI chat conversations."}
+          </p>
+          <div className="flex gap-4">
+            <Link
+              href="/admin/ai-logs"
+              className="px-6 py-2 bg-indigo-500 text-white rounded-lg font-medium hover:opacity-90 transition-all"
+            >
+              {t("livechat.manage")}
+            </Link>
+          </div>
+        </div>
+
         {/* Veritabanı Yönetimi */}
         <DatabaseManagement />
       </div>

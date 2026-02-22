@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const lowlight = createLowlight(common);
 
@@ -138,7 +139,7 @@ export default function TipTapEditor({
         const result = await uploadImageAction(formData);
         editor.chain().focus().setImage({ src: result.url }).run();
       } catch (error) {
-        alert(
+        toast.error(
           "Resim yükleme başarısız: " +
             (error instanceof Error ? error.message : ""),
         );

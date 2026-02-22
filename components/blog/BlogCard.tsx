@@ -16,6 +16,7 @@ interface BlogCardProps {
 
 export default function BlogCard({ post, index = 0 }: BlogCardProps) {
   const t = useTranslations("Common");
+  const bT = useTranslations("Blog");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -55,8 +56,13 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
         {/* Content */}
         <div className="p-5 sm:p-6 space-y-3">
           {/* Title */}
-          <h3 className="text-xl sm:text-2xl font-bold leading-tight group-hover:text-primary transition-colors">
+          <h3 className="text-xl sm:text-2xl font-bold leading-tight group-hover:text-primary transition-colors flex items-center gap-2">
             {post.title}
+            {post.status === "draft" && (
+              <span className="bg-amber-500/10 text-amber-500 text-[10px] py-0.5 px-2 rounded-full uppercase font-bold tracking-tighter border border-amber-500/20">
+                {bT("draft")}
+              </span>
+            )}
           </h3>
 
           {/* Description */}

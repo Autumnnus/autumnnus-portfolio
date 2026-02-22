@@ -24,6 +24,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 // Helper to update translations
 const transformTranslationsToObject = (
@@ -112,7 +113,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
   const handleAutoTranslate = async () => {
     if (targetLangs.length === 0) {
-      alert(t("translateError"));
+      toast.error(t("translateError"));
       return;
     }
 
@@ -130,7 +131,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         !sourceContent.description ||
         !sourceContent.locationType
       ) {
-        alert(t("fillRequired"));
+        toast.error(t("fillRequired"));
         setIsTranslating(false);
         return;
       }
@@ -163,10 +164,11 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         );
       });
 
-      alert(t("translateSuccess"));
+      toast.success(t("translateSuccess"));
     } catch (error) {
-      alert(
-        "Çeviri başarısız oldu: " +
+      toast.error(
+        t("translateError") +
+          ": " +
           (error instanceof Error ? error.message : "Bilinmeyen hata"),
       );
     } finally {

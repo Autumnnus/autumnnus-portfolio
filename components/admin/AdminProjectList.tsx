@@ -6,6 +6,7 @@ import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { toast } from "sonner";
 
 interface ProjectListProps {
   projects: {
@@ -30,7 +31,7 @@ export default function AdminProjectList({ projects }: ProjectListProps) {
         await deleteProjectAction(id);
         router.refresh();
       } catch {
-        alert(t("deleteError"));
+        toast.error(t("deleteError"));
       }
     });
   };

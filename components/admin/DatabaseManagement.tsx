@@ -4,6 +4,7 @@ import { AlertCircle, Database, Download, Loader2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 export default function DatabaseManagement() {
   const t = useTranslations("Admin.Database");
@@ -62,7 +63,7 @@ export default function DatabaseManagement() {
         throw new Error(data.error || t("error"));
       }
 
-      alert(t("success"));
+      toast.success(t("success"));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error"));
