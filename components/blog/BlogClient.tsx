@@ -2,7 +2,7 @@
 
 import BlogCard from "@/components/blog/BlogCard";
 import Container from "@/components/common/Container";
-import { Badge } from "@/components/ui/badge";
+import Badge from "@/components/ui/badge";
 import { Input } from "@/components/ui/Input";
 import {
   Popover,

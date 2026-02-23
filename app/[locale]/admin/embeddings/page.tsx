@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 
-import { Badge } from "@/components/ui/badge";
+import Badge from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,

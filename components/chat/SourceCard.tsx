@@ -1,7 +1,7 @@
 "use client";
 
 import { type SourceItem } from "@/app/api/chat/route";
-import { Badge } from "@/components/ui/badge";
+import Badge from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ExternalLink, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";

@@ -17,7 +17,7 @@ import LikeButton from "@/components/interactive/LikeButton";
 import ViewCounter from "@/components/interactive/ViewCounter";
 import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
 import JsonLd from "@/components/seo/JsonLd";
-import { Badge } from "@/components/ui/badge";
+import Badge from "@/components/ui/badge";
 
 export default function ProjectDetailView({
   project,

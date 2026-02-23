@@ -4,7 +4,7 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: "default" | "secondary" | "outline";
 }
 
-export function Badge({
+export default function Badge({
   className,
   variant = "default",
   ...props

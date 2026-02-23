@@ -11,7 +11,7 @@ import {
   uploadLiveChatSoundAction,
   upsertLiveChatGreetingAction,
 } from "@/app/[locale]/admin/livechat/livechat-actions";
-import { Badge } from "@/components/ui/badge";
+import Badge from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,

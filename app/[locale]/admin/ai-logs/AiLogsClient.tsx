@@ -16,7 +16,7 @@ type Message = {
   metadata: Record<string, unknown> | null;
 };
 
-type Session = {
+export type Session = {
   id: string;
   ipAddress: string;
   updatedAt: Date;

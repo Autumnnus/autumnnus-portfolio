@@ -1,4 +1,6 @@
-import AiLogsClient from "@/app/[locale]/admin/ai-logs/AiLogsClient";
+import AiLogsClient, {
+  Session,
+} from "@/app/[locale]/admin/ai-logs/AiLogsClient";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
@@ -52,7 +54,7 @@ export default async function AdminAiLogsPage({
         </p>
       </div>
 
-      <AiLogsClient sessions={aiSessions as any} />
+      <AiLogsClient sessions={aiSessions as Session[]} />
     </div>
   );
 }

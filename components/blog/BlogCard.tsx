@@ -1,5 +1,6 @@
 "use client";
 
+import Badge from "@/components/ui/badge";
 import { BlogPost } from "@/types/contents";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, FileText } from "lucide-react";
@@ -7,7 +8,6 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Badge } from "../ui/badge";
 
 interface BlogCardProps {
   post: BlogPost;
