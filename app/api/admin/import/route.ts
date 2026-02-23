@@ -63,7 +63,6 @@ export async function POST(request: Request) {
         });
       }
 
-      // Profile
       if (profile) {
         const pr = profile as ProfileData;
         await tx.profile.create({
@@ -87,7 +86,6 @@ export async function POST(request: Request) {
         });
       }
 
-      // Work Experiences
       if (experiences?.length) {
         for (const exp of experiences as ExperienceData[]) {
           await tx.workExperience.create({

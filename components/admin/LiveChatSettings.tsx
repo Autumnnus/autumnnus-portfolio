@@ -62,7 +62,6 @@ export default function LiveChatSettings() {
   const [newExcludedPath, setNewExcludedPath] = useState("");
   const [isUploadingSound, setIsUploadingSound] = useState<string | null>(null);
 
-  // Greeting Form State
   const [isAddingGreeting, setIsAddingGreeting] = useState(false);
   const [greetingForm, setGreetingForm] = useState<LiveChatGreetingInput>({
     pathname: "",

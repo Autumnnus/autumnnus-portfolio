@@ -201,7 +201,7 @@ export async function generateTranslationAction(params: TranslationRequest) {
 
 interface SeoRequest {
   type: "blog" | "project";
-  content: string; // The main content to analyze
+  content: string;
   language: string;
 }
 

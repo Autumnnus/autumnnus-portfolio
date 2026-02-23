@@ -9,7 +9,6 @@ export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
 
-  // Detect if we are on an admin route (with or without locale)
   const isAdminPath = pathname
     .split("/")
     .some((segment) => segment === "admin");
@@ -25,7 +24,6 @@ export const proxy = auth((req) => {
     if (req.auth?.user?.email !== adminEmail) {
       return NextResponse.redirect(new URL("/tr", req.nextUrl));
     }
-    // Let intlMiddleware handle the locale normalization/prefixing
   }
 
   if (isOnApi || isFile) {
@@ -36,7 +34,6 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  // Skip all paths that should not be internationalized
   matcher: [
     "/((?!api|_next|.*\\..*).*)",
     "/",

@@ -14,7 +14,6 @@ const languageEnumValues = Object.keys(languageNames) as [string, ...string[]];
 
 // --- Project ---
 
-// Base translation schema for a single language
 const ProjectTranslationSchema = z.object({
   title: z.string().optional().default(""),
   shortDescription: z.string().optional().default(""),
@@ -48,7 +47,6 @@ export const ProjectSchema = z.object({
     )
     .refine(
       (data) => {
-        // At least one language must have a title and descriptions
         return Object.values(data).some(
           (t) =>
             t &&
@@ -65,7 +63,7 @@ export const ProjectSchema = z.object({
       },
     ),
 
-  technologies: z.array(z.string()), // Array of skill IDs
+  technologies: z.array(z.string()),
 });
 
 export type ProjectFormValues = z.infer<typeof ProjectSchema>;
@@ -104,7 +102,6 @@ export const BlogSchema = z.object({
       z.preprocess((val) => val || {}, BlogTranslationSchema.optional()),
     )
     .superRefine((data, ctx) => {
-      // Check if at least one language is filled
       const hasAnyFilled = Object.values(data).some(
         (t) => t && t.title && t.title.trim() !== "",
       );
@@ -117,7 +114,6 @@ export const BlogSchema = z.object({
         });
       }
 
-      // Check each language: if title is filled, content must be filled too
       Object.entries(data).forEach(([lang, t]) => {
         if (!t) return;
 
@@ -170,7 +166,6 @@ export const ExperienceSchema = z.object({
       z.preprocess((val) => val || {}, ExperienceTranslationSchema.optional()),
     )
     .superRefine((data, ctx) => {
-      // En az bir dilin doldurulduğunu kontrol et
       const hasAnyFilled = Object.values(data).some(
         (t) => t && t.role && t.role.trim() !== "",
       );
@@ -183,7 +178,6 @@ export const ExperienceSchema = z.object({
         });
       }
 
-      // Eğer bir dilde herhangi bir alan doldurulmuşsa, diğerleri de o dil için zorunlu
       Object.entries(data).forEach(([lang, t]) => {
         if (!t) return;
         const anyField =
@@ -243,7 +237,6 @@ export const ProfileSchema = z.object({
       z.preprocess((val) => val || {}, ProfileTranslationSchema.optional()),
     )
     .superRefine((data, ctx) => {
-      // En az bir dilin tam doldurulmuş olduğunu kontrol et
       const hasAnyFilled = Object.values(data).some(
         (t) => t && t.name && t.name.trim() !== "",
       );
@@ -256,7 +249,6 @@ export const ProfileSchema = z.object({
         });
       }
 
-      // Seçilen bir dilde eğer herhangi bir alan doldurulmuşsa, diğer hepsinin de doldurulması zorunlu
       Object.entries(data).forEach(([lang, t]) => {
         if (!t) return;
 

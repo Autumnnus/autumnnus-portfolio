@@ -61,7 +61,6 @@ export function useAdminForm<
       if (onInvalid) {
         onInvalid(errors);
       }
-      // Let the user know validation failed
       toast.error(t("validationErrorTitle"), {
         description: t("validationError"),
       });

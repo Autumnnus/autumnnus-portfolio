@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Trigger full sync
     await syncAllContent();
 
     return NextResponse.json({

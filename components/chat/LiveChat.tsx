@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { getLiveChatConfigAction } from "@/app/[locale]/admin/livechat/livechat-actions";
@@ -37,7 +38,6 @@ export default function LiveChat() {
 
   const pathname = usePathname();
 
-  // Compute logical path (without locale prefix) synchronously
   const segments = pathname.split("/").filter(Boolean);
   const supportedLocales = ["tr", "en"];
   const isLocaleFirst =
@@ -58,13 +58,11 @@ export default function LiveChat() {
       (p: string) => logicalPath === p || logicalPath.startsWith(p + "/"),
     );
 
-  // Extract locale from pathname (e.g. /tr/blog -> tr)
   const pathnameParts = pathname.split("/");
   const currentLocale = (
     pathnameParts.length > 1 && pathnameParts[1] ? pathnameParts[1] : "en"
   ) as "tr" | "en";
 
-  // Load configuration
   useEffect(() => {
     async function loadConfig() {
       try {
@@ -72,8 +70,6 @@ export default function LiveChat() {
         if (data) {
           setConfig(data);
 
-          // Normalize current pathname: remove locale prefix for logic-based matching
-          // e.g. /tr/blog -> /blog, /tr -> /
           const segs = pathname.split("/").filter(Boolean);
           const isLocFirst =
             segs.length > 0 && supportedLocales.includes(segs[0]);
@@ -81,7 +77,6 @@ export default function LiveChat() {
             ? "/" + segs.slice(1).join("/")
             : "/" + segs.join("/");
 
-          // Find greeting for this path
           const currentPathGreeting =
             data.greetings.find(
               (g: { pathname: string }) => g.pathname === lPath,
@@ -109,7 +104,6 @@ export default function LiveChat() {
     loadConfig();
   }, [pathname, currentLocale]);
 
-  // Sound Utility
   const playSound = useCallback(
     (type: "notification" | "ping") => {
       const customUrl =
@@ -123,7 +117,6 @@ export default function LiveChat() {
     [config],
   );
 
-  // Teaser Logic - only run if path is not excluded/blocked
   useEffect(() => {
     if (isPathExcluded || !isPathAllowed) return;
     if (!isOpen && !hasInteracted && teaserText && messages.length === 1) {
@@ -148,7 +141,6 @@ export default function LiveChat() {
     playSound,
   ]);
 
-  // Supplemental Ping Logic (if user opens chat before teaser)
   useEffect(() => {
     if (isPathExcluded || !isPathAllowed) return;
     if (isOpen && messages.length === 1 && !pingPlayedRef.current) {
@@ -157,7 +149,6 @@ export default function LiveChat() {
     }
   }, [isPathExcluded, isPathAllowed, isOpen, messages.length, playSound]);
 
-  // Fetch Admin Profile for Avatar
   useEffect(() => {
     async function fetchAdminData() {
       try {
@@ -174,7 +165,6 @@ export default function LiveChat() {
   const [guestEmail, setGuestEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only access localStorage in the browser
     const storedEmail = localStorage.getItem("commentAuthorEmail");
     if (storedEmail) {
       setGuestEmail(storedEmail);
@@ -185,8 +175,6 @@ export default function LiveChat() {
     process.env.NEXT_PUBLIC_ADMIN_EMAIL || "prostochasy@gmail.com";
   const isAdmin = session?.user?.email === adminEmail;
 
-  // Use session email for admin. For regular users, session means nothing here since only admin logins
-  // But we'll fallback to guestEmail from localStorage (if they left a comment before).
   const userEmail = isAdmin ? session?.user?.email : guestEmail;
 
   const userImage = isAdmin
@@ -207,7 +195,6 @@ export default function LiveChat() {
     }
   }, [messages, isLoading, isOpen]);
 
-  // Persistence: Save messages to localStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(
@@ -217,7 +204,6 @@ export default function LiveChat() {
     }
   }, [messages]);
 
-  // Persistence: Load messages from localStorage
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -227,7 +213,6 @@ export default function LiveChat() {
           ...msg,
           timestamp: new Date(msg.timestamp),
         }));
-        // Mark all loaded messages as already-played so we don't re-trigger sounds
         playedMessageIdsRef.current = new Set(revived.map((m) => m.id));
         setMessages(revived);
       } catch (err) {
@@ -235,13 +220,11 @@ export default function LiveChat() {
       }
     }
   }, []);
-
-  // Initial greeting: set welcome message as soon as teaserText is available (even before opening)
   useEffect(() => {
     if (!teaserText) return;
     setMessages((prev) => {
       const hasNonWelcome = prev.some((m) => m.id !== "welcome");
-      if (hasNonWelcome) return prev; // Don't overwrite real conversation
+      if (hasNonWelcome) return prev;
 
       const currentGreeting = teaserText || t("greeting");
       const alreadySet =
@@ -261,7 +244,6 @@ export default function LiveChat() {
     });
   }, [teaserText, t]);
 
-  // Play sound for genuinely NEW AI messages only (not on reloads, nav, open/close)
   useEffect(() => {
     if (messages.length === 0) return;
     const lastMsg = messages[messages.length - 1];
@@ -270,17 +252,15 @@ export default function LiveChat() {
 
     playedMessageIdsRef.current.add(lastMsg.id);
 
-    if (lastMsg.id === "welcome") return; // Handled by teaserText effect
+    if (lastMsg.id === "welcome") return;
 
     if (!isOpen) {
-      // If closed: Play ping and show teaser with the new message
       playSound("ping");
       setTeaserText(lastMsg.content);
       setShowTeaser(true);
       const hideTimer = setTimeout(() => setShowTeaser(false), 10000);
       return () => clearTimeout(hideTimer);
     } else {
-      // If open: Standard notification sound
       playSound("notification");
     }
   }, [messages, playSound, isOpen]);
@@ -324,7 +304,6 @@ export default function LiveChat() {
         }),
       });
 
-      // Filter out sources that have already been shown in previous messages
       const shownSourceUrls = new Set(
         messages.flatMap((m: Message) => m.sources ?? []).map((s) => s.url),
       );
@@ -365,14 +344,12 @@ export default function LiveChat() {
     await processMessage(content);
   };
 
-  // Don't render anything until config is loaded to prevent flash
   if (!configLoaded) return null;
 
   if (config && !config.isEnabled) {
     if (!isAdmin) return null;
   }
 
-  // Check paths using pre-computed flags (also used to gate notifications above)
   if (config) {
     if (isPathExcluded) return null;
     if (!isPathAllowed) return null;

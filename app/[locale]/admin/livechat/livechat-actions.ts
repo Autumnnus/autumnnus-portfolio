@@ -50,7 +50,6 @@ export async function getLiveChatConfigAction() {
   });
 
   if (!config) {
-    // Create default config if it doesn't exist
     config = await prisma.liveChatConfig.create({
       data: {
         isEnabled: true,

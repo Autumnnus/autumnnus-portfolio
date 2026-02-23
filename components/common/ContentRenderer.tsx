@@ -9,7 +9,6 @@ interface ContentRendererProps {
 export default function ContentRenderer({ content }: ContentRendererProps) {
   if (!content) return null;
 
-  // Check if content is HTML (TipTap returns HTML)
   const isHtml = /<[a-z][\s\S]*>/i.test(content);
 
   if (isHtml) {
@@ -24,7 +23,6 @@ export default function ContentRenderer({ content }: ContentRendererProps) {
             /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/,
           );
           if (match) {
-            // Unescape HTML entities from TipTap content
             const code = match[1]
               .replace(/&lt;/g, "<")
               .replace(/&gt;/g, ">")
@@ -32,7 +30,6 @@ export default function ContentRenderer({ content }: ContentRendererProps) {
               .replace(/&quot;/g, '"')
               .replace(/&#039;/g, "'");
 
-            // Look for language class in the code tag first, then pre tag
             const langMatch =
               part.match(/<code[^>]*class="language-(\w+)"/) ||
               part.match(/<pre[^>]*class="language-(\w+)"/);

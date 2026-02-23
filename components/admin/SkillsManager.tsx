@@ -90,7 +90,7 @@ export default function SkillsManager({
       setSkills([...skills, newSkill]);
       setNewName("");
       setNewIcon("");
-      toast.success("Yetenek eklendi."); // We can rely on default toast since it's a simple manager
+      toast.success("Yetenek eklendi.");
       router.refresh();
     } catch (error) {
       toast.error(t("addError") + ": " + (error as Error).message);
@@ -169,7 +169,7 @@ export default function SkillsManager({
                 value={iconSearchQuery || newName}
                 onChange={(e) => {
                   setIconSearchQuery(e.target.value);
-                  setNewName(e.target.value); // Sync manual typing
+                  setNewName(e.target.value);
                   setShowIconDropdown(true);
                 }}
                 onFocus={() => setShowIconDropdown(true)}

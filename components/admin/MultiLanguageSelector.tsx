@@ -48,7 +48,6 @@ export default function MultiLanguageSelector({
     onChange([]);
   };
 
-  // Filter out source lang from available options
   const availableLangs = Object.keys(languageNames).filter(
     (l) => l !== sourceLang,
   );

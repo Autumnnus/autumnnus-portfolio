@@ -13,7 +13,7 @@ export default function WorkCard({ experience }: WorkCardProps) {
   const { company, role, startDate, endDate, description, logo, locationType } =
     experience;
   const locale = useLocale();
-  const t = useTranslations("Work"); // Assuming "Work" namespace has 'present' or similar, or I'll use simple check
+  const t = useTranslations("Work");
 
   const formatDate = (date: string | Date | null | undefined) => {
     if (!date) return "";

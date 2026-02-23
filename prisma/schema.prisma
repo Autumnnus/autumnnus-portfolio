@@ -243,9 +243,9 @@ enum Language {
 
 model Embedding {
   id         String   @id @default(uuid())
-  sourceType String   // blog, project, profile, experience
+  sourceType String   
   sourceId   String
-  language   String   // tr, en (others fallback to en)
+  language   String   
   chunkText  String
   chunkIndex Int
   embedding  Unsupported("vector(3072)")?
@@ -259,7 +259,7 @@ model Embedding {
 model ChatRateLimit {
   id           String   @id @default(uuid())
   ipAddress    String
-  date         DateTime // YYYY-MM-DD set to midnight
+  date         DateTime 
   requestCount Int      @default(0)
 
   @@unique([ipAddress, date])
@@ -268,17 +268,17 @@ model ChatRateLimit {
 model LiveChatConfig {
   id                   String             @id @default(uuid())
   isEnabled            Boolean            @default(true)
-  allowedPaths         String[]           @default([]) // Empty means all if configured
-  excludedPaths        String[]           @default([]) // Paths where the widget should NEVER appear
-  pingSoundUrl        String?            // Custom URL or null for default
-  notificationSoundUrl String?            // Custom URL or null for default
+  allowedPaths         String[]           @default([]) 
+  excludedPaths        String[]           @default([]) 
+  pingSoundUrl        String?            
+  notificationSoundUrl String?            
   greetings            LiveChatGreeting[]
   updatedAt            DateTime           @updatedAt
 }
 
 model LiveChatGreeting {
   id           String                        @id @default(uuid())
-  pathname     String                        @unique // e.g. "/", "/blog"
+  pathname     String                        @unique 
   configId     String
   config       LiveChatConfig                @relation(fields: [configId], references: [id], onDelete: Cascade)
   translations LiveChatGreetingTranslation[]
@@ -308,9 +308,9 @@ model AiChatSession {
 model AiChatMessage {
   id        String        @id @default(uuid())
   sessionId String
-  role      String        // "user" or "ai"
+  role      String        
   content   String
-  metadata  Json?         // To store raw Gemini request/response details
+  metadata  Json?         
   createdAt DateTime      @default(now())
   session   AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }

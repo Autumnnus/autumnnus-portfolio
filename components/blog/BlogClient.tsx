@@ -67,7 +67,6 @@ export default function BlogClient({
     [searchParams, pathname, router],
   );
 
-  // Eğer yükleme işlemi yoksa ve URL bizim push'ladığımızdan farklıysa (Örn: Geri tuşu) input'u eşitle
   const currentUrlQuery = searchParams.query || "";
   if (!isPending && currentUrlQuery !== pushedQuery) {
     setSearchQuery(currentUrlQuery);
@@ -75,7 +74,6 @@ export default function BlogClient({
   }
 
   useEffect(() => {
-    // 500ms'lik gecikme ile optimize edilmiş arama
     const timer = setTimeout(() => {
       if (searchQuery !== pushedQuery) {
         if (searchQuery.length >= 2 || searchQuery.length === 0) {

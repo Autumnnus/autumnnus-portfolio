@@ -28,7 +28,7 @@ export default function LikeButton({
         const status = await getLikeStatus(itemId, itemType);
         if (mounted) {
           setLiked(status.liked);
-          setLikes(status.count); // Sync with server count on load
+          setLikes(status.count);
         }
       } catch (error) {
         console.error("Failed to fetch like status:", error);
@@ -45,7 +45,6 @@ export default function LikeButton({
   }, [itemId, itemType]);
 
   const handleToggleLike = async () => {
-    // Optimistic update
     const previousLiked = liked;
     const previousLikes = likes;
 
@@ -60,7 +59,6 @@ export default function LikeButton({
           setLikes(result.count);
         }
       } else {
-        // Revert on failure
         setLiked(previousLiked);
         setLikes(previousLikes);
         console.error(result.error);

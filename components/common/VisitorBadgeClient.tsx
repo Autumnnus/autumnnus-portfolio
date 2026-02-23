@@ -360,7 +360,6 @@ function seededRandom(seed: number): number {
   return x - Math.floor(x);
 }
 
-// -- Thematic Explosion Component --
 function ThematicExplosion({
   tier,
   isWinter,
@@ -383,18 +382,17 @@ function ThematicExplosion({
       />
 
       {particles.map((_, i) => {
-        // Create an organic explosion pattern
         const angle = seededRandom(i) * Math.PI * 2;
         const velocity = 60 + seededRandom(i + 1) * 120;
         const randomX = Math.cos(angle) * velocity;
-        const randomY = Math.sin(angle) * velocity + 40; // slight gravity effect
+        const randomY = Math.sin(angle) * velocity + 40;
 
         const randomScale = 0.5 + seededRandom(i + 2) * 1;
         const initialRotate = seededRandom(i + 3) * 360;
         const rotateAmount =
           (seededRandom(i + 4) > 0.5 ? 1 : -1) * (180 + seededRandom(i) * 180);
 
-        const particleType = i % 3; // 0: Tier Icon, 1: Theme Icon (Leaf/Snowflake), 2: Sparkle/Dot
+        const particleType = i % 3;
 
         return (
           <motion.div
@@ -479,7 +477,6 @@ export default function VisitorBadgeClient({
   const [showExplosion, setShowExplosion] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -493,7 +490,6 @@ export default function VisitorBadgeClient({
     const handleTrigger = () => {
       setIsOpen(true);
       setShowExplosion(true);
-      // Reset explosion after some time
       setTimeout(() => setShowExplosion(false), 3000);
     };
 

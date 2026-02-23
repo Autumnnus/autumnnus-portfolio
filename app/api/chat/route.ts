@@ -301,7 +301,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find or create AI Chat Session for this IP
     const recentSession = await prisma.aiChatSession.findFirst({
       where: { ipAddress: ip },
       orderBy: { updatedAt: "desc" },
@@ -319,14 +318,12 @@ export async function POST(req: NextRequest) {
       });
       sessionId = newSession.id;
     } else {
-      // Update the session's updatedAt timestamp
       await prisma.aiChatSession.update({
         where: { id: sessionId },
         data: { updatedAt: new Date() },
       });
     }
 
-    // Log the user's message
     await prisma.aiChatMessage.create({
       data: {
         sessionId: sessionId!,
@@ -348,7 +345,6 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    // --- Intent Detection ---
     const intentPrompt = `Analyze the user's message and the conversation history to determine the intent and a refined search query.
 User Message: "${message}"
 
@@ -405,7 +401,6 @@ Return JSON in this format: { "intent": "greeting"|"inappropriate"|"general_chat
           : "No relevant information found in the portfolio.";
     }
 
-    // --- Dynamic System Prompt based on Intent ---
     let intentInstructions = "";
     if (intentData.intent === "greeting") {
       intentInstructions =
@@ -458,7 +453,6 @@ ${message}`;
       },
     });
 
-    // Only return sources when they are genuinely relevant (project or blog)
     const relevantSources = sources.filter(
       (s) => s.sourceType === "project" || s.sourceType === "blog",
     );

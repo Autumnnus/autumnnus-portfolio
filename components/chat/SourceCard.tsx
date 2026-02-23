@@ -7,7 +7,6 @@ import { ExternalLink, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
-// GitHub Icon SVG component to avoid deprecated lucide icon
 function GitHubIcon({ className }: { className?: string }) {
   return (
     <svg

@@ -235,7 +235,6 @@ export async function getBlogPosts({
         const session = await auth();
         isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
       } catch {
-        // Fallback for static generation where auth/headers are not available
         isAdmin = false;
       }
     }
@@ -640,30 +639,20 @@ export async function createComment(
     const isAdmin =
       session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
-    // If Admin, use admin details if not provided or override
-    // But user form provides name/email. Let's trust the form for name, but use isAdmin flag.
-    // Actually user requirement: "admin comment attÄ±ÄŸÄ±nda admin bilgileri ile atsÄ±n"
-    // So if isAdmin, we might enforce specific name/email or just tag it.
-    // Let's use the session name/email if authenticated as valid admin?
-    // Or just trust the submitted form but mark as admin if the session email matches?
-    // Let's mark as isAdmin if session matches.
-
     const ipAddress = await getIpIdentifier();
 
-    // Rate limiting: Check if IP has posted recently
-    // Skip rate limiting for Admin
     if (!isAdmin) {
-      // const recentComments = await prisma.comment.count({
-      //   where: {
-      //     ipAddress,
-      //     createdAt: {
-      //       gte: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes
-      //     },
-      //   },
-      // });
-      // if (recentComments >= 3) {
-      //   throw new Error("You are commenting too fast. Please try again later.");
-      // }
+      const recentComments = await prisma.comment.count({
+        where: {
+          ipAddress,
+          createdAt: {
+            gte: new Date(Date.now() - 10 * 60 * 1000),
+          },
+        },
+      });
+      if (recentComments >= 3) {
+        throw new Error("You are commenting too fast. Please try again later.");
+      }
     }
 
     const data: Prisma.CommentUncheckedCreateInput = {
@@ -692,7 +681,6 @@ export async function createComment(
         : "/[locale]/projects/[slug]";
     revalidatePath(path, "layout");
 
-    // Notifications and Logs
     if (!isAdmin) {
       await createAuditLog("COMMENT_CREATED", itemType.toUpperCase(), itemId, {
         authorName,
@@ -726,7 +714,6 @@ export async function createComment(
 
       await sendTelegramNotification(telegramMessage, coverImage);
 
-      // Comment Milestone Notification
       const commentCountWhere: Prisma.CommentWhereInput = {};
       if (itemType === "blog") {
         commentCountWhere.blogPostId = itemId;
@@ -778,9 +765,6 @@ export async function deleteComment(commentId: string) {
       where: { id: commentId },
     });
 
-    // Revalidate? We don't know the exact path here easily without fetching the comment first.
-    // But usually this action is called from the page where comment exists.
-    // Let's revalidate everything/layout.
     revalidatePath("/[locale]/blog/[slug]", "layout");
     revalidatePath("/[locale]/projects/[slug]", "layout");
 
@@ -791,7 +775,6 @@ export async function deleteComment(commentId: string) {
   }
 }
 
-// Deprecated: kept for backward compatibility if needed, but redirects to new logic
 export async function createCommentAction(blogPostId: string, content: string) {
   const session = await auth();
   if (!session?.user?.email) {
@@ -816,7 +799,7 @@ export async function getComments(
     const skip = (page - 1) * limit;
     const where: Prisma.CommentWhereInput = {
       approved: true,
-      parentId: null, // Fetch top-level comments
+      parentId: null,
     };
 
     if (itemType === "blog") {
@@ -900,7 +883,6 @@ export async function toggleLike(itemId: string, itemType: CommentItemType) {
       });
     }
 
-    // Get updated count
     const countWhere: Prisma.LikeWhereInput = {};
     if (itemType === "blog") {
       countWhere.blogPostId = itemId;
@@ -994,7 +976,7 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
           ? { blogPostId: itemId }
           : { projectId: itemId }),
         createdAt: {
-          gte: new Date(Date.now() - 60 * 60 * 1000), // 1 hour
+          gte: new Date(Date.now() - 60 * 60 * 1000),
         },
       } as Prisma.ViewWhereInput,
     });
@@ -1010,10 +992,8 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
       }
       await prisma.view.create({ data });
 
-      // Only check milestones when a NEW view is registered
       const count = await prisma.view.count({ where: countWhere });
       if (shouldNotify(count)) {
-        // Check if we already notified for this specific milestone
         const auditLogs = await prisma.auditLog.findMany({
           where: {
             action: "VIEW_MILESTONE",
@@ -1081,7 +1061,7 @@ async function verifyTurnstileToken(token: string) {
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
   if (!secretKey) {
     console.warn("TURNSTILE_SECRET_KEY is missing");
-    return true; // Bypass if not configured
+    return true;
   }
 
   try {
@@ -1111,7 +1091,6 @@ async function sendTelegramNotification(message: string, photo?: string) {
   }
 
   try {
-    // Determine if we can use sendPhoto (must be absolute public URL, not localhost)
     const isPublicPhoto =
       photo &&
       photo.startsWith("http") &&
@@ -1168,11 +1147,8 @@ export async function trackVisitor() {
   try {
     const ipAddress = await getIpIdentifier();
 
-    // Check if it's really the "0.0.0.0" fallback or a valid IP
     if (ipAddress === "0.0.0.0") return { success: false };
 
-    // Try to create or find existing (since IP is unique, create will fail if exists)
-    // Actually simpler to just check existence first or use upsert
     const existing = await prisma.uniqueVisitor.findUnique({
       where: { ipAddress },
     });
@@ -1265,11 +1241,10 @@ export async function trackVisitor() {
           ipAddress,
         });
 
-        // Record the first time this milestone was reached in the dedicated table
         try {
           await prisma.visitorMilestone.upsert({
             where: { count: totalUniqueVisitors },
-            update: {}, // Don't update if already reached
+            update: {},
             create: { count: totalUniqueVisitors },
           });
         } catch (e) {
@@ -1308,8 +1283,6 @@ export async function getSimilarProjects(
     const targetLanguage = lang === "tr" ? "tr" : "en";
     type RawResult = { sourceId: string; distance: number };
 
-    // We get the embedding of the first chunk of the source project (usually header + description)
-    // and find the closest projects based on their closest chunk.
     const similarProjectIds = await prisma.$queryRaw<RawResult[]>`
       WITH SourceEmbedding AS (
         SELECT embedding 

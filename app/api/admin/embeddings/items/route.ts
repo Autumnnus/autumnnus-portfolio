@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
@@ -69,7 +70,6 @@ export async function GET(req: NextRequest) {
       embUpdate: Date | undefined | null,
     ) => {
       if (!embUpdate) return "missing";
-      // Adding a small buffer of 5 seconds to account for slight delays during sync
       return sourceUpdate.getTime() - embUpdate.getTime() > 5000
         ? "outdated"
         : "synced";
@@ -131,7 +131,6 @@ export async function GET(req: NextRequest) {
       });
     });
 
-    // Sort items so outdated/missing are on top
     items.sort((a, b) => {
       if (a.status !== b.status) {
         if (a.status === "missing") return -1;

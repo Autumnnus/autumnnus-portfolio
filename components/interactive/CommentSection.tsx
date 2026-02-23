@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
@@ -102,7 +103,6 @@ export default function CommentSection({
     },
   });
 
-  // Load user details from localStorage or Session
   useEffect(() => {
     if (session?.user) {
       form.setValue("authorName", session.user.name || "");
@@ -115,7 +115,6 @@ export default function CommentSection({
     }
   }, [form, session]);
 
-  // Fetch comments
   useEffect(() => {
     let mounted = true;
     async function fetchComments() {

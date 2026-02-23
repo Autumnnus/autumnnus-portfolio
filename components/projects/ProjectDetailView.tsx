@@ -5,7 +5,6 @@ import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
 import Icon from "@/components/common/Icon";
 import RelatedProjectCard from "@/components/projects/RelatedProjectCard";
-import { Badge } from "@/components/ui/badge";
 import { GithubRepoStats, Project } from "@/types/contents";
 import { ArrowLeft, ArrowRight, ExternalLink, Github } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -18,6 +17,7 @@ import LikeButton from "@/components/interactive/LikeButton";
 import ViewCounter from "@/components/interactive/ViewCounter";
 import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
 import JsonLd from "@/components/seo/JsonLd";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProjectDetailView({
   project,
@@ -345,9 +345,7 @@ export default function ProjectDetailView({
             name: "Autumnnus",
             url: "https://autumnnus.com",
           },
-          ...(project.coverImage
-            ? { image: [project.coverImage] } // Simplified request
-            : {}),
+          ...(project.coverImage ? { image: [project.coverImage] } : {}),
           ...(project.liveDemo ? { url: project.liveDemo } : {}),
         }}
       />

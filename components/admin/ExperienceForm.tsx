@@ -26,7 +26,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-// Helper to update translations
 const transformTranslationsToObject = (
   translations: WorkExperienceTranslation[],
 ) => {
@@ -151,7 +150,6 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         { role: string; description: string; locationType: string }
       >;
 
-      // Update target inputs
       Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
         setValue(`translations.${lang}.role` as const, content.role);

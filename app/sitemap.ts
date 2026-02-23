@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const { items: blogPosts } = await getBlogPosts({
     lang: Language.en,
-    limit: 1000, // Fetch all
+    limit: 1000,
     skipAuth: true,
   });
 
@@ -53,7 +53,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Fetch all projects
   const { items: projects } = await getProjects({
     lang: Language.en,
     limit: 1000,

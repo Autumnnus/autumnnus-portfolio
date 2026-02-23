@@ -45,7 +45,6 @@ import TipTapEditor from "./TipTapEditor";
 
 import { useTranslations } from "next-intl";
 
-// Helper to update translations
 const transformTranslationsToObject = (translations: ProjectTranslation[]) => {
   const result: Record<
     string,
@@ -106,7 +105,6 @@ export default function ProjectForm({
   const [newSkillIcon, setNewSkillIcon] = useState("");
   const [isAddingSkill, setIsAddingSkill] = useState(false);
 
-  // New states for simple-icons autocomplete
   const [iconSearchQuery, setIconSearchQuery] = useState("");
   const [iconSearchResults, setIconSearchResults] = useState<
     Array<{ name: string; icon: string; hex: string }>
@@ -114,12 +112,9 @@ export default function ProjectForm({
   const [isSearchingIcons, setIsSearchingIcons] = useState(false);
   const [showIconDropdown, setShowIconDropdown] = useState(false);
 
-  // AI Translation State
   const [sourceLang, setSourceLang] = useState<string>("tr");
   const [targetLangs, setTargetLangs] = useState<string[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
-
-  // GitHub Repos State
   interface GithubRepo {
     id: number;
     name: string;
@@ -216,11 +211,7 @@ export default function ProjectForm({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // For skills, we still upload immediately because they are handled separately in handleQuickAddSkill
     if (customPath === "skills") {
-      // For skills we don't have access to setLoading anymore from global state,
-      // but here it's inside image upload so we can just use a local one or toast promise,
-      // wait, let's keep it simple.
       const formData = new FormData();
       formData.append("file", file);
       formData.append("path", customPath);
@@ -256,7 +247,6 @@ export default function ProjectForm({
 
     setGalleryImages((prev) => {
       const updated = [...prev, ...newImages];
-      // Sync with form
       setValue(
         "images",
         updated.map((img) => img.url),
@@ -308,7 +298,6 @@ export default function ProjectForm({
       return;
     }
 
-    // Check if skill already exists in availableSkills to avoid Prisma P2002
     const normalizedKey = newSkillName.toUpperCase().replace(/\s+/g, "_");
     const existing = availableSkills.find(
       (s) =>
@@ -317,7 +306,6 @@ export default function ProjectForm({
     );
 
     if (existing) {
-      // If it exists, just select it if not already selected
       const currentSkills = getValues("technologies");
       if (!currentSkills.includes(existing.id)) {
         setValue("technologies", [...currentSkills, existing.id]);
@@ -339,7 +327,6 @@ export default function ProjectForm({
       });
       setAvailableSkills((prev) => [...prev, newSkill]);
 
-      // Auto select the new skill
       const currentSkills = getValues("technologies");
       setValue("technologies", [...currentSkills, newSkill.id]);
 
@@ -362,7 +349,6 @@ export default function ProjectForm({
     try {
       await deleteSkillAction(id);
       setAvailableSkills((prev) => prev.filter((s) => s.id !== id));
-      // Also remove from selected if it was selected
       const current = getValues("technologies");
       if (current.includes(id)) {
         setValue(
@@ -430,7 +416,6 @@ export default function ProjectForm({
         },
       })) as Record<string, ProjectContent | null>;
 
-      // Update target inputs
       Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
         setValue(`translations.${lang}.title` as const, content.title);
@@ -466,7 +451,6 @@ export default function ProjectForm({
   };
 
   const onSubmitAction = async (data: ProjectFormValues) => {
-    // 1. Upload cover image if it's new
     let finalCoverImage = data.coverImage || "";
     if (coverImage?.file) {
       finalCoverImage = await uploadSingleFile(
@@ -475,7 +459,6 @@ export default function ProjectForm({
       );
     }
 
-    // 2. Upload gallery images if they are new
     const finalGalleryImages = await Promise.all(
       galleryImages.map(async (img) => {
         if (img.file) {
@@ -545,7 +528,6 @@ export default function ProjectForm({
     setValue("technologies", updated);
   };
 
-  // Debounced search for simple-icons
   useEffect(() => {
     const searchIcons = async () => {
       if (!iconSearchQuery.trim()) {
@@ -574,7 +556,7 @@ export default function ProjectForm({
 
     const timeoutId = setTimeout(() => {
       searchIcons();
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [iconSearchQuery]);
@@ -587,13 +569,12 @@ export default function ProjectForm({
     setNewSkillName(iconItem.name);
     setNewSkillIcon(iconItem.icon);
     setShowIconDropdown(false);
-    setIconSearchQuery(""); // clear search
+    setIconSearchQuery("");
   };
 
   return (
     <form
       onSubmit={(e) => {
-        // Only run hook handleSubmit
         handleFormSubmit(e);
       }}
       className="space-y-8 sm:space-y-12 max-w-5xl mx-auto pb-32 px-4 sm:px-0"

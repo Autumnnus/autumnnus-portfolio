@@ -16,7 +16,7 @@ export default async function AdminProjectsPage({
   const t = await getTranslations("Admin.Dashboard.projects");
   const tNav = await getTranslations("Admin.Navigation");
   const result = await getProjects({
-    lang: Language.tr, // Admin listesi için Türkçe başlıkları çekiyoruz
+    lang: Language.tr,
     limit: 100,
     search: query,
   });

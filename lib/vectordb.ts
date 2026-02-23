@@ -19,10 +19,8 @@ export async function upsertEmbedding(
   chunkText: string,
   embedding: number[],
 ) {
-  // Convert embedding array to string format for vector type: '[0.1, 0.2, ...]'
   const embeddingString = `[${embedding.join(",")}]`;
 
-  // Use raw query for vector insertion
   await prisma.$executeRaw`
     INSERT INTO "Embedding" ("id", "sourceType", "sourceId", "language", "chunkText", "chunkIndex", "embedding", "updatedAt")
     VALUES (gen_random_uuid(), ${sourceType}, ${sourceId}, ${language}, ${chunkText}, ${chunkIndex}, ${embeddingString}::vector, NOW())
@@ -38,15 +36,12 @@ export async function searchSimilar(
   queryEmbedding: number[],
   language: string,
   limit: number = 5,
-  threshold: number = 0.5, // Similarity threshold (0 to 1, lower distance means higher similarity)
+  threshold: number = 0.5,
 ): Promise<EmbeddingResult[]> {
   const embeddingString = `[${queryEmbedding.join(",")}]`;
 
-  // Fallback to English if not Turkish
   const targetLanguage = language === "tr" ? "tr" : "en";
 
-  // Using cosine distance operator <=> from pgvector
-  // We order by distance ascending (closest first)
   const results = await prisma.$queryRaw<
     Array<{
       id: string;
@@ -79,7 +74,7 @@ export async function searchSimilar(
     sourceId: r.sourceId,
     language: r.language,
     chunkText: r.chunkText,
-    similarity: 1 - r.distance, // Convert distance to similarity
+    similarity: 1 - r.distance,
   }));
 }
 

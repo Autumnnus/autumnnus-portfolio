@@ -34,7 +34,6 @@ import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-// Helper to update translations
 const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
   const result: Record<
     string,
@@ -121,16 +120,11 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     formState: { errors },
   } = form;
 
-  // Auto-slugify
   const isEditing = !!initialData;
   const sourceTitle = watch(`translations.${sourceLang}.title` as const);
-
-  // Effect to sync slug with title only for NEW posts
-  // or if slug is explicitly empty
   useEffect(() => {
     if (!isEditing && sourceTitle) {
       const currentSlug = getValues("slug");
-      // Only auto-update if slug is empty or it was already an auto-generated version of a slightly shorter title
       if (
         !currentSlug ||
         currentSlug ===
@@ -214,7 +208,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         } | null
       >;
 
-      // Update target inputs
       Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
         setValue(`translations.${lang}.title` as const, content.title);
@@ -344,7 +337,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           <ul className="list-disc list-inside space-y-1">
             {Object.entries(errors).map(([key, value]) => {
               if (key === "translations" && value) {
-                // If it's a global error on the record (like "En az bir dilde...")
                 if ((value as FieldError).message) {
                   return (
                     <li key={key}>
@@ -353,10 +345,8 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                   );
                 }
 
-                // If it's a per-language/field error
                 return Object.entries(value).map(([lang, langErrors]) => {
                   const fieldError = langErrors as FieldError;
-                  // If the language object itself has a direct error
                   if (fieldError.message) {
                     return (
                       <li key={`${key}.${lang}`}>
@@ -369,7 +359,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
                   const langErrRec = langErrors as Record<string, FieldError>;
 
-                  // Map field errors (title, content, etc.)
                   const fieldErrors = Object.entries(langErrRec)
                     .filter(
                       ([field]) => !["message", "type", "ref"].includes(field),

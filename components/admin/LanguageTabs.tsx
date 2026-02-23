@@ -22,7 +22,6 @@ export default function LanguageTabs({
       ? sourceLang
       : activeTab;
 
-  // Combine sourceLang with unique targetLangs
   const activeLangs = Array.from(new Set([sourceLang, ...targetLangs]));
 
   return (

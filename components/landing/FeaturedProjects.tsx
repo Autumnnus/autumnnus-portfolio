@@ -13,7 +13,6 @@ interface FeaturedProjectsProps {
 export default function FeaturedProjects({ projects }: FeaturedProjectsProps) {
   const t = useTranslations("Projects");
 
-  // Use passed projects
   const featuredProjects = projects.slice(0, 4);
 
   return (

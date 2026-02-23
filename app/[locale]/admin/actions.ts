@@ -407,7 +407,6 @@ export async function updateProfileAction(data: ProfileData) {
   }
 }
 
-// Experience Actions
 export async function createExperienceAction(data: ExperienceData) {
   const session = await auth();
   if (
@@ -469,7 +468,6 @@ export async function deleteExperienceAction(id: string) {
   });
 }
 
-// Quest Actions
 export async function createQuestAction(data: QuestData) {
   const session = await auth();
   if (
@@ -766,7 +764,7 @@ export async function importDatabaseAction(jsonData: string) {
                 connect: (
                   project.technologies as unknown as { id: string }[]
                 ).map((tech) => ({
-                  id: tech.id, // Connect by ID since we restored skills with IDs
+                  id: tech.id,
                 })),
               },
               translations: {

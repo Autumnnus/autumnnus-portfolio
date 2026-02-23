@@ -20,7 +20,7 @@ export default function AdminSearch({ placeholder }: AdminSearchProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       const currentQuery = searchParams.get("query") || "";
-      if (query === currentQuery) return; // Prevent unnecessary pushes
+      if (query === currentQuery) return;
 
       const params = new URLSearchParams(searchParams.toString());
       if (query) {

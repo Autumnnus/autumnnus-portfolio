@@ -46,7 +46,7 @@ export async function generateMetadata({
     description: project.metaDescription || project.shortDescription,
     keywords: project.keywords || [],
     openGraph: {
-      type: "website", // Projects are more like products/portfolios than articles
+      type: "website",
       locale: locale,
       url: url,
       title: project.metaTitle || project.title,

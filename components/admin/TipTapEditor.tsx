@@ -110,7 +110,6 @@ export default function TipTapEditor({
       onChange(editor.getHTML());
     },
     onTransaction: () => {
-      // Force a re-render to update toolbar state on every single change
       setSelectionCounter((s) => s + 1);
     },
     editorProps: {
@@ -244,7 +243,6 @@ export default function TipTapEditor({
                     .focus()
                     .updateAttributes("codeBlock", { language: value })
                     .run();
-                  // Force immediate UI update for the select input
                   setSelectionCounter((s) => s + 1);
                 }}
               >

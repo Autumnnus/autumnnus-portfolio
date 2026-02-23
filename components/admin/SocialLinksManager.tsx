@@ -180,7 +180,7 @@ export default function SocialLinksManager({
                 value={iconSearchQuery || newName}
                 onChange={(e) => {
                   setIconSearchQuery(e.target.value);
-                  setNewName(e.target.value); // Sync manual typing
+                  setNewName(e.target.value);
                   setShowIconDropdown(true);
                 }}
                 onFocus={() => setShowIconDropdown(true)}

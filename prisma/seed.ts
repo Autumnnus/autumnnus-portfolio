@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // 1. Profile
   await prisma.profile.upsert({
     where: { id: "default-profile" },
     update: {},
@@ -47,7 +46,6 @@ async function main() {
   });
   console.log("✅ Profile seeded");
 
-  // 2. Live Chat Config
   await prisma.liveChatConfig.upsert({
     where: { id: "global-chat-config" },
     update: {},
@@ -78,7 +76,6 @@ async function main() {
   });
   console.log("✅ Live Chat Config seeded");
 
-  // 3. Social Links
   const socialLinks = [
     {
       key: "github",
@@ -109,7 +106,6 @@ async function main() {
   }
   console.log("✅ Social Links seeded");
 
-  // 4. Skills
   const skills = [
     {
       key: "react",

@@ -29,7 +29,6 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
 
   useEffect(() => {
     seedComments();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setComments(getComments(postSlug));
     setUser(getCurrentUser());
   }, [postSlug]);

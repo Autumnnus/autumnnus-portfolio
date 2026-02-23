@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function JsonLd({ data }: { data: Record<string, any> }) {
   return (
     <script
