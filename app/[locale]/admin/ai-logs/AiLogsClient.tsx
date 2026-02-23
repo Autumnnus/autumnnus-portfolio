@@ -5,7 +5,7 @@ import CodeBlock from "@/components/common/CodeBlock";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Bot, Info, User, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Message = {
   id: string;
@@ -28,8 +28,15 @@ export default function AiLogsClient({ sessions }: { sessions: Session[] }) {
     sessions.length > 0 ? sessions[0].id : null,
   );
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const selectedSession = sessions.find((s) => s.id === selectedSessionId);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [selectedSessionId, selectedSession?.messages]);
 
   if (sessions.length === 0) {
     return (
@@ -142,6 +149,7 @@ export default function AiLogsClient({ sessions }: { sessions: Session[] }) {
               </div>
             </div>
           ))}
+          <div ref={scrollRef} />
         </div>
       </div>
 

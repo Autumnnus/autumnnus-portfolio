@@ -38,20 +38,7 @@ export default function LiveChat() {
 
   // Compute logical path (without locale prefix) synchronously
   const segments = pathname.split("/").filter(Boolean);
-  const supportedLocales = [
-    "tr",
-    "en",
-    "de",
-    "fr",
-    "es",
-    "it",
-    "pt",
-    "ru",
-    "ja",
-    "ko",
-    "ar",
-    "zh",
-  ];
+  const supportedLocales = ["tr", "en"];
   const isLocaleFirst =
     segments.length > 0 && supportedLocales.includes(segments[0]);
   const logicalPath = isLocaleFirst
@@ -74,19 +61,7 @@ export default function LiveChat() {
   const pathnameParts = pathname.split("/");
   const currentLocale = (
     pathnameParts.length > 1 && pathnameParts[1] ? pathnameParts[1] : "en"
-  ) as
-    | "tr"
-    | "en"
-    | "de"
-    | "fr"
-    | "es"
-    | "it"
-    | "pt"
-    | "ru"
-    | "ja"
-    | "ko"
-    | "ar"
-    | "zh";
+  ) as "tr" | "en";
 
   // Load configuration
   useEffect(() => {
@@ -223,10 +198,13 @@ export default function LiveChat() {
   const aiImage = adminAvatar;
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    if (isOpen && scrollRef.current) {
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isOpen]);
 
   // Persistence: Save messages to localStorage
   useEffect(() => {

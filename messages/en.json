@@ -200,6 +200,7 @@
     "LiveChat": {
       "status": "Live Chat Status",
       "statusDesc": "Enable or disable Live Chat sitewide or for specific pages.",
+      "defaultSound": "Default system sound",
       "visiblePages": "Visible Pages",
       "visiblePagesDesc": "Determine which pages the widget will appear on.",
       "visiblePagesDesc_note": "enter (ex: /blog). If left blank, it appears on all pages.",

@@ -34,10 +34,7 @@ export default function LanguageSwitcher() {
 
     // Defensive check: strip any existing locale prefix from the pathname.
     // This prevents nested URLs like /tr/en/projects when switching languages.
-    const cleanPath = pathname.replace(
-      /^\/(tr|en|de|fr|es|it|pt|ru|ja|ko|ar|zh)(\/|$)/,
-      "/",
-    );
+    const cleanPath = pathname.replace(/^\/(tr|en)(\/|$)/, "/");
 
     // Using string-based replace with the cleaned, unlocalized pathname.
     router.replace(cleanPath, { locale: nextLocale });

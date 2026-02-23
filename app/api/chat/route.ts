@@ -335,19 +335,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const queryEmbedding = await generateEmbedding(message);
-    const similarChunks = await searchSimilar(queryEmbedding, locale, 8, 0.55);
-
-    const { contextBlocks, sources } =
-      similarChunks.length > 0
-        ? await fetchMetadataForChunks(similarChunks, locale)
-        : { contextBlocks: [], sources: [] };
-
-    const contextText =
-      contextBlocks.length > 0
-        ? contextBlocks.join("\n\n")
-        : "No relevant information found in the portfolio.";
-
     const recentHistory = history.slice(-HISTORY_LIMIT);
     const historyText =
       recentHistory.length > 0
@@ -357,6 +344,79 @@ export async function POST(req: NextRequest) {
             )
             .join("\n")
         : "";
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    // --- Intent Detection ---
+    const intentPrompt = `Analyze the user's message and the conversation history to determine the intent and a refined search query.
+User Message: "${message}"
+
+Recent History:
+${historyText || "None"}
+
+Intents:
+- "greeting": The user is just saying hello, asking how you are, thanking you, or saying goodbye. No specific portfolio information is needed.
+- "inappropriate": The user is asking an inappropriate question, using profanity, or being abusive.
+- "general_chat": The user is asking a general question NOT related to Kadir's portfolio (e.g., "how to code in Python", "what is the weather", "tell me a joke").
+- "portfolio_query": The user is asking about Kadir's portfolio, projects, experience, skills, blog posts, or contact information. This requires searching the knowledge base.
+
+If the intent is "portfolio_query", provide a "refinedQuery" which is an optimized, keyword-rich search string in English useful for a vector database search. Otherwise, refinedQuery can be empty.
+Return JSON in this format: { "intent": "greeting"|"inappropriate"|"general_chat"|"portfolio_query", "refinedQuery": "..." }`;
+
+    const intentResult = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: intentPrompt }] }],
+      generationConfig: { responseMimeType: "application/json" },
+    });
+
+    let intentData = { intent: "portfolio_query", refinedQuery: message };
+    try {
+      intentData = JSON.parse(intentResult.response.text());
+    } catch (e) {
+      console.error(
+        "Failed to parse intent JSON, defaulting to portfolio_query",
+        e,
+      );
+    }
+
+    let contextBlocks: string[] = [];
+    let sources: SourceItem[] = [];
+    let contextText = "";
+
+    if (intentData.intent === "portfolio_query") {
+      const queryEmbedding = await generateEmbedding(
+        intentData.refinedQuery || message,
+      );
+      const similarChunks = await searchSimilar(
+        queryEmbedding,
+        locale,
+        8,
+        0.55,
+      );
+
+      if (similarChunks.length > 0) {
+        const result = await fetchMetadataForChunks(similarChunks, locale);
+        contextBlocks = result.contextBlocks;
+        sources = result.sources;
+      }
+      contextText =
+        contextBlocks.length > 0
+          ? contextBlocks.join("\n\n")
+          : "No relevant information found in the portfolio.";
+    }
+
+    // --- Dynamic System Prompt based on Intent ---
+    let intentInstructions = "";
+    if (intentData.intent === "greeting") {
+      intentInstructions =
+        "The user is greeting you. Respond warmly, acknowledge the conversation, and ask how you can help them explore Kadir's portfolio.";
+    } else if (intentData.intent === "inappropriate") {
+      intentInstructions =
+        "The user sent an inappropriate or abusive message. Firmly but politely state that you cannot help with such requests.";
+    } else if (intentData.intent === "general_chat") {
+      intentInstructions =
+        "The user asked a general question unrelated to the portfolio. Politely explain that you are specialized in answering questions about Kadir's portfolio, projects, and professional background. Decline to answer general knowledge, coding help, or off-topic queries.";
+    }
 
     const systemPrompt = `You are AutumnAI, an intelligent assistant embedded in Kadir's portfolio website.
 
@@ -370,14 +430,11 @@ ROLE & RESTRICTIONS:
 - Answer in: ${locale === "tr" ? "Turkish (Türkçe)" : "English"}.
 ${historyText ? `\nCONVERSATION HISTORY:\n${historyText}\n` : ""}
 
-PORTFOLIO CONTEXT (use ONLY this to answer):
-${contextText}
+${intentInstructions ? `CURRENT INTENT INSTRUCTIONS:\n${intentInstructions}\n` : ""}
+${intentData.intent === "portfolio_query" ? `PORTFOLIO CONTEXT (use ONLY this to answer):\n${contextText}\n` : ""}
 
 USER QUESTION:
 ${message}`;
-
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const result = await model.generateContent(systemPrompt);
     const response = result.response.text();
@@ -410,7 +467,9 @@ ${message}`;
   } catch (error) {
     console.error("Chat API Error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
       { status: 500 },
     );
   }

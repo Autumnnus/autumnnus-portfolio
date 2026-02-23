@@ -214,6 +214,7 @@
       "excludedPagesDesc_note": "Bu ayar görünür sayfalardan daha önceliklidir.",
       "blockPage": "Sayfayı Engelle",
       "noBlocks": "Herhangi bir engel yok.",
+      "defaultSound": "Varsayılan sistem sesi",
       "greetingMessages": "Karşılama Mesajları",
       "greetingMessagesDesc": "Sayfaya özel ilk AI baloncuğu mesajları. Tüm sayfalar için '/*' kullanın.",
       "new": "Yeni",
