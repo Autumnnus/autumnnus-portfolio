@@ -68,7 +68,6 @@ export default function LiveChat() {
     async function loadConfig() {
       try {
         const data = await getLiveChatConfigAction().catch(() => null);
-        console.log("data", data);
         if (data) {
           setConfig(data);
 
@@ -112,11 +111,9 @@ export default function LiveChat() {
       const customUrl =
         type === "ping" ? config?.pingSoundUrl : config?.notificationSoundUrl;
       const soundUrl = customUrl || `/assets/sounds/${type}.mp3`;
-      console.log("soundUrl", soundUrl);
       const audio = new Audio(soundUrl);
       audio.play().catch((err) => {
-        console.log("err", err);
-        // Browser might block auto-play until interaction
+        console.error("err", err);
       });
     },
     [config],
@@ -378,7 +375,9 @@ export default function LiveChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-4 z-50 w-[380px] sm:w-[450px] h-[600px] max-h-[85vh] bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl shadow-primary/5 flex flex-col overflow-hidden ring-1 ring-black/5 dark:ring-white/5"
+            className="fixed z-50 flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl ring-1 ring-black/5 dark:ring-white/5
+                       bottom-24 inset-x-4 h-[500px] max-h-[calc(100vh-120px)]
+                       sm:left-auto sm:right-8 sm:w-[380px] sm:h-[600px]"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border/50 bg-muted/30 backdrop-blur-md">
@@ -387,7 +386,7 @@ export default function LiveChat() {
                   <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm tracking-tight">
+                  <h3 className="font-semibold text-sm tracking-tight truncate max-w-[120px] sm:max-w-none">
                     {t("title")}
                   </h3>
                   <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
@@ -463,7 +462,7 @@ export default function LiveChat() {
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
+      <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end gap-4 overflow-visible">
         <AnimatePresence>
           {showTeaser && !isOpen && (
             <motion.div
@@ -475,7 +474,7 @@ export default function LiveChat() {
                 setShowTeaser(false);
                 setHasInteracted(true);
               }}
-              className="relative max-w-[280px] bg-background border border-border/50 p-4 rounded-2xl shadow-xl cursor-pointer hover:bg-muted/50 transition-colors group"
+              className="relative max-w-[240px] sm:max-w-[320px] bg-background border border-border/50 p-4 rounded-2xl shadow-xl cursor-pointer hover:bg-muted/50 transition-colors group"
             >
               <div className="absolute -bottom-2 right-6 w-4 h-4 bg-background border-r border-b border-border/50 rotate-45" />
               <button

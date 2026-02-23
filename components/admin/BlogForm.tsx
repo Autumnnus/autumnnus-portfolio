@@ -303,8 +303,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       translations: translationsArray,
     };
 
-    console.log("Submitting blog data:", submitData);
-
     if (initialData?.id) {
       await updateBlogAction(initialData.id, submitData);
       return { action: "update" };
@@ -338,12 +336,12 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       onSubmit={(e) => {
         handleFormSubmit(e);
       }}
-      className="space-y-8 max-w-4xl mx-auto pb-20"
+      className="space-y-6 sm:space-y-8 max-w-4xl mx-auto pb-20 px-4 sm:px-0"
     >
       {Object.keys(errors).length > 0 && (
         <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
           <p className="font-bold mb-2">{t("validationError")}:</p>
-          <ul className="list-disc list-inside">
+          <ul className="list-disc list-inside space-y-1">
             {Object.entries(errors).map(([key, value]) => {
               if (key === "translations" && value) {
                 // If it's a global error on the record (like "En az bir dilde...")
@@ -410,98 +408,125 @@ export default function BlogForm({ initialData }: BlogFormProps) {
           </ul>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="lg:col-span-12 xl:col-span-7 space-y-6 bg-muted/20 p-4 sm:p-6 rounded-2xl border border-border/50">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("slug")}</label>
+            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+              {t("slug")}
+            </label>
             <input
               {...register("slug")}
-              className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
+              className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
               placeholder="..."
             />
             {errors.slug && (
-              <p className="text-xs text-red-500">{errors.slug.message}</p>
+              <p className="text-xs text-destructive font-medium px-1">
+                {errors.slug?.message}
+              </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t("category")}</label>
-            <input
-              {...register("category")}
-              className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
-              placeholder="..."
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("status")}</label>
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("category")}
+              </label>
+              <input
+                {...register("category")}
+                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
+                placeholder="..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("status")}
+              </label>
               <select
                 {...register("status")}
-                className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all"
+                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-bold cursor-pointer appearance-none"
               >
                 <option value="draft">{t("draft")}</option>
                 <option value="published">{t("publish")}</option>
               </select>
             </div>
-            <div className="flex flex-col justify-end space-y-4 pb-2">
-              <div className="flex items-center gap-2">
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 pt-2">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center">
                 <input
                   type="checkbox"
                   id="featured"
                   {...register("featured")}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  className="peer appearance-none w-5 h-5 rounded border-2 border-border checked:bg-primary checked:border-primary transition-all cursor-pointer"
                 />
-                <label htmlFor="featured" className="text-sm font-medium">
-                  {t("featured")}
-                </label>
+                <Sparkles className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
               </div>
-              <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">
+                {t("featured")}
+              </span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center">
                 <input
                   type="checkbox"
                   id="commentsEnabled"
                   {...register("commentsEnabled")}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  className="peer appearance-none w-5 h-5 rounded border-2 border-border checked:bg-primary checked:border-primary transition-all cursor-pointer"
                 />
-                <label
-                  htmlFor="commentsEnabled"
-                  className="text-sm font-medium"
-                >
-                  {t("commentsEnabled")}
-                </label>
+                <Settings className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
               </div>
-            </div>
+              <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">
+                {t("commentsEnabled")}
+              </span>
+            </label>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="lg:col-span-12 xl:col-span-5 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("coverImage")}</label>
-            <div className="relative aspect-video bg-muted rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:bg-muted/50 transition-colors">
+            <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
+              {t("coverImage")}
+            </label>
+            <div className="relative aspect-video bg-muted/20 rounded-2xl border-2 border-dashed border-border/50 flex items-center justify-center overflow-hidden hover:bg-muted/30 hover:border-primary/50 transition-all duration-300 group">
               {coverImage ? (
                 <>
                   <Image
-                    src={coverImage.url}
+                    src={coverImage?.url || ""}
                     alt={t("coverAlt")}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                     unoptimized
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCoverImage(null);
-                      setValue("coverImage", "");
-                    }}
-                    className="absolute top-2 right-2 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
-                  >
-                    <X size={16} />
-                  </button>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <label className="cursor-pointer p-2.5 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-colors">
+                      <ImagePlus size={18} className="text-white" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCoverImage(null);
+                        setValue("coverImage", "");
+                      }}
+                      className="p-2.5 bg-red-500/40 backdrop-blur-md rounded-full hover:bg-red-500/60 transition-colors"
+                    >
+                      <X size={18} className="text-white" />
+                    </button>
+                  </div>
                 </>
               ) : (
-                <label className="cursor-pointer flex flex-col items-center gap-2 w-full h-full justify-center">
-                  <ImagePlus size={32} className="text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground font-medium">
+                <label className="cursor-pointer flex flex-col items-center gap-3 w-full h-full justify-center group-hover:scale-105 transition-transform duration-300">
+                  <div className="p-4 bg-primary/10 rounded-full text-primary transition-colors group-hover:bg-primary/20">
+                    <ImagePlus size={32} />
+                  </div>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                     {t("coverImage")}
                   </span>
                   <input
@@ -513,19 +538,19 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                 </label>
               )}
               {loading && (
-                <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-                  <Loader2 className="animate-spin text-primary" />
+                <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                  <Loader2 className="animate-spin text-primary w-8 h-8" />
                 </div>
               )}
             </div>
           </div>
           <div className="space-y-2">
-            <label className="font-medium text-xs text-muted-foreground uppercase">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
               {t("imageAlt")}
             </label>
             <input
               {...register("imageAlt")}
-              className="w-full p-2 bg-muted rounded border border-border outline-hidden focus:border-primary transition-all text-sm"
+              className="w-full p-2.5 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
               placeholder="..."
             />
           </div>
@@ -535,17 +560,17 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       <div className="h-px bg-border/50" />
 
       {/* Translation Controls */}
-      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-primary">
+      <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="flex items-center justify-between sm:justify-start gap-3">
+              <span className="text-sm font-bold text-primary whitespace-nowrap">
                 {t("sourceLanguage")}:
               </span>
               <select
                 value={sourceLang}
                 onChange={(e) => setSourceLang(e.target.value)}
-                className="px-3 py-1 text-xs font-bold rounded-md border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer"
+                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer flex-1 sm:flex-none shadow-sm"
               >
                 {Object.entries(languageNames).map(([code, name]) => (
                   <option key={code} value={code}>
@@ -566,7 +591,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             type="button"
             onClick={handleAutoTranslate}
             disabled={isTranslating || targetLangs.length === 0}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
+            className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isTranslating ? (
               <Loader2 className="animate-spin w-4 h-4" />
@@ -576,15 +601,16 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             {t("translateInSelectedLangs")}
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 px-1 opacity-70">
+          <div className="w-1 h-1 rounded-full bg-primary" />
           {t("translateInSelectedLangsDesc")}
         </p>
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
         {(lang) => (
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <div className="flex justify-end mb-4">
+          <div className="space-y-6 max-w-3xl mx-auto">
+            <div className="flex justify-end sticky top-0 z-30 py-2 sm:py-0">
               <SeoPopover
                 type="blog"
                 language={lang}
@@ -633,75 +659,80 @@ export default function BlogForm({ initialData }: BlogFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <Layout size={12} /> {t("title")}
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2 px-1">
+                  <Layout size={14} className="text-primary/60" /> {t("title")}
                 </label>
                 <input
                   {...register(`translations.${lang}.title` as const)}
-                  className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                  className="w-full p-3 bg-background rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm font-medium"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <Settings size={12} /> {t("readTime")}
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2 px-1">
+                  <Settings size={14} className="text-primary/60" />{" "}
+                  {t("readTime")}
                 </label>
                 <input
                   {...register(`translations.${lang}.readTime` as const)}
                   placeholder="..."
-                  className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                  className="w-full p-3 bg-background rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                <Search size={12} /> {t("metaDescription")}
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2 px-1">
+                <Search size={14} className="text-primary/60" />{" "}
+                {t("metaDescription")}
               </label>
               <textarea
                 {...register(`translations.${lang}.metaDescription` as const)}
-                className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                className="w-full p-3 bg-background rounded-xl border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm min-h-[80px]"
                 placeholder="..."
               />
             </div>
 
             <div className="space-y-4 pt-4 border-t border-border/50">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                  <FileText size={12} /> {t("fullDescription")} {t("htmlLabel")}
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2 px-1">
+                  <FileText size={14} className="text-primary/60" />{" "}
+                  {t("fullDescription")}
                 </label>
-                <TipTapEditor
-                  content={
-                    getValues(`translations.${lang}.content` as const) || ""
-                  }
-                  onChange={(html) =>
-                    setValue(`translations.${lang}.content` as const, html, {
-                      shouldDirty: true,
-                    })
-                  }
-                  uploadPath={`blog/${getValues("slug") || "temp"}`}
-                />
+                <div className="prose-sm max-w-none">
+                  <TipTapEditor
+                    content={
+                      getValues(`translations.${lang}.content` as const) || ""
+                    }
+                    onChange={(html) =>
+                      setValue(`translations.${lang}.content` as const, html, {
+                        shouldDirty: true,
+                      })
+                    }
+                    uploadPath={`blog/${getValues("slug") || "temp"}`}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4 pt-6 border-t border-border/50 mt-6">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                <Settings size={12} /> {t("seo")}
+            <div className="space-y-6 pt-8 border-t border-border/50 mt-8">
+              <h4 className="text-xs font-bold text-primary uppercase tracking-[0.2em] flex items-center gap-3">
+                <Settings size={14} /> {t("seo")}
               </h4>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider px-1">
                     {t("metaTitle")}
                   </label>
                   <input
                     {...register(`translations.${lang}.metaTitle` as const)}
-                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                    className="w-full p-3 bg-background rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider px-1">
                     {t("keywords")}
                   </label>
                   <input
@@ -716,19 +747,19 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                     defaultValue={getValues(
                       `translations.${lang}.keywords` as const,
                     )?.join(", ")}
-                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                    className="w-full p-3 bg-background rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
                     placeholder={t("keywordsPlaceholder")}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider px-1">
                   {t("excerpt")}
                 </label>
                 <textarea
                   {...register(`translations.${lang}.excerpt` as const)}
-                  className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                  className="w-full p-3 bg-background rounded-xl border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm min-h-[100px]"
                 />
               </div>
 
@@ -742,21 +773,28 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         )}
       </LanguageTabs>
 
-      <div className="flex justify-end gap-4 border-t border-border pt-8">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="px-8 py-3 bg-muted rounded-lg font-bold hover:bg-muted/80 transition-colors"
-        >
-          {useTranslations("Admin.Common")("cancel")}
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-12 py-3 bg-orange-500 text-white rounded-lg font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20"
-        >
-          {loading && <Loader2 className="animate-spin w-4 h-4" />} {t("save")}
-        </button>
+      <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 z-40 px-4 sm:px-0 flex justify-center pointer-events-none">
+        <div className="max-w-4xl w-full flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-background/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-2xl border border-border/50 pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="w-full sm:w-auto px-8 py-3 bg-muted rounded-xl text-sm font-bold hover:bg-muted/80 transition-all flex items-center justify-center"
+          >
+            {useTranslations("Admin.Common")("cancel")}
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto px-12 py-3 bg-orange-500 text-white rounded-xl text-sm font-bold hover:opacity-90 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-xl shadow-orange-500/20"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin w-4 h-4" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            {t("save")}
+          </button>
+        </div>
       </div>
     </form>
   );

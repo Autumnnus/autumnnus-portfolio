@@ -301,7 +301,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       router.refresh();
     },
     onInvalid: (errors) => {
-      console.log("FORM VALIDATION ERRORS:", JSON.stringify(errors, null, 2));
       const errMsgs: string[] = [];
       if (errors.email) errMsgs.push("E-posta adresi hatalı veya boş.");
       if (errors.translations) {
@@ -345,7 +344,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="space-y-8 max-w-4xl mx-auto pb-20"
+      className="space-y-6 sm:space-y-8 max-w-4xl mx-auto pb-20 px-4 sm:px-0"
     >
       {Object.keys(errors).length > 0 && (
         <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm animate-in fade-in slide-in-from-top-2">
@@ -411,91 +410,91 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <div className="flex flex-col items-center sm:items-start gap-6 mb-8 group">
-            <div className="relative">
-              <input type="hidden" {...register("avatar")} />
-              <div className="relative w-40 h-40 rounded-full overflow-hidden ring-4 ring-background shadow-2xl transition-all duration-300 group-hover:ring-primary/20 bg-muted">
-                {avatar ? (
-                  <>
-                    <Image
-                      src={avatar.url}
-                      alt={t("avatarAlt")}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
-                      <label className="cursor-pointer p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-colors">
-                        <ImagePlus size={20} className="text-white" />
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={handleImageUpload}
-                          accept="image/*"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAvatar(null);
-                          setValue("avatar", "", { shouldDirty: true });
-                        }}
-                        className="p-2 bg-red-500/40 backdrop-blur-md rounded-full hover:bg-red-500/60 transition-colors"
-                      >
-                        <X size={20} className="text-white" />
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full hover:bg-muted/80 transition-colors gap-2">
-                    <div className="p-4 bg-primary/10 rounded-full text-primary">
-                      <ImagePlus size={32} />
-                    </div>
-                    <span className="text-xs font-semibold text-muted-foreground">
-                      {t("avatar")}
-                    </span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                      accept="image/*"
-                    />
-                  </label>
-                )}
-              </div>
-
-              {avatar && (
-                <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground p-2 rounded-full shadow-lg">
-                  <Sparkles size={16} className="animate-pulse" />
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="lg:col-span-4 flex flex-col items-center gap-6 group">
+          <div className="relative">
+            <input type="hidden" {...register("avatar")} />
+            <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden ring-4 ring-background shadow-2xl transition-all duration-300 group-hover:ring-primary/20 bg-muted">
+              {avatar ? (
+                <>
+                  <Image
+                    src={avatar.url}
+                    alt={t("avatarAlt")}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
+                    <label className="cursor-pointer p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-colors">
+                      <ImagePlus size={20} className="text-white" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAvatar(null);
+                        setValue("avatar", "", { shouldDirty: true });
+                      }}
+                      className="p-2 bg-red-500/40 backdrop-blur-md rounded-full hover:bg-red-500/60 transition-colors"
+                    >
+                      <X size={20} className="text-white" />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full hover:bg-muted/80 transition-colors gap-2">
+                  <div className="p-4 bg-primary/10 rounded-full text-primary">
+                    <ImagePlus size={32} />
+                  </div>
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {t("avatar")}
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                  />
+                </label>
               )}
             </div>
 
-            <div className="space-y-1 text-center sm:text-left">
-              <h3 className="text-xl font-bold">{t("avatar")}</h3>
-              <p className="text-sm text-muted-foreground">{t("avatarDesc")}</p>
-            </div>
+            {avatar && (
+              <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground p-2 rounded-full shadow-lg">
+                <Sparkles size={14} className="animate-pulse" />
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 bg-muted/20 p-6 rounded-2xl border border-border/50">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
-                {t("email")}
-              </label>
-              <input
-                {...register("email")}
-                className="w-full p-3 bg-background/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                placeholder="hello@example.com"
-              />
-              {errors.email && (
-                <p className="text-xs text-red-500 font-medium">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
+          <div className="space-y-1 text-center">
+            <h3 className="text-xl font-bold">{t("avatar")}</h3>
+            <p className="text-sm text-muted-foreground">{t("avatarDesc")}</p>
+          </div>
+        </div>
 
+        <div className="lg:col-span-8 space-y-4 bg-muted/20 p-4 sm:p-6 rounded-2xl border border-border/50">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
+              {t("email")}
+            </label>
+            <input
+              {...register("email")}
+              className="w-full p-3 bg-background/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+              placeholder="hello@example.com"
+            />
+            {errors.email && (
+              <p className="text-xs text-red-500 font-medium">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
                 {t("github")}
@@ -523,16 +522,16 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
       <div className="h-px bg-border/50" />
 
-      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-primary">
+      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <span className="text-sm font-bold text-primary whitespace-nowrap">
               {t("sourceLanguage")}:
             </span>
             <select
               value={sourceLang}
               onChange={(e) => setSourceLang(e.target.value)}
-              className="px-3 py-1 text-xs font-bold rounded-md border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer"
+              className="px-3 py-1 text-xs font-bold rounded-md border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer flex-1 sm:flex-none"
             >
               {Object.entries(languageNames).map(([code, name]) => (
                 <option key={code} value={code}>
@@ -553,7 +552,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           type="button"
           onClick={handleAutoTranslate}
           disabled={isTranslating || targetLangs.length === 0}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
+          className="px-4 py-2.5 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isTranslating ? (
             <Loader2 className="animate-spin w-4 h-4" />
@@ -567,36 +566,38 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
         {(lang) => (
           <div className="space-y-4 max-w-2xl mx-auto">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground">
-                {t("name")}
-              </label>
-              <input
-                {...register(`translations.${lang}.name` as const)}
-                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                placeholder={t("namePlaceholder")}
-              />
-              {errors.translations?.[lang]?.name && (
-                <p className="text-xs text-red-500">
-                  {errors.translations[lang]?.name?.message}
-                </p>
-              )}
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  {t("name")}
+                </label>
+                <input
+                  {...register(`translations.${lang}.name` as const)}
+                  className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                  placeholder={t("namePlaceholder")}
+                />
+                {errors.translations?.[lang]?.name && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.name?.message}
+                  </p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground">
-                {t("unvan")}
-              </label>
-              <input
-                {...register(`translations.${lang}.title` as const)}
-                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                placeholder={t("titlePlaceholder")}
-              />
-              {errors.translations?.[lang]?.title && (
-                <p className="text-xs text-red-500">
-                  {errors.translations[lang]?.title?.message}
-                </p>
-              )}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">
+                  {t("unvan")}
+                </label>
+                <input
+                  {...register(`translations.${lang}.title` as const)}
+                  className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                  placeholder={t("titlePlaceholder")}
+                />
+                {errors.translations?.[lang]?.title && (
+                  <p className="text-xs text-red-500">
+                    {errors.translations[lang]?.title?.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -605,7 +606,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               </label>
               <input
                 {...register(`translations.${lang}.greetingText` as const)}
-                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
                 placeholder={t("greetingPlaceholder")}
               />
               {errors.translations?.[lang]?.greetingText && (
@@ -621,7 +622,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               </label>
               <textarea
                 {...register(`translations.${lang}.description` as const)}
-                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[100px]"
+                className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[100px] text-sm"
                 placeholder={t("descPlaceholder")}
               />
               {errors.translations?.[lang]?.description && (
@@ -631,13 +632,13 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 pt-2">
               <label className="text-xs font-bold uppercase text-muted-foreground">
                 {t("aboutTitle")}
               </label>
               <input
                 {...register(`translations.${lang}.aboutTitle` as const)}
-                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
                 placeholder={t("aboutTitlePlaceholder")}
               />
               {errors.translations?.[lang]?.aboutTitle && (
@@ -653,7 +654,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               </label>
               <textarea
                 {...register(`translations.${lang}.aboutDescription` as const)}
-                className="w-full p-2 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[150px]"
+                className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[150px] text-sm"
                 placeholder={t("aboutDescPlaceholder")}
               />
               {errors.translations?.[lang]?.aboutDescription && (
@@ -669,7 +670,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       <div className="h-px bg-border/50" />
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h3 className="text-xl font-bold">{t("questsTitle")}</h3>
             <p className="text-sm text-muted-foreground">{t("questsDesc")}</p>
@@ -683,7 +684,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                 translations: {},
               })
             }
-            className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-bold hover:bg-primary/20 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-bold hover:bg-primary/20 transition-all"
           >
             <Plus size={16} />
             {t("addQuest")}
@@ -694,12 +695,12 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           {fields.map((field, index) => (
             <div
               key={field.id}
-              className="bg-card border-2 border-border p-6 rounded-2xl space-y-4 relative group"
+              className="bg-card border-2 border-border p-4 sm:p-6 rounded-2xl space-y-4 relative group"
             >
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full transition-all"
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full transition-all"
               >
                 <Trash2 size={18} />
               </button>
@@ -726,7 +727,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
                         {...register(
                           `quests.${index}.translations.${lang}.title` as const,
                         )}
-                        className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        className="w-full p-2.5 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                         placeholder={t("questPlaceholder")}
                       />
                       {errors.quests?.[index]?.translations?.[lang]?.title && (
@@ -752,11 +753,11 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         </div>
       </div>
 
-      <div className="sticky bottom-8 z-20 flex justify-end gap-4 border-t border-border/50 bg-background/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border">
+      <div className="sticky bottom-4 sm:bottom-8 z-20 bg-background/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-2xl border border-border/50">
         <button
           type="submit"
           disabled={loading}
-          className="px-16 py-4 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-3 transition-all shadow-xl shadow-primary/20 group"
+          className="w-full sm:w-auto sm:ml-auto px-12 py-3 sm:py-4 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-xl shadow-primary/20 group"
         >
           {loading ? (
             <Loader2 className="animate-spin w-5 h-5" />

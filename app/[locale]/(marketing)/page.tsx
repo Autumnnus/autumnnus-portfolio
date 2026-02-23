@@ -56,7 +56,6 @@ export default async function Home({ params }: HomeProps) {
 
   const featuredProjects = (projectsResult.items as unknown as Project[]) || [];
   const featuredBlogs = (blogResult.items as unknown as BlogPost[]) || [];
-  console.log("aboutStats", aboutStats);
   return (
     <>
       <SectionNav />

@@ -30,7 +30,6 @@ export default function WorkCard({ experience }: WorkCardProps) {
   const endStr = endDate ? formatDate(endDate) : t("present");
   const period = `${startStr} - ${endStr}`;
 
-  console.log("experience", experience);
   return (
     <article className="group relative flex flex-col sm:flex-row gap-4 sm:gap-6 p-1 transition-all">
       {/* Left Column: Logo */}

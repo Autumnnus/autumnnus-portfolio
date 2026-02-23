@@ -184,7 +184,6 @@ export async function POST(request: Request) {
 
           try {
             await uploadFile(relativePath, content, contentType);
-            console.log(`Restored asset: ${relativePath}`);
           } catch (err) {
             console.error(`Failed to restore asset: ${relativePath}`, err);
           }

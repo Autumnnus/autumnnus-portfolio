@@ -66,10 +66,10 @@ export function ChatMessage({ message, userImage, aiImage }: ChatMessageProps) {
           "flex flex-col gap-1 rounded-2xl px-4 py-2.5 text-sm shadow-sm transition-colors",
           isUser
             ? "max-w-[85%] bg-primary text-primary-foreground rounded-tr-sm"
-            : "w-full max-w-[85%] bg-muted/80 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm shadow-inner",
+            : "max-w-[85%] bg-muted/80 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm shadow-inner",
         )}
       >
-        <div className="prose prose-sm dark:prose-invert wrap-break-word max-w-none prose-p:leading-relaxed prose-pre:bg-black/10 dark:prose-pre:bg-white/10 prose-pre:rounded-lg">
+        <div className="prose prose-sm dark:prose-invert break-words max-w-none prose-p:leading-relaxed prose-pre:bg-black/10 dark:prose-pre:bg-white/10 prose-pre:rounded-lg">
           <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
 

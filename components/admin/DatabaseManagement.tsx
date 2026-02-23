@@ -75,37 +75,50 @@ export default function DatabaseManagement() {
   };
 
   return (
-    <div className="p-8 bg-card border border-border rounded-xl space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-red-500/10 rounded-lg">
-          <Database className="w-8 h-8 text-red-500" />
+    <div className="p-4 sm:p-8 bg-card border border-border/50 rounded-2xl space-y-8 shadow-xl relative overflow-hidden group">
+      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
+        <Database size={160} />
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 relative z-10">
+        <div className="p-4 bg-red-500/10 rounded-2xl shadow-inner border border-red-500/20">
+          <Database className="w-8 h-8 sm:w-10 sm:h-10 text-red-500" />
         </div>
-        <div>
-          <h2 className="text-2xl font-bold">{t("title")}</h2>
-          <p className="text-muted-foreground text-sm">{t("description")}</p>
+        <div className="text-center sm:text-left">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            {t("title")}
+          </h2>
+          <p className="text-muted-foreground text-sm font-medium mt-1">
+            {t("description")}
+          </p>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-destructive/10 text-destructive rounded-lg text-sm flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" /> {error}
+        <div className="p-4 bg-destructive/10 text-destructive rounded-xl text-sm flex items-center gap-3 border border-destructive/20 animate-in fade-in slide-in-from-top-2 relative z-10">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-4 relative z-10">
         <button
           onClick={handleExport}
           disabled={loading}
-          className="flex-1 px-6 py-4 bg-secondary text-secondary-foreground rounded-xl font-medium hover:opacity-90 transition-all flex items-center justify-center gap-3 border border-border"
+          className="flex-1 px-6 py-5 sm:py-6 bg-background text-foreground rounded-2xl font-bold hover:bg-muted transition-all flex items-center justify-center gap-4 border border-border/50 shadow-sm active:scale-[0.98] disabled:opacity-50"
         >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Download className="w-5 h-5" />
-          )}
+          <div className="p-2 sm:p-3 bg-blue-500/10 rounded-xl text-blue-500">
+            {loading ? (
+              <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
+            ) : (
+              <Download className="w-5 h-5 sm:w-6 sm:h-6" />
+            )}
+          </div>
           <div className="text-left">
-            <div className="font-bold">{t("export")}</div>
-            <div className="text-xs opacity-70">{t("exportSub")}</div>
+            <div className="font-bold text-base sm:text-lg">{t("export")}</div>
+            <div className="text-xs text-muted-foreground font-medium opacity-70">
+              {t("exportSub")}
+            </div>
           </div>
         </button>
 
@@ -118,23 +131,32 @@ export default function DatabaseManagement() {
             onChange={handleImport}
             disabled={loading}
           />
-          <div className="px-6 py-4 bg-red-500 text-white rounded-xl font-medium hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-lg shadow-red-500/20">
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Upload className="w-5 h-5" />
-            )}
+          <div className="px-6 py-5 sm:py-6 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all flex items-center justify-center gap-4 shadow-lg shadow-red-500/20 active:scale-[0.98] disabled:opacity-50 h-full">
+            <div className="p-2 sm:p-3 bg-white/20 rounded-xl">
+              {loading ? (
+                <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
+              ) : (
+                <Upload className="w-5 h-5 sm:w-6 sm:h-6" />
+              )}
+            </div>
             <div className="text-left">
-              <div className="font-bold">{t("import")}</div>
-              <div className="text-xs opacity-70">{t("importSub")}</div>
+              <div className="font-bold text-base sm:text-lg">
+                {t("import")}
+              </div>
+              <div className="text-xs text-white/70 font-medium">
+                {t("importSub")}
+              </div>
             </div>
           </div>
         </label>
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        ⚠️ {t("warning")}
-      </p>
+      <div className="p-4 bg-muted/30 rounded-xl border border-border/30 relative z-10">
+        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-center flex items-center justify-center gap-2">
+          <AlertCircle size={14} className="text-red-500" />
+          {t("warning")}
+        </p>
+      </div>
     </div>
   );
 }

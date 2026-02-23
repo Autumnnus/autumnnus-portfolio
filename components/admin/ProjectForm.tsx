@@ -596,7 +596,7 @@ export default function ProjectForm({
         // Only run hook handleSubmit
         handleFormSubmit(e);
       }}
-      className="space-y-8 max-w-4xl mx-auto pb-20"
+      className="space-y-8 sm:space-y-12 max-w-5xl mx-auto pb-32 px-4 sm:px-0"
     >
       {Object.keys(errors).length > 0 && (
         <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
@@ -655,17 +655,17 @@ export default function ProjectForm({
         </div>
       )}
 
-      <div className="flex justify-between items-center bg-muted/30 p-5 border border-border rounded-xl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 p-4 sm:p-5 border border-border rounded-xl">
         <div>
-          <h2 className="text-lg font-bold">{t("githubRepos")}</h2>
-          <p className="text-xs text-muted-foreground">
+          <h2 className="text-base sm:text-lg font-bold">{t("githubRepos")}</h2>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             {t("githubReposDesc")}
           </p>
         </div>
         <button
           type="button"
           onClick={handleFetchRepos}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-all text-sm"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-all text-sm"
           disabled={isFetchingRepos}
         >
           {isFetchingRepos ? (
@@ -678,35 +678,35 @@ export default function ProjectForm({
       </div>
 
       {showRepoModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-2xl max-h-[80vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-60 bg-black/50 flex flex-col items-center justify-center p-2 sm:p-4 backdrop-blur-sm">
+          <div className="bg-card w-full max-w-2xl max-h-[90vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b border-border">
-              <h3 className="text-lg font-bold flex items-center gap-2">
+              <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
                 <Github size={20} /> {t("selectRepo")} ({repos.length})
               </h3>
               <button
                 type="button"
                 onClick={() => setShowRepoModal(false)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground p-1"
               >
                 <X size={20} />
               </button>
             </div>
-            <div className="overflow-y-auto p-4 flex flex-col gap-3">
+            <div className="overflow-y-auto p-2 sm:p-4 flex flex-col gap-2 sm:gap-3">
               {repos.map((repo) => (
                 <div
                   key={repo.id}
-                  className="p-4 border border-border rounded-lg bg-muted/20 hover:bg-muted/50 hover:border-primary/50 cursor-pointer transition-colors"
+                  className="p-3 sm:p-4 border border-border rounded-lg bg-muted/20 hover:bg-muted/50 hover:border-primary/50 cursor-pointer transition-colors"
                   onClick={() => handleSelectRepo(repo)}
                 >
-                  <div className="font-bold text-primary flex justify-between">
-                    <span>{repo.name}</span>
-                    <span className="text-xs text-muted-foreground bg-muted p-1 rounded font-normal">
+                  <div className="font-bold text-primary flex flex-wrap justify-between items-center gap-2">
+                    <span className="text-sm sm:text-base">{repo.name}</span>
+                    <span className="text-[10px] text-muted-foreground bg-muted p-1 rounded font-normal">
                       {repo.language || "Unknown"}
                     </span>
                   </div>
                   {repo.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
                       {repo.description}
                     </p>
                   )}
@@ -717,27 +717,33 @@ export default function ProjectForm({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        <div className="xl:col-span-7 space-y-6 bg-muted/20 p-4 sm:p-8 rounded-3xl border border-border/50 shadow-sm">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("slug")}</label>
+            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+              {t("slug")}
+            </label>
             <input
               {...register("slug")}
               required
-              className="w-full p-2 bg-muted rounded border border-border"
+              className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
               placeholder="my-awesome-project"
             />
             {errors.slug && (
-              <p className="text-xs text-red-500">{errors.slug.message}</p>
+              <p className="text-xs text-destructive font-medium px-1">
+                {errors.slug.message}
+              </p>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("status")}</label>
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("status")}
+              </label>
               <select
                 {...register("status")}
-                className="w-full p-2 bg-muted rounded border border-border"
+                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm cursor-pointer appearance-none"
               >
                 <option>Completed</option>
                 <option>Working</option>
@@ -745,19 +751,23 @@ export default function ProjectForm({
                 <option>Archived</option>
               </select>
               {errors.status && (
-                <p className="text-xs text-red-500">{errors.status.message}</p>
+                <p className="text-xs text-destructive font-medium px-1">
+                  {errors.status.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("category")}</label>
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("category")}
+              </label>
               <input
                 {...register("category")}
                 required
-                className="w-full p-2 bg-muted rounded border border-border"
+                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
                 placeholder="Web App"
               />
               {errors.category && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-destructive font-medium px-1">
                   {errors.category.message}
                 </p>
               )}
@@ -765,8 +775,10 @@ export default function ProjectForm({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("coverImage")}</label>
-            <div className="relative aspect-video bg-muted rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden">
+            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+              {t("coverImage")}
+            </label>
+            <div className="relative aspect-video bg-background/50 rounded-2xl border-2 border-dashed border-border/50 flex items-center justify-center overflow-hidden group hover:border-primary/50 transition-all">
               {coverImage ? (
                 <>
                   <Image
@@ -776,16 +788,18 @@ export default function ProjectForm({
                     className="object-cover"
                     unoptimized
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCoverImage(null);
-                      setValue("coverImage", "");
-                    }}
-                    className="absolute top-2 right-2 p-1 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
-                  >
-                    <X size={16} />
-                  </button>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCoverImage(null);
+                        setValue("coverImage", "");
+                      }}
+                      className="p-2 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
                 </>
               ) : (
                 <label className="cursor-pointer flex flex-col items-center gap-2 w-full h-full justify-center hover:bg-muted/50 transition-colors">
@@ -832,55 +846,68 @@ export default function ProjectForm({
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="xl:col-span-5 space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("githubUrl")}</label>
+            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+              {t("githubUrl")}
+            </label>
             <input
               {...register("github")}
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none transition-all"
+              className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
               placeholder="https://github.com/..."
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t("liveDemoUrl")}</label>
+            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+              {t("liveDemoUrl")}
+            </label>
             <input
               {...register("liveDemo")}
-              className="w-full p-2 bg-muted rounded border border-border focus:border-primary outline-none transition-all"
+              className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
               placeholder="https://..."
             />
           </div>
 
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium">{t("technologies")}</label>
+          <div className="space-y-4 pt-4 border-t border-border/50">
+            <div className="flex justify-between items-center px-1">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">
+                {t("technologies")}
+              </label>
               <button
                 type="button"
                 onClick={() => setShowAddSkill(!showAddSkill)}
-                className="text-xs flex items-center gap-1 text-primary font-bold hover:underline"
+                className="text-xs flex items-center gap-1.5 text-primary font-bold hover:scale-105 transition-all bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20"
               >
-                <Plus size={12} />{" "}
-                {showAddSkill ? commonT("close") : t("quickAdd")}
+                {showAddSkill ? (
+                  <>
+                    <X size={14} /> {commonT("close")}
+                  </>
+                ) : (
+                  <>
+                    <Plus size={14} /> {t("quickAdd")}
+                  </>
+                )}
               </button>
             </div>
 
             {showAddSkill && (
-              <div className="p-5 bg-card border-2 border-primary/20 rounded-xl space-y-5 animate-in fade-in zoom-in-95 duration-200 shadow-xl shadow-primary/5">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+              <div className="p-6 bg-card border- border-primary/20 rounded-3xl space-y-6 animate-in fade-in zoom-in-95 duration-300 shadow-2xl shadow-primary/5">
+                <div className="flex items-center gap-2 pb-4 border-b border-border/50">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
                     {t("newSkill")}
                   </h4>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {/* Search / Autocomplete Field */}
                   <div className="space-y-2 relative">
-                    <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                    <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1">
                       {t("skillName")} (Simple Icons)
                     </label>
                     <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        <Search size={14} />
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        <Search size={16} />
                       </div>
                       <input
                         value={iconSearchQuery}
@@ -890,37 +917,38 @@ export default function ProjectForm({
                         }}
                         onFocus={() => setShowIconDropdown(true)}
                         onBlur={() => {
-                          // Allow click on dropdown items to register before hiding
                           setTimeout(() => setShowIconDropdown(false), 200);
                         }}
                         placeholder={t("skillSearchPlaceholder")}
-                        className="w-full py-2.5 pl-9 pr-10 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
+                        className="w-full py-3.5 pl-11 pr-10 text-sm bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
                       />
                       {isSearchingIcons && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-primary">
-                          <Loader2 size={14} className="animate-spin" />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-primary">
+                          <Loader2 size={16} className="animate-spin" />
                         </div>
                       )}
                     </div>
 
                     {/* Search Results Dropdown */}
                     {showIconDropdown && iconSearchResults.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                      <div className="absolute z-20 w-full mt-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         {iconSearchResults.map((result, idx) => (
                           <div
                             key={idx}
                             onClick={() => handleSelectSearchedIcon(result)}
-                            className="flex items-center gap-3 px-4 py-2 hover:bg-muted cursor-pointer transition-colors border-b border-border/50 last:border-0"
+                            className="flex items-center gap-4 px-5 py-3 hover:bg-primary/5 cursor-pointer transition-colors border-b border-border/5 last:border-0 group"
                           >
-                            <Image
-                              src={result.icon}
-                              alt={result.name}
-                              width={20}
-                              height={20}
-                              className="object-contain"
-                              unoptimized
-                            />
-                            <span className="text-sm font-medium">
+                            <div className="p-2 bg-muted/50 rounded-lg group-hover:bg-primary/10 transition-colors">
+                              <Image
+                                src={result.icon}
+                                alt={result.name}
+                                width={24}
+                                height={24}
+                                className="object-contain"
+                                unoptimized
+                              />
+                            </div>
+                            <span className="text-sm font-bold tracking-tight">
                               {result.name}
                             </span>
                           </div>
@@ -929,21 +957,21 @@ export default function ProjectForm({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1">
                         {t("skillName")}
                       </label>
                       <input
                         value={newSkillName}
                         onChange={(e) => setNewSkillName(e.target.value)}
                         placeholder={t("skillNamePlaceholder")}
-                        className="w-full p-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
+                        className="w-full p-3.5 text-sm bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1">
                         {t("skillIcon")} (Emoji veya URL)
                       </label>
                       <div className="flex gap-2">
@@ -952,20 +980,20 @@ export default function ProjectForm({
                             value={newSkillIcon}
                             onChange={(e) => setNewSkillIcon(e.target.value)}
                             placeholder={t("emojiOrUrl")}
-                            className="w-full px-2.5 py-2.5 text-sm bg-muted/50 rounded-lg border border-border focus:border-primary outline-hidden transition-all pr-10"
+                            className="w-full pl-3.5 pr-12 py-3.5 text-sm bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
                           />
                           {newSkillIcon && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-background rounded border border-border">
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-muted/50 rounded-xl border border-border/50 overflow-hidden">
                               <Icon
                                 src={newSkillIcon}
                                 alt="Preview"
-                                size={16}
+                                size={18}
                               />
                             </div>
                           )}
                         </div>
-                        <label className="p-2.5 cursor-pointer bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center min-w-[44px]">
-                          <ImagePlus size={18} />
+                        <label className="p-3.5 cursor-pointer bg-primary text-primary-foreground rounded-2xl hover:scale-105 transition-all flex items-center justify-center min-w-[50px] shadow-lg shadow-primary/20 active:scale-95">
+                          <ImagePlus size={20} />
                           <input
                             type="file"
                             className="hidden"
@@ -987,12 +1015,12 @@ export default function ProjectForm({
                     type="button"
                     onClick={handleQuickAddSkill}
                     disabled={isAddingSkill || !newSkillName || !newSkillIcon}
-                    className="w-full py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+                    className="w-full py-4 bg-primary text-primary-foreground text-sm font-bold rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.01] transition-all shadow-xl shadow-primary/20 active:scale-[0.98]"
                   >
                     {isAddingSkill ? (
-                      <Loader2 className="animate-spin w-4 h-4" />
+                      <Loader2 className="animate-spin w-5 h-5" />
                     ) : (
-                      <Plus size={16} />
+                      <Plus size={18} />
                     )}
                     {t("quickAdd")}
                   </button>
@@ -1001,9 +1029,9 @@ export default function ProjectForm({
             )}
 
             {/* Skill List Search */}
-            <div className="relative mb-3">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                <Search size={14} />
+            <div className="relative mb-4">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <Search size={16} />
               </div>
               <input
                 type="text"
@@ -1012,20 +1040,20 @@ export default function ProjectForm({
                 placeholder={
                   t("skillSearchPlaceholder") || "Teknolojilerde ara..."
                 }
-                className="w-full py-2 pl-9 pr-4 text-xs bg-muted/30 rounded-lg border border-border focus:border-primary outline-hidden transition-all"
+                className="w-full py-3.5 pl-11 pr-10 text-sm bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
               />
               {skillListFilter && (
                 <button
                   type="button"
                   onClick={() => setSkillListFilter("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-full transition-colors"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto p-3 bg-muted/30 rounded-xl border border-border/50">
+            <div className="flex flex-wrap gap-2.5 max-h-72 overflow-y-auto p-4 bg-background/50 rounded-2xl border border-border/50 custom-scrollbar">
               {availableSkills
                 .filter((s) =>
                   s.name.toLowerCase().includes(skillListFilter.toLowerCase()),
@@ -1035,26 +1063,26 @@ export default function ProjectForm({
                     <button
                       type="button"
                       onClick={() => toggleSkill(skill.id)}
-                      className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2.5 border-2 pr-8 ${
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 border-2 pr-10 shadow-sm ${
                         selectedSkills.includes(skill.id)
-                          ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 -translate-y-0.5"
-                          : "bg-card border-border/50 text-muted-foreground hover:border-primary/50 hover:bg-muted/50"
+                          ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 -translate-y-0.5"
+                          : "bg-background border-border/50 text-muted-foreground hover:border-primary/50 hover:bg-muted/50"
                       }`}
                     >
                       <Icon
                         src={skill.icon || "/images/default-tech.png"}
                         alt={skill.name}
-                        size={16}
+                        size={18}
                       />
                       {skill.name}
                     </button>
                     <button
                       type="button"
                       onClick={(e) => handleDeleteSkill(e, skill.id)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-red-500 opacity-0 group-hover/skill:opacity-100 transition-opacity bg-background/50 rounded-full"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover/skill:opacity-100 transition-all bg-background/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm"
                       title={commonT("delete")}
                     >
-                      <X size={12} />
+                      <X size={14} />
                     </button>
                   </div>
                 ))}
@@ -1064,14 +1092,14 @@ export default function ProjectForm({
       </div>
 
       {/* Galeri Bölümü */}
-      <div className="p-6 bg-muted/20 border border-border rounded-xl space-y-4">
-        <div className="flex justify-between items-center">
+      <div className="p-4 sm:p-8 bg-muted/20 border border-border/50 rounded-3xl space-y-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1">
           <div>
-            <h3 className="text-lg font-bold">{t("gallery")}</h3>
-            <p className="text-xs text-muted-foreground">{t("galleryDesc")}</p>
+            <h3 className="text-xl font-bold tracking-tight">{t("gallery")}</h3>
+            <p className="text-sm text-muted-foreground">{t("galleryDesc")}</p>
           </div>
-          <label className="cursor-pointer px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm font-bold hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-2">
-            <Plus size={16} /> {t("gallery")}
+          <label className="cursor-pointer w-full sm:w-auto px-6 py-3 bg-primary text-primary-foreground rounded-2xl text-sm font-bold hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+            <Plus size={18} /> {t("gallery")}
             <input
               type="file"
               multiple
@@ -1082,39 +1110,50 @@ export default function ProjectForm({
           </label>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {galleryImages.map((img, index) => (
             <div
               key={index}
-              className="relative aspect-video bg-muted rounded-lg overflow-hidden group border border-border/50"
+              className="relative aspect-video sm:aspect-square bg-muted rounded-2xl overflow-hidden group border border-border/50 shadow-sm"
             >
               <Image
                 src={img.url}
                 alt={`Gallery ${index}`}
                 fill
-                className="object-cover transition-transform group-hover:scale-110"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
                 unoptimized
               />
 
               {/* Overlays & Controls */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => moveGalleryImage(index, "left")}
-                  disabled={index === 0}
-                  className="p-1.5 bg-white/20 hover:bg-white/40 text-white rounded-md disabled:opacity-20 transition-colors"
-                >
-                  <ChevronLeft size={16} />
-                </button>
+              <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => moveGalleryImage(index, "left")}
+                    disabled={index === 0}
+                    className="p-2 bg-background/80 hover:bg-background text-foreground rounded-xl disabled:opacity-20 transition-all active:scale-90"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => removeGalleryImage(index)}
-                  className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors shadow-lg"
-                  title={commonT("delete")}
-                >
-                  <Trash2 size={18} />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryImage(index)}
+                    className="p-2.5 bg-destructive text-white rounded-xl hover:bg-destructive/90 transition-all shadow-lg active:scale-90"
+                    title={commonT("delete")}
+                  >
+                    <Trash2 size={20} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => moveGalleryImage(index, "right")}
+                    disabled={index === galleryImages.length - 1}
+                    className="p-2 bg-background/80 hover:bg-background text-foreground rounded-xl disabled:opacity-20 transition-all active:scale-90"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
 
                 <button
                   type="button"
@@ -1122,38 +1161,34 @@ export default function ProjectForm({
                     setCoverImage(img);
                     setValue("coverImage", img.url);
                   }}
-                  className={`p-2 rounded-md transition-colors shadow-lg ${
+                  className={`w-[80%] py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${
                     coverImage?.url === img.url
-                      ? "bg-yellow-500 text-white cursor-default"
-                      : "bg-white/20 hover:bg-white/40 text-white"
+                      ? "bg-amber-500 text-white cursor-default"
+                      : "bg-background/80 hover:bg-background text-foreground active:scale-95"
                   }`}
-                  title={t("makeCover")}
                 >
                   <Star
-                    size={18}
+                    size={14}
                     fill={coverImage?.url === img.url ? "currentColor" : "none"}
                   />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => moveGalleryImage(index, "right")}
-                  disabled={index === galleryImages.length - 1}
-                  className="p-1.5 bg-white/20 hover:bg-white/40 text-white rounded-md disabled:opacity-20 transition-colors"
-                >
-                  <ChevronRight size={16} />
+                  {coverImage?.url === img.url
+                    ? t("isCover") || "Kapak"
+                    : t("makeCover")}
                 </button>
               </div>
 
               {/* Index Badge */}
-              <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-bold rounded shadow-sm">
+              <div className="absolute top-2 left-2 px-2.5 py-1 bg-background/80 backdrop-blur-sm text-foreground text-[10px] font-bold rounded-lg border border-border/50 shadow-sm">
                 #{index + 1}
               </div>
             </div>
           ))}
           {galleryImages.length === 0 && (
-            <div className="col-span-full py-10 text-center border-2 border-dashed border-border/50 rounded-lg text-muted-foreground italic text-sm">
-              {commonT("noResults")}
+            <div className="col-span-full py-16 text-center border-2 border-dashed border-border/50 rounded-3xl text-muted-foreground animate-pulse">
+              <div className="flex flex-col items-center gap-2">
+                <ImagePlus size={32} className="opacity-20" />
+                <p className="italic text-sm">{commonT("noResults")}</p>
+              </div>
             </div>
           )}
         </div>
@@ -1162,17 +1197,17 @@ export default function ProjectForm({
       <div className="h-px bg-border/50" />
 
       {/* Translation Controls */}
-      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-primary">
+      <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20 flex flex-col gap-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-primary whitespace-nowrap">
                 {t("sourceLanguage")}:
               </span>
               <select
                 value={sourceLang}
                 onChange={(e) => setSourceLang(e.target.value)}
-                className="px-3 py-1 text-xs font-bold rounded-md border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer"
+                className="px-4 py-2 text-xs font-bold rounded-xl border border-border/50 bg-background focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none cursor-pointer hover:bg-muted transition-all appearance-none min-w-[120px]"
               >
                 {Object.entries(languageNames).map(([code, name]) => (
                   <option key={code} value={code}>
@@ -1193,17 +1228,22 @@ export default function ProjectForm({
             type="button"
             onClick={handleAutoTranslate}
             disabled={isTranslating || targetLangs.length === 0}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50"
+            className="w-full md:w-auto px-6 py-3 bg-purple-600 text-white rounded-2xl text-sm font-bold hover:bg-purple-700 transition-all shadow-xl shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
           >
             {isTranslating ? (
-              <Loader2 className="animate-spin w-4 h-4" />
+              <Loader2 className="animate-spin w-5 h-5" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-5 h-5" />
             )}
             {t("translate")}
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">{t("autoTranslate")}</p>
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+          <p className="text-xs text-muted-foreground font-medium">
+            {t("autoTranslate")}
+          </p>
+        </div>
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
@@ -1252,27 +1292,28 @@ export default function ProjectForm({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
                 {t("title")}
               </label>
               <input
                 {...register(`translations.${lang}.title` as const)}
-                className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all"
+                className="w-full p-4 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-lg"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
                 {t("shortDescription")}
               </label>
               <textarea
                 {...register(`translations.${lang}.shortDescription` as const)}
-                className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all"
+                className="w-full p-4 bg-background rounded-2xl border border-border/50 h-32 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm leading-relaxed"
                 placeholder="..."
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-1">
-                <FileText size={12} /> {t("fullDescription")} (HTML)
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1 flex items-center gap-2">
+                <FileText size={14} className="text-primary" />{" "}
+                {t("fullDescription")} (HTML)
               </label>
               <TipTapEditor
                 content={
@@ -1299,16 +1340,16 @@ export default function ProjectForm({
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
                     {t("metaTitle")}
                   </label>
                   <input
                     {...register(`translations.${lang}.metaTitle` as const)}
-                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                    className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
                     {t("keywords")}
                   </label>
                   <input
@@ -1323,18 +1364,18 @@ export default function ProjectForm({
                     defaultValue={getValues(
                       `translations.${lang}.keywords` as const,
                     )?.join(", ")}
-                    className="w-full p-3 bg-background rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                    className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
                     placeholder="react, tailwind..."
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
                   {t("metaDescription")}
                 </label>
                 <textarea
                   {...register(`translations.${lang}.metaDescription` as const)}
-                  className="w-full p-3 bg-background rounded-lg border border-border h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
+                  className="w-full p-4 bg-background rounded-2xl border border-border/50 h-32 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm leading-relaxed"
                   placeholder="..."
                 />
               </div>
@@ -1343,21 +1384,28 @@ export default function ProjectForm({
         )}
       </LanguageTabs>
 
-      <div className="flex justify-end gap-4 border-t border-border pt-8">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="px-8 py-3 bg-muted rounded-lg font-bold hover:bg-muted/80 transition-colors"
-        >
-          {useTranslations("Admin.Common")("cancel")}
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-12 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
-        >
-          {loading && <Loader2 className="animate-spin w-4 h-4" />} {t("save")}
-        </button>
+      <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 z-40 px-4 sm:px-0 flex justify-center pointer-events-none">
+        <div className="max-w-5xl w-full flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-background/80 backdrop-blur-xl p-4 sm:p-6 rounded-3xl shadow-2xl border border-border/50 pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-8 py-3.5 bg-secondary/50 text-secondary-foreground rounded-2xl font-bold hover:bg-secondary transition-all active:scale-[0.98] text-sm"
+          >
+            {useTranslations("Admin.Common")("cancel")}
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-12 py-3.5 bg-primary text-primary-foreground rounded-2xl font-bold hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/20 active:scale-[0.98] text-sm"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin w-5 h-5" />
+            ) : (
+              <Sparkles className="w-5 h-5" />
+            )}
+            {t("save")}
+          </button>
+        </div>
       </div>
     </form>
   );

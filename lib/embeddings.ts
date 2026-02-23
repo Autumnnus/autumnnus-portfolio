@@ -47,10 +47,6 @@ export async function processAndEmbed(
   const fullText = `${header}\nDescription: ${description}\nContent: ${content}`;
   const chunks = chunkText(fullText);
 
-  console.log(
-    `Processing ${sourceType} ${sourceId} (${language}) - ${chunks.length} chunks`,
-  );
-
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     try {
@@ -76,8 +72,6 @@ export async function syncSingleContent(
   sourceType: "blog" | "project" | "profile" | "experience",
   sourceId: string,
 ) {
-  console.log(`Starting single content sync for ${sourceType} ${sourceId}...`);
-
   await deleteEmbeddingsBySource(sourceType, sourceId);
 
   if (sourceType === "blog") {
@@ -190,14 +184,9 @@ export async function syncSingleContent(
       }
     }
   }
-
-  console.log(`Finished single content sync for ${sourceType} ${sourceId}`);
 }
 
 export async function syncAllContent() {
-  console.log("Starting full content sync...");
-
-  // 1. Sync Blogs
   const blogs = await prisma.blogPost.findMany({
     include: { translations: true },
   });
@@ -222,7 +211,6 @@ export async function syncAllContent() {
     }
   }
 
-  // 2. Sync Projects
   const projects = await prisma.project.findMany({
     include: { translations: true, technologies: true },
   });
@@ -251,7 +239,6 @@ export async function syncAllContent() {
     }
   }
 
-  // 3. Sync Profile
   const profiles = await prisma.profile.findMany({
     include: { translations: true },
   });
@@ -277,7 +264,6 @@ export async function syncAllContent() {
     }
   }
 
-  // 4. Sync Work Experience
   const experiences = await prisma.workExperience.findMany({
     include: { translations: true },
   });
@@ -307,6 +293,4 @@ export async function syncAllContent() {
       }
     }
   }
-
-  console.log("Full content sync completed!");
 }

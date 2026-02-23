@@ -485,7 +485,7 @@ export default function VisitorBadgeClient({
 
   useEffect(() => {
     if (externalOpen) {
-      setIsOpen(true);
+      requestAnimationFrame(() => setIsOpen(true));
     }
   }, [externalOpen]);
 
@@ -582,7 +582,7 @@ export default function VisitorBadgeClient({
       />
 
       <motion.div
-        className="relative overflow-hidden rounded-2xl w-[550px]"
+        className="relative overflow-hidden rounded-2xl w-full max-w-[550px]"
         style={{
           background: tier.bgColor,
           border: `2px solid ${tier.borderColor}`,
@@ -604,9 +604,9 @@ export default function VisitorBadgeClient({
           }}
         />
 
-        <div className="relative flex items-center gap-3 px-4 py-2.5 w-full">
+        <div className="relative flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 w-full">
           <motion.div
-            className="relative flex items-center justify-center rounded-xl p-2"
+            className="relative flex items-center justify-center rounded-xl p-1.5 sm:p-2"
             style={{ backgroundColor: tier.iconBg }}
             animate={
               isHighTier
@@ -634,29 +634,29 @@ export default function VisitorBadgeClient({
               }}
             >
               <TierIcon
-                className="w-4 h-4"
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4"
                 style={{ color: tier.borderColor }}
                 suppressHydrationWarning
               />
             </motion.div>
           </motion.div>
 
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span
-                className="text-sm leading-none"
+                className="text-xs sm:text-sm leading-none font-bold"
                 style={{ color: tier.textColor }}
               >
                 {count.toLocaleString(locale)}
               </span>
               <Users
-                className="w-3 h-3 opacity-50"
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-50"
                 style={{ color: tier.textColor }}
                 suppressHydrationWarning
               />
             </div>
             <span
-              className="text-[9px] font-pixel uppercase tracking-widest opacity-80 leading-none"
+              className="text-[8px] sm:text-[9px] font-pixel uppercase tracking-widest opacity-80 leading-none truncate"
               style={{ color: tier.borderColor }}
             >
               {label}
@@ -664,7 +664,7 @@ export default function VisitorBadgeClient({
           </div>
 
           <motion.div
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full ml-auto whitespace-nowrap"
+            className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0"
             style={{
               background: `${tier.borderColor}22`,
               border: `1px solid ${tier.borderColor}44`,
@@ -683,7 +683,7 @@ export default function VisitorBadgeClient({
             transition={{ duration: 2, repeat: Infinity }}
           >
             <span
-              className="text-[8px] font-pixel font-bold uppercase tracking-wider"
+              className="text-[7px] sm:text-[8px] font-pixel font-bold uppercase tracking-wider"
               style={{ color: tier.borderColor }}
             >
               {tierNames[tier.name] || tier.name}
@@ -868,7 +868,7 @@ export default function VisitorBadgeClient({
           </div>
 
           {/* Footer gradient line */}
-          <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          <div className="h-1 w-full bg-linear-to-r from-transparent via-primary/50 to-transparent" />
         </motion.div>
       </PopoverContent>
     </Popover>

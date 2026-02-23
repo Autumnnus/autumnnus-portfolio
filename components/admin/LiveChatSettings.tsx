@@ -322,7 +322,7 @@ export default function LiveChatSettings() {
       {/* Global Settings */}
       <Card className="border-primary/20 bg-primary/5 shadow-none">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl flex items-center gap-2">
                 <Power
@@ -336,7 +336,7 @@ export default function LiveChatSettings() {
               variant={config.isEnabled ? "destructive" : "default"}
               onClick={handleToggleEnabled}
               disabled={isSaving}
-              className="px-8"
+              className="w-full sm:w-auto px-8"
             >
               {config.isEnabled ? commonT("close") : commonT("open")}
             </Button>
@@ -517,7 +517,7 @@ export default function LiveChatSettings() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {!config.greetings || config.greetings.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4 italic">
                   {t("noGreetings")}
@@ -526,35 +526,37 @@ export default function LiveChatSettings() {
                 config.greetings.map((g: LiveChatGreetingWithId) => (
                   <div
                     key={g.id}
-                    className="flex items-center justify-between p-3 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors group"
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-all gap-3 group"
                   >
-                    <div className="flex items-center gap-3">
-                      <code className="text-xs bg-muted px-2 py-1 rounded font-mono text-primary">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                      <code className="text-[10px] sm:text-xs bg-muted px-2 py-1 rounded font-mono text-primary border border-primary/10">
                         {g.pathname}
                       </code>
-                      <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                      <span className="text-xs text-muted-foreground truncate max-w-full sm:max-w-[150px] lg:max-w-[300px]">
                         {g.translations.find(
                           (trans: GreetingTranslationInput) =>
                             trans.language === "tr",
                         )?.text || "..."}
                       </span>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-2 w-full sm:w-auto justify-end opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 flex-1 sm:flex-none gap-2"
                         onClick={() => handleEditGreeting(g)}
                       >
                         <Globe className="w-3.5 h-3.5" />
+                        <span className="sm:hidden">{commonT("edit")}</span>
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 flex-1 sm:flex-none text-destructive hover:text-destructive gap-2"
                         onClick={() => handleDeleteGreeting(g.id)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
+                        <span className="sm:hidden">{commonT("delete")}</span>
                       </Button>
                     </div>
                   </div>
@@ -575,11 +577,11 @@ export default function LiveChatSettings() {
           <CardDescription>{t("soundSettingsDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Ping Sound */}
-            <div className="space-y-3 p-4 border border-border/50 rounded-xl bg-muted/10">
-              <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2">
+            <div className="space-y-4 p-4 border border-border/50 rounded-xl bg-muted/5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <Label className="flex items-center gap-2 font-bold">
                   <Volume2 className="w-4 h-4 text-primary" />
                   {t("pingSound")}
                 </Label>
@@ -587,7 +589,7 @@ export default function LiveChatSettings() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                    className="h-7 text-[10px] text-destructive hover:bg-destructive/10 px-2"
                     onClick={() => handleResetSound("ping")}
                     disabled={isUploadingSound === "ping"}
                   >
@@ -595,33 +597,32 @@ export default function LiveChatSettings() {
                   </Button>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="audio/mp3,audio/wav"
-                    onChange={(e) => handleUploadSound(e, "ping")}
-                    disabled={isUploadingSound === "ping"}
-                    className="cursor-pointer file:cursor-pointer"
-                  />
-                </div>
+              <div className="space-y-3">
+                <Input
+                  type="file"
+                  accept="audio/mp3,audio/wav"
+                  onChange={(e) => handleUploadSound(e, "ping")}
+                  disabled={isUploadingSound === "ping"}
+                  className="cursor-pointer file:cursor-pointer text-xs"
+                />
                 {config.pingSoundUrl && (
                   <audio
                     controls
                     src={config.pingSoundUrl}
-                    className="h-8 w-full mt-2"
+                    className="h-8 w-full"
                   />
                 )}
-                <p className="text-[10px] text-muted-foreground italic">
+                <p className="text-[10px] text-muted-foreground italic flex items-center gap-1">
+                  <span className="w-1 h-1 rounded-full bg-primary/40" />
                   {!config.pingSoundUrl ? t("defaultSound") : t("customSound")}
                 </p>
               </div>
             </div>
 
             {/* Notification Sound */}
-            <div className="space-y-3 p-4 border border-border/50 rounded-xl bg-muted/10">
-              <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2">
+            <div className="space-y-4 p-4 border border-border/50 rounded-xl bg-muted/5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <Label className="flex items-center gap-2 font-bold">
                   <Volume2 className="w-4 h-4 text-primary" />
                   {t("notificationSound")}
                 </Label>
@@ -629,7 +630,7 @@ export default function LiveChatSettings() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                    className="h-7 text-[10px] text-destructive hover:bg-destructive/10 px-2"
                     onClick={() => handleResetSound("notification")}
                     disabled={isUploadingSound === "notification"}
                   >
@@ -637,24 +638,23 @@ export default function LiveChatSettings() {
                   </Button>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="audio/mp3,audio/wav"
-                    onChange={(e) => handleUploadSound(e, "notification")}
-                    disabled={isUploadingSound === "notification"}
-                    className="cursor-pointer file:cursor-pointer"
-                  />
-                </div>
+              <div className="space-y-3">
+                <Input
+                  type="file"
+                  accept="audio/mp3,audio/wav"
+                  onChange={(e) => handleUploadSound(e, "notification")}
+                  disabled={isUploadingSound === "notification"}
+                  className="cursor-pointer file:cursor-pointer text-xs"
+                />
                 {config.notificationSoundUrl && (
                   <audio
                     controls
                     src={config.notificationSoundUrl}
-                    className="h-8 w-full mt-2"
+                    className="h-8 w-full"
                   />
                 )}
-                <p className="text-[10px] text-muted-foreground italic">
+                <p className="text-[10px] text-muted-foreground italic flex items-center gap-1">
+                  <span className="w-1 h-1 rounded-full bg-primary/40" />
                   {!config.notificationSoundUrl
                     ? t("defaultSound")
                     : t("customSound")}
@@ -667,21 +667,28 @@ export default function LiveChatSettings() {
 
       {/* Greeting Editor */}
       {isAddingGreeting && (
-        <Card className="border-primary/30 shadow-lg bg-background/50 backdrop-blur animate-in slide-in-from-bottom-4 duration-300">
-          <CardHeader className="border-b border-border/50 bg-muted/20">
-            <CardTitle className="text-lg">{t("editGreeting")}</CardTitle>
+        <Card className="border-primary/30 shadow-2xl bg-background/80 backdrop-blur-md animate-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-primary/5">
+            <CardTitle className="text-xl flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Globe className="w-5 h-5 text-primary" />
+              </div>
+              {t("editGreeting")}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 space-y-6">
-            <div className="space-y-4 max-w-md">
-              <div className="space-y-2">
-                <Label>{t("pathname")}</Label>
-                <div className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider font-bold">
-                  {t("autoPrefixNote")}
+          <CardContent className="pt-8 space-y-8">
+            <div className="space-y-6 max-w-2xl">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-bold">{t("pathname")}</Label>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+                    {t("autoPrefixNote")}
+                  </span>
                 </div>
                 <div className="relative group">
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 bg-muted rounded border border-border pointer-events-none group-focus-within:border-primary/50 transition-colors z-10">
-                    <Globe className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-[10px] font-mono text-muted-foreground">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 px-2.5 py-1.5 bg-muted rounded-md border border-border pointer-events-none group-focus-within:border-primary/50 group-focus-within:bg-primary/5 transition-all z-10">
+                    <Globe className="w-3.5 h-3.5 text-primary/60" />
+                    <span className="text-[11px] font-mono font-bold text-muted-foreground">
                       /[dil]
                     </span>
                   </div>
@@ -694,16 +701,19 @@ export default function LiveChatSettings() {
                         pathname: e.target.value,
                       })
                     }
-                    className="pl-28"
+                    className="pl-32 h-11 text-sm bg-muted/20 focus:bg-background transition-all"
                   />
                 </div>
                 {greetingForm.pathname && (
-                  <div className="text-[10px] text-muted-foreground bg-muted/30 p-2 rounded flex flex-wrap gap-2 items-center">
-                    <span className="font-semibold italic">
+                  <div className="text-[11px] text-muted-foreground bg-primary/5 p-3 rounded-lg flex flex-wrap gap-2 items-center border border-primary/10 animate-in fade-in duration-300">
+                    <span className="font-bold text-primary italic mr-2">
                       {t("allLanguagesNote")}
                     </span>
                     {["tr", "en"].map((lang) => (
-                      <code key={lang} className="bg-background px-1">
+                      <code
+                        key={lang}
+                        className="bg-background px-2 py-0.5 rounded border border-border/50 shadow-sm text-primary font-mono"
+                      >
                         /{lang}
                         {greetingForm.pathname === "/"
                           ? ""
