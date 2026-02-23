@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Skill {
+  id       String    @id @default(uuid())
+  key      String    @unique
+  name     String
+  icon     String
+  projects Project[] @relation("ProjectToSkill")
+}
+
+model Project {
+  id           String               @id @default(uuid())
+  slug         String               @unique
+  status       String
+  category     String
+  github       String?
+  liveDemo     String?
+  featured     Boolean              @default(false)
+  coverImage   String?
+  images       String[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  imageAlt     String?
+  comments     Comment[]
+  likes        Like[]
+  translations ProjectTranslation[]
+  views        View[]
+  technologies Skill[]              @relation("ProjectToSkill")
+}
+
+model ProjectTranslation {
+  id               String   @id @default(uuid())
+  language         Language
+  title            String
+  shortDescription String
+  fullDescription  String
+  projectId        String
+  keywords         String[] @default([])
+  metaDescription  String?
+  metaTitle        String?
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, language])
+}
+
+model BlogPost {
+  id              String                @id @default(uuid())
+  slug            String                @unique
+  coverImage      String?
+  featured        Boolean               @default(false)
+  tags            String[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  category        String?
+  commentsEnabled Boolean               @default(true)
+  imageAlt        String?
+  publishedAt     DateTime?
+  status          String                @default("draft")
+  translations    BlogPostTranslation[]
+  comments        Comment[]
+  likes           Like[]
+  views           View[]
+}
+
+model BlogPostTranslation {
+  id              String   @id @default(uuid())
+  language        Language
+  title           String
+  description     String
+  content         String
+  readTime        String
+  date            String
+  blogPostId      String
+  excerpt         String?
+  keywords        String[] @default([])
+  metaDescription String?
+  metaTitle       String?
+  blogPost        BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, language])
+}
+
+model Comment {
+  id          String    @id @default(uuid())
+  content     String
+  authorName  String
+  authorEmail String
+  approved    Boolean   @default(true)
+  blogPostId  String?
+  createdAt   DateTime  @default(now())
+  ipAddress   String    @default("0.0.0.0")
+  projectId   String?
+  isAdmin     Boolean   @default(false)
+  parentId    String?
+  blogPost    BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id         String    @id @default(uuid())
+  ipAddress  String
+  createdAt  DateTime  @default(now())
+  blogPostId String?
+  projectId  String?
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([ipAddress, blogPostId])
+  @@unique([ipAddress, projectId])
+}
+
+model View {
+  id         String    @id @default(uuid())
+  ipAddress  String
+  createdAt  DateTime  @default(now())
+  blogPostId String?
+  projectId  String?
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model WorkExperience {
+  id           String                      @id @default(uuid())
+  company      String
+  logo         String
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
+  startDate    DateTime?
+  endDate      DateTime?
+  translations WorkExperienceTranslation[]
+}
+
+model WorkExperienceTranslation {
+  id               String         @id @default(uuid())
+  language         Language
+  role             String
+  description      String
+  locationType     String
+  workExperienceId String
+  workExperience   WorkExperience @relation(fields: [workExperienceId], references: [id], onDelete: Cascade)
+
+  @@unique([workExperienceId, language])
+}
+
+model SocialLink {
+  id   String @id @default(uuid())
+  key  String @unique
+  name String
+  href String
+  icon String
+}
+
+model Profile {
+  id           String               @id @default(uuid())
+  avatar       String
+  email        String
+  github       String
+  linkedin     String
+  updatedAt    DateTime             @updatedAt
+  translations ProfileTranslation[]
+  quests       Quest[]
+}
+
+model Quest {
+  id           String             @id @default(uuid())
+  completed    Boolean            @default(false)
+  order        Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  profileId    String?
+  profile      Profile?           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  translations QuestTranslation[]
+}
+
+model QuestTranslation {
+  id       String   @id @default(uuid())
+  language Language
+  title    String
+  questId  String
+  quest    Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@unique([questId, language])
+}
+
+model ProfileTranslation {
+  id               String   @id @default(uuid())
+  language         Language
+  name             String
+  title            String
+  greetingText     String
+  description      String
+  aboutTitle       String
+  aboutDescription String
+  profileId        String
+  profile          Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, language])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+}
+
+model UniqueVisitor {
+  id        String   @id @default(uuid())
+  ipAddress String   @unique
+  createdAt DateTime @default(now())
+}
+
+model VisitorMilestone {
+  id        String   @id @default(uuid())
+  count     Int      @unique
+  reachedAt DateTime @default(now())
+}
+
+enum Language {
+  tr
+  en
+  de
+  fr
+  es
+  it
+  pt
+  ru
+  ja
+  ko
+  ar
+  zh
+}
+
+model Embedding {
+  id         String   @id @default(uuid())
+  sourceType String   
+  sourceId   String
+  language   String   
+  chunkText  String
+  chunkIndex Int
+  embedding  Unsupported("vector(3072)")?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([sourceType, sourceId, language, chunkIndex])
+}
+
+model ChatRateLimit {
+  id           String   @id @default(uuid())
+  ipAddress    String
+  date         DateTime 
+  requestCount Int      @default(0)
+
+  @@unique([ipAddress, date])
+}
+
+model LiveChatConfig {
+  id                   String             @id @default(uuid())
+  isEnabled            Boolean            @default(true)
+  allowedPaths         String[]           @default([]) 
+  excludedPaths        String[]           @default([]) 
+  pingSoundUrl        String?            
+  notificationSoundUrl String?            
+  greetings            LiveChatGreeting[]
+  updatedAt            DateTime           @updatedAt
+}
+
+model LiveChatGreeting {
+  id           String                        @id @default(uuid())
+  pathname     String                        @unique 
+  configId     String
+  config       LiveChatConfig                @relation(fields: [configId], references: [id], onDelete: Cascade)
+  translations LiveChatGreetingTranslation[]
+}
+
+model LiveChatGreetingTranslation {
+  id           String           @id @default(uuid())
+  language     Language
+  text         String
+  quickAnswers String[]         @default([])
+  greetingId   String
+  greeting     LiveChatGreeting @relation(fields: [greetingId], references: [id], onDelete: Cascade)
+
+  @@unique([greetingId, language])
+}
+
+model AiChatSession {
+  id        String          @id @default(uuid())
+  ipAddress String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  messages  AiChatMessage[]
+
+  @@index([ipAddress])
+}
+
+model AiChatMessage {
+  id        String        @id @default(uuid())
+  sessionId String
+  role      String        
+  content   String
+  metadata  Json?         
+  createdAt DateTime      @default(now())
+  session   AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}

@@ -4,9 +4,11 @@ import Icon from "@/components/common/Icon";
 import { Project } from "@/types/contents";
 import { motion } from "framer-motion";
 import { ExternalLink, Github } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface ProjectCardProps {
   project: Project;
@@ -14,6 +16,8 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
+  const t = useTranslations("Common");
+  const tProjects = useTranslations("Projects");
   const getStatusColor = (status: Project["status"]) => {
     switch (status) {
       case "Completed":
@@ -30,11 +34,18 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   const visibleTechs = project.technologies.slice(0, 7);
   const remainingCount = project.technologies.length - 7;
   const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isWinter = resolvedTheme === "dark";
   const seasonalGradient = isWinter
     ? "bg-linear-to-br from-slate-900 via-blue-950 to-slate-900"
     : "bg-linear-to-br from-orange-50 via-amber-100 to-orange-50";
+
+  if (!mounted) return null;
 
   return (
     <motion.div
@@ -53,6 +64,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
               src={project.coverImage}
               alt={project.title}
               fill
+              unoptimized
               className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute inset-0 bg-linear-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -70,7 +82,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
                 {project.technologies[0]?.icon ? (
                   <Icon
                     src={project.technologies[0].icon}
-                    alt="Main Tech"
+                    alt={tProjects("mainTechAlt")}
                     size={32}
                     className="opacity-80 group-hover:opacity-100 transition-opacity"
                   />
@@ -127,7 +139,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
         {/* Technologies */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Technologies
+            {t("technologies")}
           </p>
           <div className="flex flex-wrap gap-2">
             {visibleTechs.map((tech) => (
@@ -159,7 +171,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
               {project.status === "Working"
-                ? "All Systems Operational"
+                ? t("allSystemsOperational")
                 : project.status}
             </span>
           </div>
@@ -168,7 +180,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
             href={`/projects/${project.slug}`}
             className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
           >
-            Details
+            {t("details")}
             <span>→</span>
           </Link>
         </div>

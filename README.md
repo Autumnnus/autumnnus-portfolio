@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Autumnnus Portfolio
 
-## Getting Started
+Autumnnus Portfolio is a modern, full-featured, multi-lingual (i18n), and AI-powered personal portfolio and blog application. It includes dynamic modules for showcasing your projects and publishing blog posts.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Modular Modern Interface:** Fully responsive UI designed with Next.js (App Router), Tailwind CSS, and Framer Motion. Uses Radix UI Primitives for enhanced accessibility.
+- **Multi-language (i18n) Support:** Localization with `next-intl` (English, Turkish, etc.).
+- **Database & ORM:** Type-safe database interactions with PostgreSQL and Prisma ORM.
+- **Role-based Authentication:** Different roles like Admin and Visitor (e.g., GitHub Auth) using Auth.js.
+- **Object Storage (S3 Compatible):** Storing images, media, and other files locally or on your own server with MinIO.
+- **Artificial Intelligence (AI) Integration:** Smart operations (AI Actions) powered by Google Gemini API.
+- **Rich Text Editor & Comments:** Interactive commenting, liking, and Tiptap rich text editor for blog and project detail pages.
+- **Telegram Notifications & Visitor Tier System:** A dynamic notification system that interacts with a Telegram bot to inform the admin about visitor milestones and overall visitor count.
+- **Security & Bot Protection:** Cloudflare Turnstile integration to prevent spam comments and form submissions.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Installation & Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To install the project on your local machine, configure environment variables in detail, and spin up PostgreSQL and MinIO Docker containers, please check out our comprehensive **Installation Guide**. You will find a step-by-step tutorial suited for setting up the application for the first time.
 
-## Learn More
+👉 [**Click Here for the Installation Guide (INSTALLATION.md)**](./INSTALLATION.md)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework:** Next.js (App Router), React 19
+- **Styling & Animation:** Tailwind CSS v4, Framer Motion, Radix UI Primitives, Lucide Icons
+- **Backend & Database:** Node.js, PostgreSQL, Prisma, MinIO
+- **Security & Auth:** Auth.js (NextAuth), Cloudflare Turnstile
+- **Language & Forms:** `next-intl`, React Hook Form, Zod
+- **AI Integration:** `@google/generative-ai`
 
-## Deploy on Vercel
+## 📄 License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License. You can freely fork and adapt it for your own use, giving appropriate credit.

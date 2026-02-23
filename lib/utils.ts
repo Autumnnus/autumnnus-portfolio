@@ -1,16 +1,33 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(dateString: string): string {
+export function formatDate(
+  dateString: string,
+  locale: string = "en-US",
+): string {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "long",
     day: "numeric",
     year: "numeric",
+  }).format(date);
+}
+
+export function formatDateTime(
+  dateString: string,
+  locale: string = "en-US",
+): string {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 }
 
@@ -38,4 +55,13 @@ export function getRelativeTime(dateString: string): string {
   }
   const years = Math.floor(diffInSeconds / 31536000);
   return `about ${years} year${years > 1 ? "s" : ""} ago`;
+}
+
+export function shouldNotify(n: number): boolean {
+  if (n <= 0) return false;
+  if (n === 1) return true;
+  const log = Math.floor(Math.log10(n));
+  const base = 10 ** log;
+  const normalized = n / base;
+  return normalized === 1 || normalized === 2.5 || normalized === 5;
 }

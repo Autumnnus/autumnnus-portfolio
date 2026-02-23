@@ -1,11 +1,13 @@
 "use client";
 
+import Badge from "@/components/ui/badge";
 import { BlogPost } from "@/types/contents";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, FileText } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "../ui/Badge";
+import { useEffect, useState } from "react";
 
 interface BlogCardProps {
   post: BlogPost;
@@ -13,9 +15,18 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post, index = 0 }: BlogCardProps) {
+  const t = useTranslations("Common");
+  const bT = useTranslations("Blog");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <motion.div
-      // initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
@@ -31,11 +42,12 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
               src={post.coverImage}
               alt={post.title}
               fill
+              unoptimized
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-6xl opacity-30">
-              <FileText className="w-16 h-16" />
+              <FileText className="w-16 h-16" suppressHydrationWarning />
             </div>
           )}
         </div>
@@ -43,8 +55,13 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
         {/* Content */}
         <div className="p-5 sm:p-6 space-y-3">
           {/* Title */}
-          <h3 className="text-xl sm:text-2xl font-bold leading-tight group-hover:text-primary transition-colors">
+          <h3 className="text-xl sm:text-2xl font-bold leading-tight group-hover:text-primary transition-colors flex items-center gap-2">
             {post.title}
+            {post.status === "draft" && (
+              <span className="bg-amber-500/10 text-amber-500 text-[10px] py-0.5 px-2 rounded-full uppercase font-bold tracking-tighter border border-amber-500/20">
+                {bT("draft")}
+              </span>
+            )}
           </h3>
 
           {/* Description */}
@@ -64,13 +81,13 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 border-t border-border/50">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4" suppressHydrationWarning />
               <time>{post.date}</time>
             </div>
 
             <div className="flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
-              Read More
-              <ArrowRight className="w-4 h-4" />
+              {t("readMore")}
+              <ArrowRight className="w-4 h-4" suppressHydrationWarning />
             </div>
           </div>
         </div>

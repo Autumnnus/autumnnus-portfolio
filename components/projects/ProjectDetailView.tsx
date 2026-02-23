@@ -5,54 +5,41 @@ import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
 import Icon from "@/components/common/Icon";
 import RelatedProjectCard from "@/components/projects/RelatedProjectCard";
-import { useLanguage } from "@/components/providers/LanguageContext";
-import { Badge } from "@/components/ui/Badge";
 import { GithubRepoStats, Project } from "@/types/contents";
 import { ArrowLeft, ArrowRight, ExternalLink, Github } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
 
+import CommentSection from "@/components/interactive/CommentSection";
+import LikeButton from "@/components/interactive/LikeButton";
+import ViewCounter from "@/components/interactive/ViewCounter";
 import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
+import JsonLd from "@/components/seo/JsonLd";
+import Badge from "@/components/ui/badge";
 
 export default function ProjectDetailView({
-  slug,
+  project,
   githubStats,
+  relatedProjects = [],
 }: {
-  slug: string;
+  project: Project;
   githubStats?: GithubRepoStats | null;
+  relatedProjects?: Project[];
 }) {
-  const { content } = useLanguage();
+  const t = useTranslations("Projects");
+  const tCommon = useTranslations("Common");
   const { resolvedTheme } = useTheme();
-  const projects = useMemo(() => content.projects.items || [], [content]);
 
   const isWinter = resolvedTheme === "dark";
   const seasonalGradient = isWinter
     ? "bg-linear-to-br from-slate-900 via-blue-950 to-slate-900"
     : "bg-linear-to-br from-orange-50 via-amber-100 to-orange-50";
 
-  const project = projects.find((p) => p.slug === slug);
-
-  const { nextProject, relatedProjects } = useMemo(() => {
-    if (!project) return { nextProject: null, relatedProjects: [] };
-
-    const currentIndex = projects.findIndex((p) => p.slug === slug);
-    const next =
-      currentIndex < projects.length - 1 ? projects[currentIndex + 1] : null;
-
-    const related = projects
-      .filter(
-        (p) =>
-          p.slug !== slug &&
-          p.technologies.some((t) =>
-            project.technologies.some((ft) => ft.name === t.name),
-          ),
-      )
-      .slice(0, 2);
-
-    return { nextProject: next, relatedProjects: related };
-  }, [slug, projects, project]);
+  // Note: For now, nextProject and relatedProjects will be empty or handled via simplified logic
+  // since we shifted to backend-only fetching for the main project.
+  const nextProject = null as Project | null;
 
   if (!project) {
     return null;
@@ -85,7 +72,7 @@ export default function ProjectDetailView({
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          {content.projects.backToProjectsText}
+          {t("back")}
         </Link>
       </FadeIn>
 
@@ -103,6 +90,7 @@ export default function ProjectDetailView({
                 src={project.coverImage}
                 alt={project.title}
                 fill
+                unoptimized
                 className="object-cover"
                 priority
               />
@@ -134,7 +122,7 @@ export default function ProjectDetailView({
                       {project.technologies[0]?.icon ? (
                         <Icon
                           src={project.technologies[0].icon}
-                          alt="Project Tech"
+                          alt={t("techAlt")}
                           size={64}
                           className="drop-shadow-2xl"
                         />
@@ -174,8 +162,13 @@ export default function ProjectDetailView({
             </Badge>
           ))}
           {remainingCount > 0 && (
-            <Badge variant="outline">+{remainingCount} more</Badge>
+            <Badge variant="outline">
+              +{tCommon("more", { count: remainingCount })}
+            </Badge>
           )}
+          <div className="ml-auto">
+            <ViewCounter itemId={project.id} itemType="project" />
+          </div>
         </div>
       </FadeIn>
       {/* Title and Short Description */}
@@ -194,14 +187,14 @@ export default function ProjectDetailView({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <div className="p-4 bg-muted/30 rounded-lg">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {content.projects.categoryLabel}
+              {t("category")}
             </p>
             <p className="text-base font-medium">{project.category}</p>
           </div>
 
           <div className="p-4 bg-muted/30 rounded-lg">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {content.projects.statusLabel}
+              {t("status")}
             </p>
             <p className="text-base font-medium">
               <span
@@ -218,23 +211,28 @@ export default function ProjectDetailView({
             <>
               <div className="p-4 bg-muted/30 rounded-lg">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                  GitHub Stats
+                  {tCommon("githubStats")}
                 </p>
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="flex items-center gap-1" title="Stars">
+                  <span
+                    className="flex items-center gap-1"
+                    title={tCommon("stars")}
+                  >
                     <span className="text-yellow-500">★</span>
                     {githubStats.stars}
                   </span>
-                  <span className="flex items-center gap-1" title="Forks">
+                  <span
+                    className="flex items-center gap-1"
+                    title={tCommon("forks")}
+                  >
                     <span className="text-blue-500">⑂</span>
                     {githubStats.forks}
                   </span>
                 </div>
               </div>
-
               <div className="p-4 bg-muted/30 rounded-lg">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                  Created
+                  {tCommon("created")}
                 </p>
                 <p className="text-sm font-medium">
                   {new Date(githubStats.createdAt).toLocaleDateString()}
@@ -243,7 +241,7 @@ export default function ProjectDetailView({
 
               <div className="p-4 bg-muted/30 rounded-lg col-span-2 sm:col-span-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                  Last Updated
+                  {tCommon("lastUpdated")}
                 </p>
                 <p className="text-sm font-medium">
                   {new Date(githubStats.pushedAt).toLocaleDateString()}
@@ -264,7 +262,7 @@ export default function ProjectDetailView({
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background rounded-md font-medium hover:opacity-90 transition-opacity"
             >
               <ExternalLink className="w-4 h-4" />
-              {content.projects.liveDemoText}
+              {t("liveDemo")}
             </a>
           )}
           {project.github && (
@@ -275,9 +273,10 @@ export default function ProjectDetailView({
               className="inline-flex items-center gap-2 px-5 py-2.5 border border-border rounded-md font-medium hover:bg-accent transition-colors"
             >
               <Github className="w-4 h-4" />
-              {content.projects.sourceCodeText}
+              {t("sourceCode")}
             </a>
           )}
+          <LikeButton itemId={project.id} itemType="project" />
         </div>
       </FadeIn>
       {/* Full Description */}
@@ -296,7 +295,7 @@ export default function ProjectDetailView({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">
-                  {content.projects.nextProjectText}
+                  {t("next")}
                 </p>
                 <p className="text-lg font-bold group-hover:text-primary transition-colors">
                   {nextProject.title}
@@ -314,7 +313,7 @@ export default function ProjectDetailView({
         <FadeIn delay={0.9}>
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-8">
-              {content.projects.relatedProjectsText}
+              {t("related")}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {relatedProjects.map((relatedProject, index) => (
@@ -328,14 +327,37 @@ export default function ProjectDetailView({
           </div>
         </FadeIn>
       )}
-      {/* View All Projects Button */}
+      {/* Comments Section */}
       <FadeIn delay={1.0}>
+        <CommentSection itemId={project.id} itemType="project" />
+      </FadeIn>
+
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: project.title,
+          description: project.shortDescription,
+          applicationCategory: project.category,
+          operatingSystem: "Web",
+          author: {
+            "@type": "Person",
+            name: "Autumnnus",
+            url: "https://autumnnus.com",
+          },
+          ...(project.coverImage ? { image: [project.coverImage] } : {}),
+          ...(project.liveDemo ? { url: project.liveDemo } : {}),
+        }}
+      />
+
+      {/* View All Projects Button */}
+      <FadeIn delay={1.1}>
         <div className="text-center pt-8">
           <Link
             href="/projects"
             className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background rounded-md font-medium hover:opacity-90 transition-opacity"
           >
-            {content.projects.viewAllText}
+            {t("viewAll")}
           </Link>
         </div>
       </FadeIn>

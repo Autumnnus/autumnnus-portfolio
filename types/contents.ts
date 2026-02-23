@@ -1,6 +1,18 @@
 import { StaticImageData } from "next/image";
 
-export type Language = "tr" | "en";
+export type Language =
+  | "tr"
+  | "en"
+  | "de"
+  | "fr"
+  | "es"
+  | "it"
+  | "pt"
+  | "ru"
+  | "ja"
+  | "ko"
+  | "ar"
+  | "zh";
 
 export interface GithubRepoStats {
   stars: number;
@@ -55,36 +67,40 @@ export interface AboutSection {
 export type ProjectStatus = "Working" | "Building" | "Completed" | "Archived";
 
 export interface Project {
+  id: string;
   slug: string;
   title: string;
   shortDescription: string;
   fullDescription: string;
-  coverImage: string | StaticImageData;
+  coverImage?: string | StaticImageData | null;
   images: (string | StaticImageData)[];
   technologies: Technology[];
   status: ProjectStatus;
   category: string;
-  github?: string;
-  liveDemo?: string;
+  github?: string | null;
+  liveDemo?: string | null;
   featured?: boolean;
 }
 
 export interface BlogPost {
+  id: string;
   slug: string;
   title: string;
   description: string;
   date: string;
   readTime: string;
-  coverImage: string | StaticImageData;
+  coverImage?: string | StaticImageData | null;
   tags: string[];
   featured?: boolean;
   content: string;
+  status?: string;
 }
 
 export interface WorkExperience {
   company: string;
   role: string;
-  period: string;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   locationType: string;
   description: string;
   logo: string | StaticImageData;
@@ -148,10 +164,7 @@ export interface ContentConfig {
   };
 }
 
-export interface PortfolioConfig {
-  tr: ContentConfig;
-  en: ContentConfig;
-}
+export type PortfolioConfig = Record<Language, ContentConfig>;
 
 export interface DataWithTranslations<TCommon, TLocalized> {
   common: TCommon;

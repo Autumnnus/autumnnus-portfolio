@@ -1,0 +1,907 @@
+"use server";
+
+import { auth } from "@/auth";
+import { deleteFolder, uploadFile } from "@/lib/minio";
+import { prisma } from "@/lib/prisma";
+import { Language } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+
+export interface ProjectTranslationInput {
+  language: Language;
+  title: string;
+  shortDescription: string;
+  fullDescription: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+}
+
+export interface ProjectData {
+  slug: string;
+  status: string;
+  category: string;
+  github?: string | null;
+  liveDemo?: string | null;
+  featured: boolean;
+  coverImage?: string | null;
+  imageAlt?: string | null;
+  images: string[];
+  translations: ProjectTranslationInput[];
+  technologies: string[];
+}
+
+export interface BlogTranslationInput {
+  language: Language;
+  title: string;
+  description: string;
+  content: string;
+  readTime: string;
+  date: string;
+  excerpt?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+}
+
+export interface BlogData {
+  slug: string;
+  coverImage?: string | null;
+  imageAlt?: string | null;
+  featured: boolean;
+  tags: string[];
+  category?: string;
+  status: string;
+  commentsEnabled: boolean;
+  translations: BlogTranslationInput[];
+}
+
+export interface ProfileTranslationInput {
+  language: Language;
+  name: string;
+  title: string;
+  greetingText: string;
+  description: string;
+  aboutTitle: string;
+  aboutDescription: string;
+}
+
+export interface ProfileData {
+  avatar: string;
+  email: string;
+  github: string;
+  linkedin: string;
+  translations: ProfileTranslationInput[];
+  quests: QuestData[];
+}
+
+export interface ExperienceTranslationInput {
+  language: Language;
+  role: string;
+  description: string;
+  locationType: string;
+}
+
+export interface ExperienceData {
+  company: string;
+  logo: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  translations: ExperienceTranslationInput[];
+}
+
+export interface QuestTranslationInput {
+  language: Language;
+  title: string;
+}
+
+export interface QuestData {
+  completed: boolean;
+  order: number;
+  translations: QuestTranslationInput[];
+}
+
+export async function uploadImageAction(formData: FormData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const file = formData.get("file") as File;
+  const customPath = formData.get("path") as string;
+
+  if (!file) throw new Error("No file provided");
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const cleanFileName = file.name.replace(/\s+/g, "-");
+  const filename = customPath
+    ? `${customPath}/${Date.now()}-${cleanFileName}`
+    : `${Date.now()}-${cleanFileName}`;
+
+  const url = await uploadFile(filename, buffer, file.type);
+  return { url };
+}
+
+export async function createProjectAction(data: ProjectData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, technologies, images, ...projectData } = data;
+
+  const existingProject = await prisma.project.findUnique({
+    where: { slug: projectData.slug },
+  });
+
+  if (existingProject) {
+    throw new Error(
+      "Bu slug (URL) zaten başka bir proje tarafından kullanılıyor.",
+    );
+  }
+
+  return await prisma.project.create({
+    data: {
+      ...projectData,
+      images,
+      translations: {
+        create: translations,
+      },
+      technologies: {
+        connect: technologies.map((id: string) => ({ id })),
+      },
+    },
+  });
+}
+
+export async function updateProjectAction(id: string, data: ProjectData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, technologies, images, ...projectData } = data;
+
+  const existingProject = await prisma.project.findFirst({
+    where: {
+      slug: projectData.slug,
+      NOT: { id },
+    },
+  });
+
+  if (existingProject) {
+    throw new Error(
+      "Bu slug (URL) zaten başka bir proje tarafından kullanılıyor.",
+    );
+  }
+
+  await prisma.projectTranslation.deleteMany({ where: { projectId: id } });
+
+  return await prisma.project.update({
+    where: { id },
+    data: {
+      ...projectData,
+      images,
+      translations: {
+        create: translations,
+      },
+      technologies: {
+        set: technologies.map((id: string) => ({ id })),
+      },
+    },
+  });
+}
+
+export async function deleteProjectAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id },
+    select: { slug: true },
+  });
+
+  if (project?.slug) {
+    await deleteFolder(`projects/${project.slug}`);
+  }
+
+  return await prisma.project.delete({
+    where: { id },
+  });
+}
+
+export async function createBlogAction(data: BlogData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, ...blogData } = data;
+
+  const existingBlog = await prisma.blogPost.findUnique({
+    where: { slug: blogData.slug },
+  });
+
+  if (existingBlog) {
+    throw new Error(
+      "Bu slug (URL) zaten başka bir blog yazısı tarafından kullanılıyor.",
+    );
+  }
+
+  return await prisma.blogPost.create({
+    data: {
+      ...blogData,
+      translations: {
+        create: translations,
+      },
+    },
+  });
+}
+
+export async function updateBlogAction(id: string, data: BlogData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, ...blogData } = data;
+
+  const existingBlog = await prisma.blogPost.findFirst({
+    where: {
+      slug: blogData.slug,
+      NOT: { id },
+    },
+  });
+
+  if (existingBlog) {
+    throw new Error(
+      "Bu slug (URL) zaten başka bir blog yazısı tarafından kullanılıyor.",
+    );
+  }
+
+  await prisma.blogPostTranslation.deleteMany({ where: { blogPostId: id } });
+
+  return await prisma.blogPost.update({
+    where: { id },
+    data: {
+      ...blogData,
+      translations: {
+        create: translations,
+      },
+    },
+  });
+}
+
+export async function deleteBlogAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const blog = await prisma.blogPost.findUnique({
+    where: { id },
+    select: { slug: true },
+  });
+
+  if (blog?.slug) {
+    await deleteFolder(`blog/${blog.slug}`);
+  }
+
+  return await prisma.blogPost.delete({
+    where: { id },
+  });
+}
+
+export async function createSkillAction(data: { name: string; icon: string }) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const key = data.name.toUpperCase().replace(/\s+/g, "_");
+
+  return await prisma.skill.create({
+    data: {
+      name: data.name,
+      icon: data.icon,
+      key,
+    },
+  });
+}
+export async function updateProfileAction(data: ProfileData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, quests, ...profileData } = data;
+
+  const profile = await prisma.profile.findFirst();
+
+  if (profile) {
+    await prisma.$transaction([
+      prisma.profileTranslation.deleteMany({
+        where: { profileId: profile.id },
+      }),
+      prisma.questTranslation.deleteMany({
+        where: { quest: { profileId: profile.id } },
+      }),
+      prisma.quest.deleteMany({
+        where: { profileId: profile.id },
+      }),
+      prisma.profile.update({
+        where: { id: profile.id },
+        data: {
+          ...profileData,
+          translations: {
+            create: translations,
+          },
+          quests: {
+            create: quests.map((q) => ({
+              completed: q.completed,
+              order: q.order,
+              translations: {
+                create: q.translations.map((t) => ({
+                  language: t.language,
+                  title: t.title,
+                })),
+              },
+            })),
+          },
+        },
+      }),
+    ]);
+    revalidatePath("/[locale]", "layout");
+    return { success: true };
+  } else {
+    const newProfile = await prisma.profile.create({
+      data: {
+        ...profileData,
+        translations: {
+          create: translations,
+        },
+        quests: {
+          create: quests.map((q) => ({
+            completed: q.completed,
+            order: q.order,
+            translations: {
+              create: q.translations.map((t) => ({
+                language: t.language,
+                title: t.title,
+              })),
+            },
+          })),
+        },
+      },
+    });
+    revalidatePath("/[locale]", "layout");
+    return newProfile;
+  }
+}
+
+export async function createExperienceAction(data: ExperienceData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, ...experienceData } = data;
+
+  return await prisma.workExperience.create({
+    data: {
+      ...experienceData,
+      translations: {
+        create: translations,
+      },
+    },
+  });
+}
+
+export async function updateExperienceAction(id: string, data: ExperienceData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, ...experienceData } = data;
+
+  await prisma.workExperienceTranslation.deleteMany({
+    where: { workExperienceId: id },
+  });
+
+  return await prisma.workExperience.update({
+    where: { id },
+    data: {
+      ...experienceData,
+      translations: {
+        create: translations,
+      },
+    },
+  });
+}
+
+export async function deleteExperienceAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  return await prisma.workExperience.delete({
+    where: { id },
+  });
+}
+
+export async function createQuestAction(data: QuestData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const profile = await prisma.profile.findFirst();
+  if (!profile)
+    throw new Error("Profil bulunamadı. Lütfen önce profil oluşturun.");
+
+  const { translations, ...questData } = data;
+
+  const quest = await prisma.quest.create({
+    data: {
+      ...questData,
+      profileId: profile.id,
+      translations: {
+        create: translations.map((t) => ({
+          language: t.language,
+          title: t.title,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
+export async function updateQuestAction(id: string, data: QuestData) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { translations, ...questData } = data;
+
+  await prisma.questTranslation.deleteMany({ where: { questId: id } });
+
+  const quest = await prisma.quest.update({
+    where: { id },
+    data: {
+      ...questData,
+      translations: {
+        create: translations.map((t) => ({
+          language: t.language,
+          title: t.title,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
+export async function deleteQuestAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const quest = await prisma.quest.delete({
+    where: { id },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
+export async function toggleQuestStatusAction(id: string, completed: boolean) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const quest = await prisma.quest.update({
+    where: { id },
+    data: { completed },
+  });
+
+  revalidatePath("/[locale]", "layout");
+  return quest;
+}
+
+export async function exportDatabaseAction() {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const [projects, blogs, profile, experiences, socialLinks, skills, quests] =
+    await Promise.all([
+      prisma.project.findMany({
+        include: { translations: true, technologies: true },
+      }),
+      prisma.blogPost.findMany({
+        include: { translations: true },
+      }),
+      prisma.profile.findFirst({
+        include: { translations: true },
+      }),
+      prisma.workExperience.findMany({
+        include: { translations: true },
+      }),
+      prisma.socialLink.findMany(),
+      prisma.skill.findMany(),
+      prisma.quest.findMany({
+        include: { translations: true },
+      }),
+    ]);
+
+  return {
+    timestamp: new Date().toISOString(),
+    data: {
+      projects,
+      blogs,
+      profile,
+      experiences,
+      skills,
+      quests,
+      socialLinks,
+    },
+  };
+}
+
+export async function importDatabaseAction(jsonData: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const { data } = JSON.parse(jsonData);
+  const { projects, blogs, profile, experiences, skills, quests } = data;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.projectTranslation.deleteMany();
+      await tx.project.deleteMany();
+      await tx.blogPostTranslation.deleteMany();
+      await tx.blogPost.deleteMany();
+      await tx.workExperienceTranslation.deleteMany();
+      await tx.workExperience.deleteMany();
+      await tx.profileTranslation.deleteMany();
+      await tx.profile.deleteMany();
+      await tx.skill.deleteMany();
+      await tx.questTranslation.deleteMany();
+      await tx.quest.deleteMany();
+
+      if (skills && skills.length > 0) {
+        await tx.skill.createMany({
+          data: (
+            skills as { id: string; key: string; name: string; icon: string }[]
+          ).map((s) => ({
+            id: s.id,
+            key: s.key,
+            name: s.name,
+            icon: s.icon,
+          })),
+        });
+      }
+      if (profile) {
+        const p = profile as ProfileData;
+        const createdProfile = await tx.profile.create({
+          data: {
+            avatar: p.avatar,
+            email: p.email,
+            github: p.github,
+            linkedin: p.linkedin,
+            translations: {
+              create: p.translations.map((t) => ({
+                language: t.language,
+                name: t.name,
+                title: t.title,
+                greetingText: t.greetingText,
+                description: t.description,
+                aboutTitle: t.aboutTitle,
+                aboutDescription: t.aboutDescription,
+              })),
+            },
+          },
+        });
+
+        if (quests && quests.length > 0) {
+          for (const quest of quests as {
+            completed: boolean;
+            order: number;
+            profileId?: string;
+            translations: { language: Language; title: string }[];
+          }[]) {
+            await tx.quest.create({
+              data: {
+                completed: quest.completed,
+                order: quest.order,
+                profileId: createdProfile.id,
+                translations: {
+                  create: quest.translations.map(
+                    (t: { language: Language; title: string }) => ({
+                      language: t.language,
+                      title: t.title,
+                    }),
+                  ),
+                },
+              },
+            });
+          }
+        }
+      }
+
+      if (experiences && experiences.length > 0) {
+        for (const exp of experiences as ExperienceData[]) {
+          await tx.workExperience.create({
+            data: {
+              company: exp.company,
+              logo: exp.logo,
+              startDate: exp.startDate,
+              endDate: exp.endDate,
+              translations: {
+                create: exp.translations.map((t) => ({
+                  language: t.language,
+                  role: t.role,
+                  description: t.description,
+                  locationType: t.locationType,
+                })),
+              },
+            },
+          });
+        }
+      }
+
+      if (blogs && blogs.length > 0) {
+        for (const blog of blogs as BlogData[]) {
+          await tx.blogPost.create({
+            data: {
+              slug: blog.slug,
+              coverImage: blog.coverImage,
+              imageAlt: blog.imageAlt,
+              status: blog.status || "published",
+              category: blog.category,
+              commentsEnabled: blog.commentsEnabled ?? true,
+              featured: blog.featured,
+              tags: blog.tags,
+              translations: {
+                create: blog.translations.map((t) => ({
+                  language: t.language,
+                  title: t.title,
+                  description: t.description,
+                  content: t.content,
+                  readTime: t.readTime,
+                  date: t.date,
+                  excerpt: t.excerpt,
+                  metaTitle: t.metaTitle,
+                  metaDescription: t.metaDescription,
+                  keywords: t.keywords,
+                })),
+              },
+            },
+          });
+        }
+      }
+
+      if (projects && projects.length > 0) {
+        for (const project of projects as ProjectData[]) {
+          await tx.project.create({
+            data: {
+              slug: project.slug,
+              status: project.status,
+              category: project.category,
+              github: project.github,
+              liveDemo: project.liveDemo,
+              featured: project.featured,
+              coverImage: project.coverImage,
+              imageAlt: project.imageAlt,
+              images: project.images,
+              technologies: {
+                connect: (
+                  project.technologies as unknown as { id: string }[]
+                ).map((tech) => ({
+                  id: tech.id,
+                })),
+              },
+              translations: {
+                create: project.translations.map((t) => ({
+                  language: t.language,
+                  title: t.title,
+                  shortDescription: t.shortDescription,
+                  fullDescription: t.fullDescription,
+                  metaTitle: t.metaTitle,
+                  metaDescription: t.metaDescription,
+                  keywords: t.keywords,
+                })),
+              },
+            },
+          });
+        }
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Import error:", error);
+    throw new Error("Import failed: " + (error as Error).message);
+  }
+}
+
+export async function deleteCommentAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  return await prisma.comment.delete({
+    where: { id },
+  });
+}
+
+export async function fetchGithubReposAction() {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const accessToken = (session as { accessToken?: string }).accessToken;
+  if (!accessToken) {
+    throw new Error(
+      "GitHub erişim token'ı bulunamadı. Lütfen GitHub ile tekrar giriş yapın (logout/login).",
+    );
+  }
+
+  try {
+    const res = await fetch(
+      "https://api.github.com/user/repos?sort=updated&per_page=100",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+        next: { revalidate: 0 },
+      },
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `GitHub Repoları alınamadı: ${res.status} ${res.statusText}`,
+      );
+    }
+
+    const repos = await res.json();
+    return repos.map(
+      (repo: {
+        id: number;
+        name: string;
+        description: string | null;
+        html_url: string;
+        homepage: string | null;
+        language: string | null;
+      }) => ({
+        id: repo.id,
+        name: repo.name,
+        description: repo.description,
+        html_url: repo.html_url,
+        homepage: repo.homepage,
+        language: repo.language,
+      }),
+    );
+  } catch (error) {
+    console.error("Github repos fetch error:", error);
+    throw new Error("GitHub istek hatası: " + (error as Error).message);
+  }
+}
+
+export async function createSocialLinkAction(data: {
+  name: string;
+  href: string;
+  icon: string;
+}) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  )
+    throw new Error("Unauthorized");
+  return await prisma.socialLink.create({
+    data: {
+      key: data.name.toLowerCase().replace(/\s+/g, "-"),
+      name: data.name,
+      href: data.href,
+      icon: data.icon,
+    },
+  });
+}
+
+export async function deleteSocialLinkAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  )
+    throw new Error("Unauthorized");
+  await prisma.socialLink.delete({ where: { id } });
+  revalidatePath("/[locale]", "layout");
+}
+
+export async function deleteSkillAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  )
+    throw new Error("Unauthorized");
+  await prisma.skill.delete({ where: { id } });
+  revalidatePath("/[locale]", "layout");
+}

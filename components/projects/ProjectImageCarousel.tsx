@@ -2,6 +2,7 @@
 
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image, { StaticImageData } from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
@@ -14,6 +15,7 @@ export default function ProjectImageCarousel({
   images,
   title,
 }: ProjectImageCarouselProps) {
+  const t = useTranslations("Projects");
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [carouselState, setCarouselState] = useState({
     selectedIndex: 0,
@@ -72,6 +74,7 @@ export default function ProjectImageCarousel({
                 src={image}
                 alt={`${title} - Image ${index + 1}`}
                 fill
+                unoptimized
                 className="object-cover"
                 priority={index === 0}
               />
@@ -86,7 +89,7 @@ export default function ProjectImageCarousel({
             className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:bg-background transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-0"
             onClick={scrollPrev}
             disabled={!prevBtnEnabled}
-            aria-label="Previous slide"
+            aria-label={t("prevSlide")}
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
@@ -94,7 +97,7 @@ export default function ProjectImageCarousel({
             className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:bg-background transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-0"
             onClick={scrollNext}
             disabled={!nextBtnEnabled}
-            aria-label="Next slide"
+            aria-label={t("nextSlide")}
           >
             <ChevronRight className="w-6 h-6" />
           </button>

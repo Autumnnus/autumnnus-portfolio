@@ -1,9 +1,9 @@
 "use client";
 
+import Badge from "@/components/ui/badge";
 import { Project } from "@/types/contents";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Badge } from "../ui/Badge";
 
 interface RelatedProjectCardProps {
   project: Project;
