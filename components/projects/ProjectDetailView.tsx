@@ -22,9 +22,11 @@ import JsonLd from "@/components/seo/JsonLd";
 export default function ProjectDetailView({
   project,
   githubStats,
+  relatedProjects = [],
 }: {
   project: Project;
   githubStats?: GithubRepoStats | null;
+  relatedProjects?: Project[];
 }) {
   const t = useTranslations("Projects");
   const tCommon = useTranslations("Common");
@@ -38,7 +40,6 @@ export default function ProjectDetailView({
   // Note: For now, nextProject and relatedProjects will be empty or handled via simplified logic
   // since we shifted to backend-only fetching for the main project.
   const nextProject = null as Project | null;
-  const relatedProjects = [] as Project[];
 
   if (!project) {
     return null;

@@ -14,7 +14,15 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function BlogPostView({ post }: { post: BlogPost }) {
+import BlogCard from "@/components/blog/BlogCard";
+
+export default function BlogPostView({
+  post,
+  relatedPosts = [],
+}: {
+  post: BlogPost;
+  relatedPosts?: BlogPost[];
+}) {
   const t = useTranslations("Blog");
 
   if (!post) {
@@ -107,6 +115,26 @@ export default function BlogPostView({ post }: { post: BlogPost }) {
           <ContentRenderer content={post.content} />
         </article>
       </FadeIn>
+
+      {/* Related Posts */}
+      {relatedPosts.length > 0 && (
+        <FadeIn delay={0.65}>
+          <div className="mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8">
+              {t("related") || "Related Posts"}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-border">
+              {relatedPosts.map((relatedPost, index) => (
+                <BlogCard
+                  key={relatedPost.slug}
+                  post={relatedPost}
+                  index={index}
+                />
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+      )}
 
       {/* Comments Section */}
       <FadeIn delay={0.7}>

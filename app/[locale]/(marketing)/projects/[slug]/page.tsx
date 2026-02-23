@@ -1,4 +1,8 @@
-import { getProjectBySlug, getProjects } from "@/app/actions";
+import {
+  getProjectBySlug,
+  getProjects,
+  getSimilarProjects,
+} from "@/app/actions";
 import ProjectDetailView from "@/components/projects/ProjectDetailView";
 import { Project } from "@/types/contents";
 import { Language } from "@prisma/client";
@@ -78,10 +82,17 @@ export default async function ProjectDetailPage({
   const { getRepoStats } = await import("@/lib/github");
   const githubStats = await getRepoStats(project.github || undefined);
 
+  const similarProjects = await getSimilarProjects(
+    project.id,
+    locale as Language,
+    2,
+  );
+
   return (
     <ProjectDetailView
       project={project as unknown as Project}
       githubStats={githubStats}
+      relatedProjects={similarProjects as unknown as Project[]}
     />
   );
 }

@@ -1,4 +1,8 @@
-import { getBlogPostBySlug, getBlogPosts } from "@/app/actions";
+import {
+  getBlogPostBySlug,
+  getBlogPosts,
+  getSimilarBlogPosts,
+} from "@/app/actions";
 import BlogPostView from "@/components/blog/BlogPostView";
 import { BlogPost } from "@/types/contents";
 import { Language } from "@prisma/client";
@@ -80,5 +84,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  return <BlogPostView post={post as unknown as BlogPost} />;
+  const similarPosts = await getSimilarBlogPosts(
+    post.id,
+    locale as Language,
+    2,
+  );
+
+  return (
+    <BlogPostView
+      post={post as unknown as BlogPost}
+      relatedPosts={similarPosts as unknown as BlogPost[]}
+    />
+  );
 }

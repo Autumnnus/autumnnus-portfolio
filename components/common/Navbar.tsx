@@ -14,7 +14,7 @@ export default function Navbar() {
   const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   const navItems = [
-    { name: t("Home"), href: "/" },
+    // { name: t("Home"), href: "/" },
     { name: t("Projects"), href: "/projects" },
     { name: t("Blog"), href: "/blog" },
     { name: t("Work"), href: "/work" },

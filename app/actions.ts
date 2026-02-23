@@ -1298,3 +1298,131 @@ export async function getVisitorMilestones() {
     return [];
   }
 }
+
+export async function getSimilarProjects(
+  projectId: string,
+  lang: Language,
+  limit: number = 2,
+) {
+  try {
+    const targetLanguage = lang === "tr" ? "tr" : "en";
+    type RawResult = { sourceId: string; distance: number };
+
+    // We get the embedding of the first chunk of the source project (usually header + description)
+    // and find the closest projects based on their closest chunk.
+    const similarProjectIds = await prisma.$queryRaw<RawResult[]>`
+      WITH SourceEmbedding AS (
+        SELECT embedding 
+        FROM "Embedding" 
+        WHERE "sourceType" = 'project' 
+          AND "sourceId" = ${projectId} 
+          AND "language" = ${targetLanguage} 
+        ORDER BY "chunkIndex" ASC 
+        LIMIT 1
+      )
+      SELECT "sourceId", MIN(embedding <=> (SELECT embedding FROM SourceEmbedding)) as distance
+      FROM "Embedding"
+      WHERE "sourceType" = 'project'
+        AND "language" = ${targetLanguage}
+        AND "sourceId" != ${projectId}
+      GROUP BY "sourceId"
+      ORDER BY distance ASC
+      LIMIT ${limit}
+    `;
+
+    if (!similarProjectIds.length) return [];
+
+    const ids = similarProjectIds.map((r) => r.sourceId);
+
+    const projects = await prisma.project.findMany({
+      where: { id: { in: ids } },
+      include: {
+        translations: { where: { language: lang } },
+        technologies: true,
+      },
+    });
+
+    // Sort projects to match the similarity order
+    return ids
+      .map((id) => {
+        const p = projects.find((proj) => proj.id === id);
+        if (!p) return null;
+        const translation = p.translations[0] || {};
+        return {
+          ...p,
+          title: translation.title || p.slug,
+          shortDescription: translation.shortDescription || "",
+          fullDescription: translation.fullDescription || "",
+        };
+      })
+      .filter(Boolean);
+  } catch (error) {
+    console.error("Failed to fetch similar projects:", error);
+    return [];
+  }
+}
+
+export async function getSimilarBlogPosts(
+  blogPostId: string,
+  lang: Language,
+  limit: number = 2,
+) {
+  try {
+    const targetLanguage = lang === "tr" ? "tr" : "en";
+    type RawResult = { sourceId: string; distance: number };
+
+    const similarBlogIds = await prisma.$queryRaw<RawResult[]>`
+      WITH SourceEmbedding AS (
+        SELECT embedding 
+        FROM "Embedding" 
+        WHERE "sourceType" = 'blog' 
+          AND "sourceId" = ${blogPostId} 
+          AND "language" = ${targetLanguage} 
+        ORDER BY "chunkIndex" ASC 
+        LIMIT 1
+      )
+      SELECT "sourceId", MIN(embedding <=> (SELECT embedding FROM SourceEmbedding)) as distance
+      FROM "Embedding"
+      WHERE "sourceType" = 'blog'
+        AND "language" = ${targetLanguage}
+        AND "sourceId" != ${blogPostId}
+      GROUP BY "sourceId"
+      ORDER BY distance ASC
+      LIMIT ${limit}
+    `;
+
+    if (!similarBlogIds.length) return [];
+
+    const ids = similarBlogIds.map((r) => r.sourceId);
+
+    const posts = await prisma.blogPost.findMany({
+      where: {
+        id: { in: ids },
+        status: "published", // Always restrict similar posts to published
+      },
+      include: {
+        translations: { where: { language: lang } },
+      },
+    });
+
+    return ids
+      .map((id) => {
+        const p = posts.find((post) => post.id === id);
+        if (!p) return null;
+        const translation = p.translations[0] || {};
+        return {
+          ...p,
+          title: translation.title || p.slug,
+          description: translation.description || "",
+          content: translation.content || "",
+          readTime: translation.readTime || "",
+          date: translation.date || "",
+          status: p.status,
+        };
+      })
+      .filter(Boolean);
+  } catch (error) {
+    console.error("Failed to fetch similar blog posts:", error);
+    return [];
+  }
+}
