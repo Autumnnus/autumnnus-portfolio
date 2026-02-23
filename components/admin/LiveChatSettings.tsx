@@ -69,6 +69,7 @@ export default function LiveChatSettings() {
     translations: Object.keys(languageNames).map((lang) => ({
       language: lang as Language,
       text: "",
+      quickAnswers: [],
     })),
   });
 
@@ -233,6 +234,7 @@ export default function LiveChatSettings() {
         translations: Object.keys(languageNames).map((lang) => ({
           language: lang as Language,
           text: "",
+          quickAnswers: [],
         })),
       });
       toast.success(t("successGreetingSaved"));
@@ -253,6 +255,7 @@ export default function LiveChatSettings() {
         return {
           language: lang as Language,
           text: trans ? trans.text : "",
+          quickAnswers: trans?.quickAnswers || [],
         };
       }),
     });
@@ -733,40 +736,98 @@ export default function LiveChatSettings() {
                   (l) => l !== "tr",
                 )}
               >
-                {(lang) => (
-                  <div className="space-y-4" key={lang}>
-                    <Input
-                      placeholder={t("greetingPlaceholder", {
-                        name:
-                          languageNames[lang as keyof typeof languageNames] ||
-                          lang,
-                      })}
-                      value={
-                        greetingForm.translations.find(
-                          (t) => t.language === lang,
-                        )?.text || ""
-                      }
-                      onChange={(e) => {
-                        const newTrans = [...greetingForm.translations];
-                        const idx = newTrans.findIndex(
-                          (t) => t.language === lang,
-                        );
-                        if (idx > -1) {
-                          newTrans[idx].text = e.target.value;
-                        } else {
-                          newTrans.push({
-                            language: lang as Language,
-                            text: e.target.value,
-                          });
-                        }
-                        setGreetingForm({
-                          ...greetingForm,
-                          translations: newTrans,
-                        });
-                      }}
-                    />
-                  </div>
-                )}
+                {(lang) => {
+                  const currentTrans = greetingForm.translations.find(
+                    (t) => t.language === lang,
+                  ) || {
+                    language: lang as Language,
+                    text: "",
+                    quickAnswers: [],
+                  };
+
+                  const handleUpdateTrans = (
+                    updates: Partial<GreetingTranslationInput>,
+                  ) => {
+                    const newTrans = [...greetingForm.translations];
+                    const idx = newTrans.findIndex((t) => t.language === lang);
+                    if (idx > -1) {
+                      newTrans[idx] = { ...newTrans[idx], ...updates };
+                    } else {
+                      newTrans.push({
+                        language: lang as Language,
+                        text: "",
+                        quickAnswers: [],
+                        ...updates,
+                      });
+                    }
+                    setGreetingForm({
+                      ...greetingForm,
+                      translations: newTrans,
+                    });
+                  };
+
+                  return (
+                    <div className="space-y-6" key={lang}>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold">
+                          {t("messageContent")}
+                        </Label>
+                        <Input
+                          placeholder={t("greetingPlaceholder", {
+                            name:
+                              languageNames[
+                                lang as keyof typeof languageNames
+                              ] || lang,
+                          })}
+                          value={currentTrans.text}
+                          onChange={(e) =>
+                            handleUpdateTrans({ text: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-semibold flex items-center gap-2">
+                            {t("quickAnswers") || "Hızlı Cevaplar"}
+                            <span className="text-[10px] font-normal text-muted-foreground">
+                              (
+                              {t("maxQuickAnswers", { count: 4 }) ||
+                                "En fazla 4 adet"}
+                              )
+                            </span>
+                          </Label>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {[0, 1, 2, 3].map((index) => (
+                            <div key={index} className="flex gap-2">
+                              <Input
+                                placeholder={`${t("quickAnswer") || "Cevap"} ${index + 1}`}
+                                value={currentTrans.quickAnswers?.[index] || ""}
+                                onChange={(e) => {
+                                  const newAnswers = [
+                                    ...(currentTrans.quickAnswers || []),
+                                  ];
+                                  newAnswers[index] = e.target.value;
+                                  handleUpdateTrans({
+                                    quickAnswers: newAnswers.filter(
+                                      (a, i) => a.trim() !== "" || i < index,
+                                    ),
+                                  });
+                                }}
+                                className="h-9 text-xs"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground italic">
+                          {t("quickAnswersDesc") ||
+                            "Kullanıcıya karşılama mesajıyla birlikte sunulacak hızlı soru/cevap butonları."}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }}
               </LanguageTabs>
             </div>
 

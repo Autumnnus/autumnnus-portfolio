@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 export interface GreetingTranslationInput {
   language: Language;
   text: string;
+  quickAnswers?: string[];
 }
 
 export interface LiveChatGreetingInput {

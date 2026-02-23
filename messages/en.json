@@ -250,7 +250,11 @@
       "successSoundReset": "Sound reset to default",
       "errorSoundReset": "Error occurred while resetting",
       "customSound": "Custom sound uploaded (MinIO)",
-      "greetingPlaceholder": "{name} greeting message..."
+      "greetingPlaceholder": "{name} greeting message...",
+      "quickAnswers": "Quick Answers",
+      "maxQuickAnswers": "Max {count} answers",
+      "quickAnswer": "Answer",
+      "quickAnswersDesc": "Quick question/answer buttons to be shown with the greeting message."
     },
     "Editor": {
       "bold": "Bold (Ctrl+B)",

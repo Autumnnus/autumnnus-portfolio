@@ -32,6 +32,7 @@ export default function LiveChat() {
   const [configLoaded, setConfigLoaded] = useState(false);
   const [showTeaser, setShowTeaser] = useState(false);
   const [teaserText, setTeaserText] = useState("");
+  const [quickAnswers, setQuickAnswers] = useState<string[]>([]);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const pathname = usePathname();
@@ -93,7 +94,10 @@ export default function LiveChat() {
             const trans = currentPathGreeting.translations.find(
               (t: { language: string }) => t.language === currentLocale,
             );
-            if (trans) setTeaserText(trans.text);
+            if (trans) {
+              setTeaserText(trans.text);
+              setQuickAnswers(trans.quickAnswers || []);
+            }
           }
         }
       } catch (err) {
@@ -293,14 +297,13 @@ export default function LiveChat() {
     setMessages([welcomeMsg]);
   }, [t, teaserText]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  const processMessage = async (content: string) => {
+    if (!content.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: content.trim(),
       timestamp: new Date(),
     };
 
@@ -351,6 +354,15 @@ export default function LiveChat() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await processMessage(input);
+  };
+
+  const handleQuickSubmit = async (content: string) => {
+    await processMessage(content);
   };
 
   // Don't render anything until config is loaded to prevent flash
@@ -431,6 +443,33 @@ export default function LiveChat() {
                   />
                 ))}
                 {isLoading && <ChatLoading aiImage={aiImage} />}
+
+                {/* Quick Answers */}
+                {isOpen &&
+                  !isLoading &&
+                  messages.length === 1 &&
+                  messages[0].id === "welcome" &&
+                  quickAnswers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      {quickAnswers.map((answer, i) => (
+                        <Button
+                          key={i}
+                          variant="outline"
+                          size="sm"
+                          className="text-[11px] h-8 rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all font-medium py-1 px-3"
+                          onClick={() => {
+                            setInput(answer);
+                            setTimeout(() => {
+                              handleQuickSubmit(answer);
+                            }, 10);
+                          }}
+                        >
+                          {answer}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
                 <div ref={scrollRef} />
               </div>
             </div>

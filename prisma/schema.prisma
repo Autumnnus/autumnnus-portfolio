@@ -285,11 +285,12 @@ model LiveChatGreeting {
 }
 
 model LiveChatGreetingTranslation {
-  id         String           @id @default(uuid())
-  language   Language
-  text       String
-  greetingId String
-  greeting   LiveChatGreeting @relation(fields: [greetingId], references: [id], onDelete: Cascade)
+  id           String           @id @default(uuid())
+  language     Language
+  text         String
+  quickAnswers String[]         @default([])
+  greetingId   String
+  greeting     LiveChatGreeting @relation(fields: [greetingId], references: [id], onDelete: Cascade)
 
   @@unique([greetingId, language])
 }

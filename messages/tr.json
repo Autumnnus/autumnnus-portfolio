@@ -250,7 +250,11 @@
       "errorSoundUpload": "Ses yüklenirken hata oluştu",
       "successSoundReset": "Ses varsayılana sıfırlandı",
       "errorSoundReset": "Sıfırlanırken hata oluştu",
-      "greetingPlaceholder": "{name} karşılama mesajı..."
+      "greetingPlaceholder": "{name} karşılama mesajı...",
+      "quickAnswers": "Hızlı Cevaplar",
+      "maxQuickAnswers": "En fazla {count} adet",
+      "quickAnswer": "Cevap",
+      "quickAnswersDesc": "Kullanıcıya karşılama mesajıyla birlikte sunulacak hızlı soru/cevap butonları."
     },
     "Editor": {
       "bold": "Kalın (Ctrl+B)",
