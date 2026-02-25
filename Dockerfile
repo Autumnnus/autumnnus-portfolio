@@ -59,4 +59,4 @@ ENV PORT 3001
 ENV HOSTNAME "0.0.0.0"
 
 # server.js is created by next build from the standalone output
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node server.js"]
