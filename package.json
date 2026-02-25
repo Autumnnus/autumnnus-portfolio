@@ -12,6 +12,7 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:validate": "prisma validate",
+    "db:prod:init": "npx prisma migrate deploy && npx prisma db seed",
     "i18n:scan": "tsx scripts/find-hardcoded-strings.ts",
     "types:check": "tsc --noEmit"
   },
