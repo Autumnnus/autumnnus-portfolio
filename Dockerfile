@@ -20,12 +20,12 @@ COPY . .
 # for some data fetching/next config logic if needed.
 # Coolify will provide these, but we can set defaults or let them be empty.
 ARG DATABASE_URL
-ARG NEXTAUTH_SECRET
-ARG NEXTAUTH_URL
+ARG AUTH_SECRET
+ARG AUTH_URL
 
 ENV DATABASE_URL=$DATABASE_URL
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV AUTH_SECRET=$AUTH_SECRET
+ENV AUTH_URL=$AUTH_URL
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
