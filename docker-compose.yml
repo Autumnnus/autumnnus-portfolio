@@ -9,7 +9,10 @@ services:
     restart: always
     ports:
       - "3001:3001"
+    env_file:
+      - .env
     environment:
+      # İç ağda postgres servisine 5432 portundan bağlanır
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - MINIO_ENDPOINT=minio
       - MINIO_PORT=9000
@@ -47,10 +50,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   minio:
     image: minio/minio:latest

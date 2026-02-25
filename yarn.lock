@@ -1195,7 +1195,7 @@
   dependencies:
     "@prisma/client-runtime-utils" "7.4.1"
 
-"@prisma/config@7.4.1":
+"@prisma/config@7.4.1", "@prisma/config@^7.3.0":
   version "7.4.1"
   resolved "https://registry.npmjs.org/@prisma/config/-/config-7.4.1.tgz"
   integrity sha512-vteSXm8N46bo3FW9MhPGVHAj+KRgrR6TWtlSk6GqToCKjTnOexXdPZyiDyEsfVW38YhqEmVl6w/6iHN8uYVJcw==
