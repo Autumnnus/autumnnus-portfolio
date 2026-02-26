@@ -59,11 +59,15 @@ export async function processAndEmbed(
         chunk,
         embedding,
       );
+      console.log(
+        `Successfully embedded chunk ${i} for ${sourceType} ${sourceId} (${language})`,
+      );
     } catch (error) {
       console.error(
-        `Failed to embed chunk ${i} for ${sourceType} ${sourceId}:`,
+        `CRITICAL: Failed to embed chunk ${i} for ${sourceType} ${sourceId}:`,
         error,
       );
+      throw error; // Re-throw to stop silent failures
     }
   }
 }

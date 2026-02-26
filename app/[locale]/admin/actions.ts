@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { deleteFolder, uploadFile } from "@/lib/minio";
 import { prisma } from "@/lib/prisma";
+import { deleteEmbeddingsBySource } from "@/lib/vectordb";
 import { Language } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -218,6 +219,8 @@ export async function deleteProjectAction(id: string) {
     await deleteFolder(`projects/${project.slug}`);
   }
 
+  await deleteEmbeddingsBySource("project", id);
+
   return await prisma.project.delete({
     where: { id },
   });
@@ -308,6 +311,8 @@ export async function deleteBlogAction(id: string) {
   if (blog?.slug) {
     await deleteFolder(`blog/${blog.slug}`);
   }
+
+  await deleteEmbeddingsBySource("blog", id);
 
   return await prisma.blogPost.delete({
     where: { id },
