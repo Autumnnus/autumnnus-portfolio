@@ -3,7 +3,7 @@ import ProjectForm from "@/components/admin/ProjectForm";
 import Container from "@/components/common/Container";
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 
 interface EditProjectPageProps {

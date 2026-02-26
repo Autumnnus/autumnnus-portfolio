@@ -2,7 +2,7 @@ import BlogForm from "@/components/admin/BlogForm";
 import Container from "@/components/common/Container";
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 export default async function NewBlogPage() {
   const t = await getTranslations("Admin.Dashboard.blog");

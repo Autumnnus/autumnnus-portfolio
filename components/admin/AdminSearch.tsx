@@ -1,8 +1,9 @@
 "use client";
 
 import { Input } from "@/components/ui/Input";
+import { usePathname, useRouter } from "@/i18n/routing";
 import { Search, X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 interface AdminSearchProps {

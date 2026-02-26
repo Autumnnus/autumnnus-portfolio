@@ -10,7 +10,7 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { Input } from "@/components/ui/Input";
 import { useAdminForm } from "@/hooks/useAdminForm";
-import { languageNames } from "@/i18n/routing";
+import { languageNames, useRouter } from "@/i18n/routing";
 import { ExperienceFormValues, ExperienceSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -21,7 +21,6 @@ import {
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -212,7 +211,6 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     successMessage: initialData?.id ? t("saveSuccess") : t("createSuccess"),
     onSuccess: () => {
       router.push("/admin/experience");
-      router.refresh();
     },
     onInvalid: (errors) => {
       const errMsgs: string[] = [];

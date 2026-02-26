@@ -14,7 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/routing";
 
 export function AdminSidebar() {
   const t = useTranslations("Admin.Navigation");

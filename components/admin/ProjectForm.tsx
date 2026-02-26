@@ -17,7 +17,7 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import Icon from "@/components/common/Icon";
 import { useAdminForm } from "@/hooks/useAdminForm";
-import { languageNames } from "@/i18n/routing";
+import { languageNames, useRouter } from "@/i18n/routing";
 import { ProjectFormValues, ProjectSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Language, Project, ProjectTranslation, Skill } from "@prisma/client";
@@ -36,7 +36,6 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FieldError, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -515,7 +514,6 @@ export default function ProjectForm({
         router.refresh();
       } else if (result.action === "create" && result.id) {
         router.push(`/admin/projects/${result.id}/edit`);
-        router.refresh();
       }
     },
   });

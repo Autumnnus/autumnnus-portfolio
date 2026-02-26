@@ -9,7 +9,7 @@ import {
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { useAdminForm } from "@/hooks/useAdminForm";
-import { languageNames } from "@/i18n/routing";
+import { languageNames, useRouter } from "@/i18n/routing";
 import { BlogFormValues, BlogSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BlogPost, BlogPostTranslation, Language } from "@prisma/client";
@@ -24,7 +24,6 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FieldError, FieldErrors, useForm } from "react-hook-form";
 import SeoPopover from "./SeoPopover";
@@ -318,7 +317,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         router.refresh();
       } else if (result.action === "create" && result.id) {
         router.push(`/admin/blog/${result.id}/edit`);
-        router.refresh();
       }
     },
     onInvalid,

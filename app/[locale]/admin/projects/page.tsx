@@ -5,7 +5,7 @@ import Container from "@/components/common/Container";
 import { Language } from "@prisma/client";
 import { ArrowLeft, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 export default async function AdminProjectsPage({
   searchParams,

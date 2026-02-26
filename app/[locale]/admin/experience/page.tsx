@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Briefcase, Pencil, Plus, Trash2 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { redirect } from "next/navigation";
 
 export default async function AdminExperiencePage() {

@@ -9,7 +9,7 @@ import { Skill } from "@prisma/client";
 import { Loader2, Plus, Search, Sparkles, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
