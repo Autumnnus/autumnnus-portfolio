@@ -5,7 +5,7 @@ import {
   deleteSkillAction,
 } from "@/app/[locale]/admin/actions";
 import Icon from "@/components/common/Icon";
-import { Skill } from "@prisma/client";
+import { Skill } from "@/lib/db/schema";
 import { Loader2, Plus, Search, Sparkles, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";

@@ -12,7 +12,7 @@ import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
 import { ProfileFormValues, ProfileSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Language, Profile, ProfileTranslation } from "@prisma/client";
+import { LanguageType as Language, Profile, ProfileTranslation } from "@/lib/db/schema";
 import { ImagePlus, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";

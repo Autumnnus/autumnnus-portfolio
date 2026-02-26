@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { sql } from "drizzle-orm";
 
 export type EmbeddingSourceType = "blog" | "project" | "profile" | "experience";
 
@@ -17,11 +18,11 @@ export async function upsertEmbedding(
   language: string,
   chunkIndex: number,
   chunkText: string,
-  embedding: number[],
+  embeddingData: number[],
 ) {
-  const embeddingString = `[${embedding.join(",")}]`;
+  const embeddingString = `[${embeddingData.join(",")}]`;
 
-  await prisma.$executeRaw`
+  await db.execute(sql`
     INSERT INTO "Embedding" ("id", "sourceType", "sourceId", "language", "chunkText", "chunkIndex", "embedding", "updatedAt")
     VALUES (gen_random_uuid(), ${sourceType}, ${sourceId}, ${language}, ${chunkText}, ${chunkIndex}, ${embeddingString}::vector, NOW())
     ON CONFLICT ("sourceType", "sourceId", "language", "chunkIndex")
@@ -29,7 +30,7 @@ export async function upsertEmbedding(
       "chunkText" = ${chunkText},
       "embedding" = ${embeddingString}::vector,
       "updatedAt" = NOW()
-  `;
+  `);
 }
 
 export async function searchSimilar(
@@ -42,17 +43,7 @@ export async function searchSimilar(
 
   const targetLanguage = language === "tr" ? "tr" : "en";
 
-  const results = await prisma.$queryRaw<
-    Array<{
-      id: string;
-      sourceType: string;
-      sourceId: string;
-      language: string;
-      chunkText: string;
-      chunkIndex: number;
-      distance: number;
-    }>
-  >`
+  const results = await db.execute(sql`
     SELECT
       id,
       "sourceType",
@@ -66,9 +57,19 @@ export async function searchSimilar(
     AND (embedding <=> ${embeddingString}::vector) < ${threshold}
     ORDER BY distance ASC
     LIMIT ${limit}
-  `;
+  `);
 
-  return results.map((r) => ({
+  type RawResult = {
+    id: string;
+    sourceType: string;
+    sourceId: string;
+    language: string;
+    chunkText: string;
+    chunkIndex: number;
+    distance: number;
+  };
+
+  return (results.rows as unknown as RawResult[]).map((r) => ({
     id: r.id,
     sourceType: r.sourceType,
     sourceId: r.sourceId,
@@ -79,17 +80,15 @@ export async function searchSimilar(
 }
 
 export async function deleteEmbeddingsBySource(
-  sourceType: EmbeddingSourceType,
+  sourceType: string,
   sourceId: string,
 ) {
-  await prisma.embedding.deleteMany({
-    where: {
-      sourceType,
-      sourceId,
-    },
-  });
+  await db.execute(sql`
+    DELETE FROM "Embedding"
+    WHERE "sourceType" = ${sourceType} AND "sourceId" = ${sourceId}
+  `);
 }
 
 export async function deleteAllEmbeddings() {
-  await prisma.embedding.deleteMany({});
+  await db.execute(sql`DELETE FROM "Embedding"`);
 }

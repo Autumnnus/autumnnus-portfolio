@@ -1,18 +1,8 @@
 import { z } from "zod";
 
-// We can import the Language enum from @prisma/client, but since this runs on client side too
-// and we want to avoid importing heavy prisma client code if possible (though types are fine),
-// we can define the languages list manually or importing from routing.
-// For strict type safety matching DB:
 import { languageNames } from "@/i18n/routing";
 
-// Generic schemas for reusable parts
-// Generic schemas for reusable parts
-// const TranslationFieldSchema = z.string().min(1, "Bu alan zorunludur"); // "This field is required"
-
 const languageEnumValues = Object.keys(languageNames) as [string, ...string[]];
-
-// --- Project ---
 
 const ProjectTranslationSchema = z.object({
   title: z.string().optional().default(""),

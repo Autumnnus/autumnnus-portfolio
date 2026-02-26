@@ -16,8 +16,8 @@ import {
   getWorkExperiences,
 } from "@/app/actions";
 import SectionNav from "@/components/common/SectionNav";
+import { LanguageType as Language } from "@/lib/db/schema";
 import { BlogPost, Project, WorkExperience } from "@/types/contents";
-import { Language } from "@prisma/client";
 
 interface HomeProps {
   params: Promise<{ locale: string }>;

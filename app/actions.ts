@@ -1,8 +1,41 @@
 ﻿"use server";
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import {
+  _projectToSkill,
+  auditLog,
+  blogPost,
+  blogPostTranslation,
+  comment,
+  LanguageType as Language,
+  like,
+  profileTranslation,
+  project,
+  projectTranslation,
+  quest,
+  questTranslation,
+  skill,
+  socialLink,
+  uniqueVisitor,
+  view,
+  visitorMilestone,
+  workExperience,
+  workExperienceTranslation,
+} from "@/lib/db/schema";
 import { shouldNotify } from "@/lib/utils";
-import { Language, Prisma } from "@prisma/client";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 
 export interface GetProjectsOptions {
   lang: Language;
@@ -26,67 +59,84 @@ export async function getProjects({
   try {
     const skip = (page - 1) * limit;
 
-    const andConditions: Prisma.ProjectWhereInput[] = [];
+    const filters = [];
 
     if (featured !== undefined) {
-      andConditions.push({ featured });
+      filters.push(eq(project.featured, featured));
     }
 
     if (status !== "All") {
-      andConditions.push({ status });
+      filters.push(eq(project.status, status));
     }
 
     if (category !== "All") {
-      andConditions.push({ category });
+      filters.push(eq(project.category, category));
     }
 
     if (search) {
-      andConditions.push({
-        OR: [
-          {
-            translations: {
-              some: {
-                OR: [
-                  { title: { contains: search, mode: "insensitive" } },
-                  {
-                    shortDescription: { contains: search, mode: "insensitive" },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            technologies: {
-              some: {
-                name: { contains: search, mode: "insensitive" },
-              },
-            },
-          },
-        ],
-      });
+      // Find project IDs matching translation search
+      const matchingTranslations = await db
+        .select({ projectId: projectTranslation.projectId })
+        .from(projectTranslation)
+        .where(
+          or(
+            ilike(projectTranslation.title, `%${search}%`),
+            ilike(projectTranslation.shortDescription, `%${search}%`),
+          ),
+        );
+
+      const matchingSkills = await db
+        .select({ projectId: _projectToSkill.A })
+        .from(_projectToSkill)
+        .innerJoin(skill, eq(_projectToSkill.B, skill.id))
+        .where(ilike(skill.name, `%${search}%`));
+
+      const matchingIds = [
+        ...new Set([
+          ...matchingTranslations.map((t) => t.projectId),
+          ...matchingSkills.map((s) => s.projectId),
+        ]),
+      ];
+
+      if (matchingIds.length === 0) {
+        // No matches across translations or skills
+        return {
+          items: [],
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+        };
+      }
+
+      filters.push(inArray(project.id, matchingIds));
     }
 
-    const where: Prisma.ProjectWhereInput = {
-      AND: andConditions,
-    };
+    const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-    const [projects, total] = await Promise.all([
-      prisma.project.findMany({
-        where,
-        include: {
-          translations: {
-            where: { language: lang },
-          },
-          technologies: true,
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(project)
+      .where(whereClause);
+
+    const total = totalResult.count;
+
+    const projectsRes = await db.query.project.findMany({
+      where: whereClause,
+      with: {
+        translations: {
+          where: eq(projectTranslation.language, lang),
         },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.project.count({ where }),
-    ]);
+        technologies: {
+          with: { skill: true },
+        },
+      },
+      orderBy: [desc(project.createdAt)],
+      offset: skip,
+      limit,
+    });
 
-    const items = projects.map((p) => {
+    const items = projectsRes.map((p) => {
       const translation = p.translations[0] || {};
       return {
         ...p,
@@ -117,38 +167,42 @@ export async function getProjects({
 
 export async function getProjectById(id: string) {
   try {
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
+    const prj = await db.query.project.findFirst({
+      where: eq(project.id, id),
+      with: {
         translations: true,
-        technologies: true,
+        technologies: { with: { skill: true } },
       },
     });
-    return project;
+    if (!prj) return null;
+    return {
+      ...prj,
+      technologies: prj.technologies.map((t) => t.skill),
+    };
   } catch (error) {
     console.error(`Failed to fetch project by id ${id}:`, error);
     return null;
   }
 }
 
-export async function getProjectBySlug(slug: string, lang: Language) {
+export async function getProjectBySlug(slugStr: string, lang: Language) {
   try {
-    const project = await prisma.project.findUnique({
-      where: { slug },
-      include: {
+    const prj = await db.query.project.findFirst({
+      where: eq(project.slug, slugStr),
+      with: {
         translations: {
-          where: { language: lang },
+          where: eq(projectTranslation.language, lang),
         },
-        technologies: true,
+        technologies: { with: { skill: true } },
       },
     });
 
-    if (!project) return null;
+    if (!prj) return null;
 
-    const translation = project.translations[0] || {};
+    const translation = prj.translations[0] || {};
     return {
-      ...project,
-      title: translation.title || project.slug,
+      ...prj,
+      title: translation.title || prj.slug,
       shortDescription: translation.shortDescription || "",
       fullDescription: translation.fullDescription || "",
       metaTitle: translation.metaTitle,
@@ -156,14 +210,14 @@ export async function getProjectBySlug(slug: string, lang: Language) {
       keywords: translation.keywords || [],
     };
   } catch (error) {
-    console.error(`Failed to fetch project by slug ${slug}:`, error);
+    console.error(`Failed to fetch project by slug ${slugStr}:`, error);
     return null;
   }
 }
 
 export async function getSkills() {
   try {
-    return await prisma.skill.findMany();
+    return await db.select().from(skill);
   } catch (error) {
     console.error("Failed to fetch skills", error);
     return [];
@@ -172,9 +226,7 @@ export async function getSkills() {
 
 export async function getSocialLinks() {
   try {
-    return await prisma.socialLink.findMany({
-      orderBy: { name: "asc" },
-    });
+    return await db.select().from(socialLink).orderBy(asc(socialLink.name));
   } catch (error) {
     console.error("Failed to fetch social links", error);
     return [];
@@ -183,25 +235,24 @@ export async function getSocialLinks() {
 
 export async function getProjectFilters() {
   try {
-    const [statuses, categories] = await Promise.all([
-      prisma.project.groupBy({
-        by: ["status"],
-        _count: { status: true },
-      }),
-      prisma.project.groupBy({
-        by: ["category"],
-        _count: { category: true },
-      }),
-    ]);
+    const statuses = await db
+      .select({ status: project.status, count: count() })
+      .from(project)
+      .groupBy(project.status);
+
+    const categories = await db
+      .select({ category: project.category, count: count() })
+      .from(project)
+      .groupBy(project.category);
 
     return {
       statuses: statuses.map((s) => ({
         status: s.status,
-        count: s._count.status,
+        count: s.count,
       })),
       categories: categories.map((c) => ({
         category: c.category,
-        count: c._count.category,
+        count: c.count,
       })),
     };
   } catch (error) {
@@ -241,51 +292,66 @@ export async function getBlogPosts({
 
     const skip = (page - 1) * limit;
 
-    const andConditions: Prisma.BlogPostWhereInput[] = [];
+    const filters = [];
 
     if (!isAdmin) {
-      andConditions.push({ status: "published" });
+      filters.push(eq(blogPost.status, "published"));
     }
 
     if (featured !== undefined) {
-      andConditions.push({ featured });
+      filters.push(eq(blogPost.featured, featured));
     }
 
     if (tag !== "All") {
-      andConditions.push({ tags: { has: tag } });
+      filters.push(sql`${blogPost.tags} @> ARRAY[${tag}]::text[]`);
     }
 
     if (search) {
-      andConditions.push({
-        translations: {
-          some: {
-            OR: [
-              { title: { contains: search, mode: "insensitive" } },
-              { description: { contains: search, mode: "insensitive" } },
-            ],
-          },
-        },
-      });
+      const matchingTranslations = await db
+        .select({ blogPostId: blogPostTranslation.blogPostId })
+        .from(blogPostTranslation)
+        .where(
+          or(
+            ilike(blogPostTranslation.title, `%${search}%`),
+            ilike(blogPostTranslation.description, `%${search}%`),
+          ),
+        );
+
+      const matchingIds = matchingTranslations.map((t) => t.blogPostId);
+
+      if (matchingIds.length === 0) {
+        return {
+          items: [],
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+        };
+      }
+
+      filters.push(inArray(blogPost.id, matchingIds));
     }
 
-    const where: Prisma.BlogPostWhereInput = {
-      AND: andConditions,
-    };
+    const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-    const [posts, total] = await Promise.all([
-      prisma.blogPost.findMany({
-        where,
-        include: {
-          translations: {
-            where: { language: lang },
-          },
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(blogPost)
+      .where(whereClause);
+
+    const total = totalResult.count;
+
+    const posts = await db.query.blogPost.findMany({
+      where: whereClause,
+      with: {
+        translations: {
+          where: eq(blogPostTranslation.language, lang),
         },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.blogPost.count({ where }),
-    ]);
+      },
+      orderBy: [desc(blogPost.createdAt)],
+      offset: skip,
+      limit,
+    });
 
     const items = posts.map((p) => {
       const translation = p.translations[0] || {};
@@ -321,13 +387,13 @@ export async function getBlogPosts({
 
 export async function getBlogPostById(id: string) {
   try {
-    const post = await prisma.blogPost.findUnique({
-      where: { id },
-      include: {
+    const post = await db.query.blogPost.findFirst({
+      where: eq(blogPost.id, id),
+      with: {
         translations: true,
       },
     });
-    return post;
+    return post || null;
   } catch (error) {
     console.error(`Failed to fetch blog post by id ${id}:`, error);
     return null;
@@ -335,16 +401,16 @@ export async function getBlogPostById(id: string) {
 }
 
 export async function getBlogPostBySlug(
-  slug: string,
+  slugStr: string,
   lang: Language,
   skipAuth = false,
 ) {
   try {
-    const post = await prisma.blogPost.findUnique({
-      where: { slug },
-      include: {
+    const post = await db.query.blogPost.findFirst({
+      where: eq(blogPost.slug, slugStr),
+      with: {
         translations: {
-          where: { language: lang },
+          where: eq(blogPostTranslation.language, lang),
         },
       },
     });
@@ -378,20 +444,18 @@ export async function getBlogPostBySlug(
       keywords: translation.keywords || [],
     };
   } catch (error) {
-    console.error(`Failed to fetch blog post by slug ${slug}:`, error);
+    console.error(`Failed to fetch blog post by slug ${slugStr}:`, error);
     return null;
   }
 }
 
 export async function getBlogFilters() {
   try {
-    const posts = await prisma.blogPost.findMany({
-      select: { tags: true },
-    });
+    const posts = await db.select({ tags: blogPost.tags }).from(blogPost);
 
     const tagCounts = new Map<string, number>();
     posts.forEach((post) => {
-      post.tags.forEach((tag) => {
+      post.tags?.forEach((tag) => {
         tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
       });
     });
@@ -409,29 +473,29 @@ export async function getBlogFilters() {
 }
 export async function getProfile(lang: Language) {
   try {
-    const profile = await prisma.profile.findFirst({
-      include: {
+    const prof = await db.query.profile.findFirst({
+      with: {
         translations: {
-          where: { language: lang },
+          where: eq(profileTranslation.language, lang),
         },
         quests: {
-          include: {
+          with: {
             translations: {
-              where: { language: lang },
+              where: eq(questTranslation.language, lang),
             },
           },
-          orderBy: { order: "asc" },
+          orderBy: [asc(quest.order)],
         },
       },
     });
 
-    if (!profile) return null;
+    if (!prof) return null;
 
-    const translation = profile.translations[0] || {};
+    const translation = prof.translations[0] || {};
     return {
-      ...profile,
+      ...prof,
       ...translation,
-      quests: profile.quests.map((q) => ({
+      quests: prof.quests.map((q) => ({
         id: q.id,
         completed: q.completed,
         order: q.order,
@@ -446,13 +510,13 @@ export async function getProfile(lang: Language) {
 
 export async function getWorkExperiences(lang: Language) {
   try {
-    const experiences = await prisma.workExperience.findMany({
-      include: {
+    const experiences = await db.query.workExperience.findMany({
+      with: {
         translations: {
-          where: { language: lang },
+          where: eq(workExperienceTranslation.language, lang),
         },
       },
-      orderBy: { startDate: "desc" },
+      orderBy: [desc(workExperience.startDate)],
     });
 
     return experiences.map((exp) => {
@@ -470,24 +534,28 @@ export async function getWorkExperiences(lang: Language) {
 
 export async function getAboutStats() {
   try {
-    const projectCount = await prisma.project.count();
+    const [projectCountRes] = await db.select({ count: count() }).from(project);
+    const projectCount = projectCountRes.count;
 
-    const firstExperience = await prisma.workExperience.findFirst({
-      where: {
-        startDate: { not: null },
-      },
-      orderBy: { startDate: "asc" },
-      select: { startDate: true },
+    const firstExperience = await db.query.workExperience.findFirst({
+      where: sql`${workExperience.startDate} IS NOT NULL`,
+      orderBy: [asc(workExperience.startDate)],
     });
 
     let experienceYears = 0;
     if (firstExperience?.startDate) {
       experienceYears =
-        new Date().getFullYear() - firstExperience.startDate.getFullYear();
+        new Date().getFullYear() -
+        new Date(firstExperience.startDate).getFullYear();
     }
 
-    const visitorCount = await prisma.uniqueVisitor.count();
-    const blogCount = await prisma.blogPost.count();
+    const [visitorCountRes] = await db
+      .select({ count: count() })
+      .from(uniqueVisitor);
+    const visitorCount = visitorCountRes.count;
+
+    const [blogCountRes] = await db.select({ count: count() }).from(blogPost);
+    const blogCount = blogCountRes.count;
 
     return {
       projectCount,
@@ -581,9 +649,9 @@ async function getNotificationDetails(
   };
 
   if (itemType === "blog") {
-    const post = await prisma.blogPost.findUnique({
-      where: { id: itemId },
-      include: { translations: { take: 1 } },
+    const post = await db.query.blogPost.findFirst({
+      where: eq(blogPost.id, itemId),
+      with: { translations: { limit: 1 } },
     });
     if (post) {
       itemTitle = post.translations[0]?.title || post.slug;
@@ -591,14 +659,14 @@ async function getNotificationDetails(
       itemLink = `${baseUrl}/blog/${post.slug}`;
     }
   } else {
-    const project = await prisma.project.findUnique({
-      where: { id: itemId },
-      include: { translations: { take: 1 } },
+    const prj = await db.query.project.findFirst({
+      where: eq(project.id, itemId),
+      with: { translations: { limit: 1 } },
     });
-    if (project) {
-      itemTitle = project.translations[0]?.title || project.slug;
-      coverImage = ensureAbsoluteUrl(project.coverImage || "");
-      itemLink = `${baseUrl}/projects/${project.slug}`;
+    if (prj) {
+      itemTitle = prj.translations[0]?.title || prj.slug;
+      coverImage = ensureAbsoluteUrl(prj.coverImage || "");
+      itemLink = `${baseUrl}/projects/${prj.slug}`;
     }
   }
 
@@ -612,7 +680,7 @@ async function getNotificationDetails(
 export async function createComment(
   itemId: string,
   itemType: CommentItemType,
-  content: string,
+  contentStr: string,
   authorName: string,
   authorEmail: string,
   parentId?: string,
@@ -623,7 +691,7 @@ export async function createComment(
       throw new Error("Security verification failed. Please try again.");
     }
 
-    if (!content || content.trim().length === 0) {
+    if (!contentStr || contentStr.trim().length === 0) {
       throw new Error("Comment content is required");
     }
 
@@ -642,21 +710,24 @@ export async function createComment(
     const ipAddress = await getIpIdentifier();
 
     if (!isAdmin) {
-      const recentComments = await prisma.comment.count({
-        where: {
-          ipAddress,
-          createdAt: {
-            gte: new Date(Date.now() - 10 * 60 * 1000),
-          },
-        },
-      });
+      const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const [{ count: recentComments }] = await db
+        .select({ count: count() })
+        .from(comment)
+        .where(
+          and(
+            eq(comment.ipAddress, ipAddress),
+            gte(comment.createdAt, tenMinsAgo),
+          ),
+        );
+
       if (recentComments >= 3) {
         throw new Error("You are commenting too fast. Please try again later.");
       }
     }
 
-    const data: Prisma.CommentUncheckedCreateInput = {
-      content,
+    const data: typeof comment.$inferInsert = {
+      content: contentStr,
       authorName,
       authorEmail,
       ipAddress,
@@ -671,9 +742,7 @@ export async function createComment(
       data.projectId = itemId;
     }
 
-    const comment = await prisma.comment.create({
-      data,
-    });
+    const [newComment] = await db.insert(comment).values(data).returning();
 
     const path =
       itemType === "blog"
@@ -684,7 +753,7 @@ export async function createComment(
     if (!isAdmin) {
       await createAuditLog("COMMENT_CREATED", itemType.toUpperCase(), itemId, {
         authorName,
-        commentId: comment.id,
+        commentId: newComment.id,
         ipAddress,
       });
 
@@ -695,34 +764,34 @@ export async function createComment(
 
       let parentCommentText = "";
       if (parentId) {
-        const parent = await prisma.comment.findUnique({
-          where: { id: parentId },
+        const parent = await db.query.comment.findFirst({
+          where: eq(comment.id, parentId),
         });
         if (parent) {
-          parentCommentText = `\n\nâ†©ï¸ <b>Replying to:</b> <i>"${escapeHtml(parent.authorName)}: ${escapeHtml(parent.content.substring(0, 50))}${parent.content.length > 50 ? "..." : ""}"</i>`;
+          parentCommentText = `\n\nâ†©ï¸  <b>Replying to:</b> <i>"${escapeHtml(parent.authorName)}: ${escapeHtml(parent.content.substring(0, 50))}${parent.content.length > 50 ? "..." : ""}"</i>`;
         }
       }
 
       const telegramMessage =
         `<b>ğŸ’¬ New Comment on ${itemType === "blog" ? "Blog" : "Project"}</b>\n\n` +
-        `ğŸ“ <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
+        `ğŸ“  <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
         `ğŸ‘¤ <b>Author:</b> ${escapeHtml(authorName)}\n` +
         `ğŸ“§ <b>Email:</b> ${escapeHtml(authorEmail)}\n` +
-        `ğŸ’¬ <b>Comment:</b>\n<i>"${escapeHtml(content)}"</i>` +
+        `ğŸ’¬ <b>Comment:</b>\n<i>"${escapeHtml(contentStr)}"</i>` +
         parentCommentText +
         `\n\nğŸ”— <a href="${itemLink}">View on Website</a>`;
 
       await sendTelegramNotification(telegramMessage, coverImage);
 
-      const commentCountWhere: Prisma.CommentWhereInput = {};
-      if (itemType === "blog") {
-        commentCountWhere.blogPostId = itemId;
-      } else {
-        commentCountWhere.projectId = itemId;
-      }
-      const totalComments = await prisma.comment.count({
-        where: commentCountWhere,
-      });
+      const commentCountWhere =
+        itemType === "blog"
+          ? eq(comment.blogPostId, itemId)
+          : eq(comment.projectId, itemId);
+
+      const [{ count: totalComments }] = await db
+        .select({ count: count() })
+        .from(comment)
+        .where(commentCountWhere);
 
       if (shouldNotify(totalComments) && totalComments > 1) {
         await sendTelegramNotification(
@@ -744,7 +813,7 @@ export async function createComment(
       }
     }
 
-    return { success: true, comment };
+    return { success: true, comment: newComment };
   } catch (error) {
     console.error("Failed to create comment:", error);
     return { success: false, error: (error as Error).message };
@@ -761,9 +830,7 @@ export async function deleteComment(commentId: string) {
       throw new Error("Unauthorized");
     }
 
-    await prisma.comment.delete({
-      where: { id: commentId },
-    });
+    await db.delete(comment).where(eq(comment.id, commentId));
 
     revalidatePath("/[locale]/blog/[slug]", "layout");
     revalidatePath("/[locale]/projects/[slug]", "layout");
@@ -775,7 +842,10 @@ export async function deleteComment(commentId: string) {
   }
 }
 
-export async function createCommentAction(blogPostId: string, content: string) {
+export async function createCommentAction(
+  blogPostId: string,
+  contentStr: string,
+) {
   const session = await auth();
   if (!session?.user?.email) {
     throw new Error("Unauthorized");
@@ -783,7 +853,7 @@ export async function createCommentAction(blogPostId: string, content: string) {
   return createComment(
     blogPostId,
     "blog",
-    content,
+    contentStr,
     session.user.name || "Anonymous",
     session.user.email,
   );
@@ -797,38 +867,48 @@ export async function getComments(
 ) {
   try {
     const skip = (page - 1) * limit;
-    const where: Prisma.CommentWhereInput = {
-      approved: true,
-      parentId: null,
-    };
+
+    const filters = [
+      eq(comment.approved, true),
+      sql`${comment.parentId} IS NULL`,
+    ];
 
     if (itemType === "blog") {
-      where.blogPostId = itemId;
+      filters.push(eq(comment.blogPostId, itemId));
     } else {
-      where.projectId = itemId;
+      filters.push(eq(comment.projectId, itemId));
     }
 
-    const [comments, total, adminProfile] = await Promise.all([
-      prisma.comment.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-        include: {
-          replies: {
-            orderBy: { createdAt: "asc" },
-            where: { approved: true },
-          },
+    const whereClause = and(...filters);
+
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(comment)
+      .where(whereClause);
+
+    const total = totalResult.count;
+
+    const commentsList = await db.query.comment.findMany({
+      where: whereClause,
+      orderBy: [desc(comment.createdAt)],
+      offset: skip,
+      limit,
+      with: {
+        replies: {
+          where: eq(comment.approved, true),
+          orderBy: [asc(comment.createdAt)],
         },
-      }),
-      prisma.comment.count({ where }),
-      prisma.profile.findFirst({ select: { avatar: true } }),
-    ]);
+      },
+    });
+
+    const adminProfile = await db.query.profile.findFirst({
+      columns: { avatar: true },
+    });
 
     const adminAvatar = adminProfile?.avatar || "";
 
     return {
-      comments,
+      comments: commentsList,
       total,
       page,
       limit,
@@ -859,38 +939,39 @@ export async function toggleLike(itemId: string, itemType: CommentItemType) {
   try {
     const ipAddress = await getIpIdentifier();
 
-    const where: Prisma.LikeWhereInput = {
-      ipAddress,
-    };
-
+    const filters = [eq(like.ipAddress, ipAddress)];
     if (itemType === "blog") {
-      where.blogPostId = itemId;
+      filters.push(eq(like.blogPostId, itemId));
     } else {
-      where.projectId = itemId;
+      filters.push(eq(like.projectId, itemId));
     }
-
-    const existingLike = await prisma.like.findFirst({
-      where,
+    const existingLike = await db.query.like.findFirst({
+      where: and(...filters),
     });
 
     if (existingLike) {
-      await prisma.like.delete({
-        where: { id: existingLike.id },
-      });
+      await db.delete(like).where(eq(like.id, existingLike.id));
     } else {
-      await prisma.like.create({
-        data: where as Prisma.LikeCreateInput,
-      });
+      const data: typeof like.$inferInsert = { ipAddress };
+      if (itemType === "blog") {
+        data.blogPostId = itemId;
+      } else {
+        data.projectId = itemId;
+      }
+      await db.insert(like).values(data);
     }
 
-    const countWhere: Prisma.LikeWhereInput = {};
+    const countFilters = [];
     if (itemType === "blog") {
-      countWhere.blogPostId = itemId;
+      countFilters.push(eq(like.blogPostId, itemId));
     } else {
-      countWhere.projectId = itemId;
+      countFilters.push(eq(like.projectId, itemId));
     }
 
-    const count = await prisma.like.count({ where: countWhere });
+    const [{ count: totalLikes }] = await db
+      .select({ count: count() })
+      .from(like)
+      .where(and(...countFilters));
 
     const path =
       itemType === "blog"
@@ -899,20 +980,20 @@ export async function toggleLike(itemId: string, itemType: CommentItemType) {
     revalidatePath(path, "layout");
 
     if (!existingLike) {
-      if (shouldNotify(count)) {
+      if (shouldNotify(totalLikes)) {
         const { itemTitle, itemLink, coverImage } =
           await getNotificationDetails(itemId, itemType);
 
         await sendTelegramNotification(
           `❤️ <b>Like Milestone Reached!</b>\n\n` +
             `🚀 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
-            `📊 <b>Total Likes:</b> <code>${count}</code>\n\n` +
+            `📊 <b>Total Likes:</b> <code>${totalLikes}</code>\n\n` +
             `🔗 <a href="${itemLink}">View Item</a>`,
           coverImage,
         );
 
         await createAuditLog("LIKE_MILESTONE", itemType.toUpperCase(), itemId, {
-          milestone: count,
+          milestone: totalLikes,
           ipAddress,
         });
       }
@@ -923,7 +1004,7 @@ export async function toggleLike(itemId: string, itemType: CommentItemType) {
       liked: !existingLike,
     });
 
-    return { success: true, liked: !existingLike, count };
+    return { success: true, liked: !existingLike, count: totalLikes };
   } catch (error) {
     console.error("Failed to toggle like:", error);
     return { success: false, error: (error as Error).message };
@@ -933,26 +1014,36 @@ export async function toggleLike(itemId: string, itemType: CommentItemType) {
 export async function getLikeStatus(itemId: string, itemType: CommentItemType) {
   try {
     const ipAddress = await getIpIdentifier();
-    const where: Prisma.LikeWhereInput = {
-      ipAddress,
-    };
 
+    const countFilters = [];
     if (itemType === "blog") {
-      where.blogPostId = itemId;
+      countFilters.push(eq(like.blogPostId, itemId));
     } else {
-      where.projectId = itemId;
+      countFilters.push(eq(like.projectId, itemId));
     }
 
-    const like = await prisma.like.findFirst({ where });
-    const countWhere: Prisma.LikeWhereInput = {};
-    if (itemType === "blog") {
-      countWhere.blogPostId = itemId;
-    } else {
-      countWhere.projectId = itemId;
-    }
-    const count = await prisma.like.count({ where: countWhere });
+    const [{ count: totalLikes }] = await db
+      .select({ count: count() })
+      .from(like)
+      .where(and(...countFilters));
 
-    return { liked: !!like, count };
+    let isLiked = false;
+
+    if (ipAddress !== "0.0.0.0") {
+      const filters = [eq(like.ipAddress, ipAddress)];
+      if (itemType === "blog") {
+        filters.push(eq(like.blogPostId, itemId));
+      } else {
+        filters.push(eq(like.projectId, itemId));
+      }
+
+      const existingLike = await db.query.like.findFirst({
+        where: and(...filters),
+      });
+      isLiked = !!existingLike;
+    }
+
+    return { liked: isLiked, count: totalLikes };
   } catch (error) {
     console.error("Failed to get like status:", error);
     return { liked: false, count: 0 };
@@ -962,49 +1053,59 @@ export async function getLikeStatus(itemId: string, itemType: CommentItemType) {
 export async function incrementView(itemId: string, itemType: CommentItemType) {
   try {
     const ipAddress = await getIpIdentifier();
-    const countWhere: Prisma.ViewWhereInput = {};
+
+    // Check recent view
+    const filters = [eq(view.ipAddress, ipAddress)];
     if (itemType === "blog") {
-      countWhere.blogPostId = itemId;
+      filters.push(eq(view.blogPostId, itemId));
     } else {
-      countWhere.projectId = itemId;
+      filters.push(eq(view.projectId, itemId));
     }
 
-    const existingView = await prisma.view.findFirst({
-      where: {
-        ipAddress,
-        ...(itemType === "blog"
-          ? { blogPostId: itemId }
-          : { projectId: itemId }),
-        createdAt: {
-          gte: new Date(Date.now() - 60 * 60 * 1000),
-        },
-      } as Prisma.ViewWhereInput,
+    const existingRecentView = await db.query.view.findFirst({
+      where: and(
+        ...filters,
+        gte(view.createdAt, new Date(Date.now() - 60 * 60 * 1000)),
+      ),
     });
 
-    if (!existingView) {
-      const data: Prisma.ViewUncheckedCreateInput = {
-        ipAddress,
-      };
+    let totalViews = 0;
+
+    if (!existingRecentView) {
+      const data: typeof view.$inferInsert = { ipAddress };
       if (itemType === "blog") {
         data.blogPostId = itemId;
       } else {
         data.projectId = itemId;
       }
-      await prisma.view.create({ data });
 
-      const count = await prisma.view.count({ where: countWhere });
-      if (shouldNotify(count)) {
-        const auditLogs = await prisma.auditLog.findMany({
-          where: {
-            action: "VIEW_MILESTONE",
-            entityId: itemId,
-            entityType: itemType.toUpperCase(),
-          },
+      await db.insert(view).values(data);
+
+      const countFilters = [];
+      if (itemType === "blog") {
+        countFilters.push(eq(view.blogPostId, itemId));
+      } else {
+        countFilters.push(eq(view.projectId, itemId));
+      }
+      const [{ count: c }] = await db
+        .select({ count: count() })
+        .from(view)
+        .where(and(...countFilters));
+
+      totalViews = c;
+
+      if (shouldNotify(totalViews)) {
+        const auditLogs = await db.query.auditLog.findMany({
+          where: and(
+            eq(auditLog.action, "VIEW_MILESTONE"),
+            eq(auditLog.entityId, itemId),
+            eq(auditLog.entityType, itemType.toUpperCase()),
+          ),
         });
 
-        const hasNotifiedThisMilestone = auditLogs.some((log) => {
-          const details = log.details as Record<string, unknown> | null;
-          return details?.milestone === count;
+        const hasNotifiedThisMilestone = auditLogs.some((l) => {
+          const det = l.details as Record<string, unknown> | null;
+          return det?.milestone === totalViews;
         });
 
         if (!hasNotifiedThisMilestone) {
@@ -1014,7 +1115,7 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
           await sendTelegramNotification(
             `📈 <b>New View Milestone Reached!</b>\n\n` +
               `🚀 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
-              `📊 <b>Total Views:</b> <code>${count}</code>\n` +
+              `📊 <b>Total Views:</b> <code>${totalViews}</code>\n` +
               `✨ This ${itemType === "blog" ? "blog post" : "project"} just hit a new milestone!\n\n` +
               `🔗 <a href="${itemLink}">View on Website</a>`,
             coverImage,
@@ -1025,16 +1126,27 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
             itemType.toUpperCase(),
             itemId,
             {
-              milestone: count,
+              milestone: totalViews,
               ipAddress,
             },
           );
         }
       }
+    } else {
+      const countFilters = [];
+      if (itemType === "blog") {
+        countFilters.push(eq(view.blogPostId, itemId));
+      } else {
+        countFilters.push(eq(view.projectId, itemId));
+      }
+      const [{ count: c }] = await db
+        .select({ count: count() })
+        .from(view)
+        .where(and(...countFilters));
+      totalViews = c;
     }
 
-    const count = await prisma.view.count({ where: countWhere });
-    return { success: true, count };
+    return { success: true, count: totalViews };
   } catch (error) {
     console.error("Failed to increment view:", error);
     return { success: false, error: (error as Error).message };
@@ -1043,13 +1155,19 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
 
 export async function getViewCount(itemId: string, itemType: CommentItemType) {
   try {
-    const countWhere: Prisma.ViewWhereInput = {};
+    const countFilters = [];
     if (itemType === "blog") {
-      countWhere.blogPostId = itemId;
+      countFilters.push(eq(view.blogPostId, itemId));
     } else {
-      countWhere.projectId = itemId;
+      countFilters.push(eq(view.projectId, itemId));
     }
-    return await prisma.view.count({ where: countWhere });
+
+    const [{ count: totalViews }] = await db
+      .select({ count: count() })
+      .from(view)
+      .where(and(...countFilters));
+
+    return totalViews;
   } catch {
     return 0;
   }
@@ -1129,14 +1247,17 @@ async function sendTelegramNotification(message: string, photo?: string) {
 }
 
 async function createAuditLog(
-  action: string,
-  entityType: string,
-  entityId: string,
-  details: Prisma.InputJsonValue,
+  actionArg: string,
+  entityTypeArg: string,
+  entityIdArg: string,
+  detailsArg: Record<string, unknown>,
 ) {
   try {
-    await prisma.auditLog.create({
-      data: { action, entityType, entityId, details },
+    await db.insert(auditLog).values({
+      action: actionArg,
+      entityType: entityTypeArg,
+      entityId: entityIdArg,
+      details: detailsArg,
     });
   } catch (error) {
     console.error("Audit log failed:", error);
@@ -1149,16 +1270,18 @@ export async function trackVisitor() {
 
     if (ipAddress === "0.0.0.0") return { success: false };
 
-    const existing = await prisma.uniqueVisitor.findUnique({
-      where: { ipAddress },
+    const existing = await db.query.uniqueVisitor.findFirst({
+      where: eq(uniqueVisitor.ipAddress, ipAddress),
     });
 
     if (!existing) {
-      await prisma.uniqueVisitor.create({
-        data: { ipAddress },
+      await db.insert(uniqueVisitor).values({
+        ipAddress,
       });
 
-      const totalUniqueVisitors = await prisma.uniqueVisitor.count();
+      const [{ count: totalUniqueVisitors }] = await db
+        .select({ count: count() })
+        .from(uniqueVisitor);
 
       if (shouldNotify(totalUniqueVisitors)) {
         const baseUrl = getBaseUrl();
@@ -1242,11 +1365,16 @@ export async function trackVisitor() {
         });
 
         try {
-          await prisma.visitorMilestone.upsert({
-            where: { count: totalUniqueVisitors },
-            update: {},
-            create: { count: totalUniqueVisitors },
+          // Check if milestone exists
+          const existingMilestone = await db.query.visitorMilestone.findFirst({
+            where: eq(visitorMilestone.count, totalUniqueVisitors),
           });
+
+          if (!existingMilestone) {
+            await db
+              .insert(visitorMilestone)
+              .values({ count: totalUniqueVisitors });
+          }
         } catch (e) {
           console.error("Failed to record visitor milestone:", e);
         }
@@ -1265,8 +1393,8 @@ export async function trackVisitor() {
 
 export async function getVisitorMilestones() {
   try {
-    return await prisma.visitorMilestone.findMany({
-      orderBy: { count: "asc" },
+    return await db.query.visitorMilestone.findMany({
+      orderBy: [asc(visitorMilestone.count)],
     });
   } catch (error) {
     console.error("Failed to fetch visitor milestones:", error);
@@ -1286,7 +1414,7 @@ export async function getSimilarProjects(
     let similarProjectIds: RawResult[] = [];
 
     try {
-      similarProjectIds = await prisma.$queryRaw<RawResult[]>`
+      const res = await db.execute<RawResult>(sql`
         WITH SourceEmbedding AS (
           SELECT embedding 
           FROM "Embedding" 
@@ -1305,7 +1433,11 @@ export async function getSimilarProjects(
         GROUP BY "sourceId"
         ORDER BY distance ASC
         LIMIT ${limit}
-      `;
+      `);
+      similarProjectIds = res.rows.map((r) => ({
+        sourceId: String((r as Record<string, unknown>).sourceId),
+        distance: Number((r as Record<string, unknown>).distance),
+      }));
     } catch (e) {
       console.error("Project similarity search failed:", e);
     }
@@ -1314,13 +1446,13 @@ export async function getSimilarProjects(
       !similarProjectIds.length ||
       similarProjectIds.every((r) => r.distance === null)
     ) {
-      const fallbackProjects = await prisma.project.findMany({
-        where: { id: { not: projectId } },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        include: {
-          translations: { where: { language: lang } },
-          technologies: true,
+      const fallbackProjects = await db.query.project.findMany({
+        where: ne(project.id, projectId),
+        orderBy: [desc(project.createdAt)],
+        limit,
+        with: {
+          translations: { where: eq(projectTranslation.language, lang) },
+          technologies: { with: { skill: true } },
         },
       });
 
@@ -1337,18 +1469,17 @@ export async function getSimilarProjects(
 
     const ids = similarProjectIds.map((r) => r.sourceId);
 
-    const projects = await prisma.project.findMany({
-      where: { id: { in: ids } },
-      include: {
-        translations: { where: { language: lang } },
-        technologies: true,
+    const projectsRes = await db.query.project.findMany({
+      where: inArray(project.id, ids),
+      with: {
+        translations: { where: eq(projectTranslation.language, lang) },
+        technologies: { with: { skill: true } },
       },
     });
 
-    // Sort projects to match the similarity order
     return ids
       .map((id) => {
-        const p = projects.find((proj) => proj.id === id);
+        const p = projectsRes.find((proj) => proj.id === id);
         if (!p) return null;
         const translation = p.translations[0] || {};
         return {
@@ -1377,7 +1508,7 @@ export async function getSimilarBlogPosts(
     let similarBlogIds: RawResult[] = [];
 
     try {
-      similarBlogIds = await prisma.$queryRaw<RawResult[]>`
+      const res = await db.execute<RawResult>(sql`
         WITH SourceEmbedding AS (
           SELECT embedding 
           FROM "Embedding" 
@@ -1396,7 +1527,11 @@ export async function getSimilarBlogPosts(
         GROUP BY "sourceId"
         ORDER BY distance ASC
         LIMIT ${limit}
-      `;
+      `);
+      similarBlogIds = res.rows.map((r) => ({
+        sourceId: String((r as Record<string, unknown>).sourceId),
+        distance: Number((r as Record<string, unknown>).distance),
+      }));
     } catch (e) {
       console.error("Blog similarity search failed:", e);
     }
@@ -1405,15 +1540,15 @@ export async function getSimilarBlogPosts(
       !similarBlogIds.length ||
       similarBlogIds.every((r) => r.distance === null)
     ) {
-      const fallbackPosts = await prisma.blogPost.findMany({
-        where: {
-          id: { not: blogPostId },
-          status: "published",
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        include: {
-          translations: { where: { language: lang } },
+      const fallbackPosts = await db.query.blogPost.findMany({
+        where: and(
+          ne(blogPost.id, blogPostId),
+          eq(blogPost.status, "published"),
+        ),
+        orderBy: [desc(blogPost.createdAt)],
+        limit,
+        with: {
+          translations: { where: eq(blogPostTranslation.language, lang) },
         },
       });
 
@@ -1433,19 +1568,16 @@ export async function getSimilarBlogPosts(
 
     const ids = similarBlogIds.map((r) => r.sourceId);
 
-    const posts = await prisma.blogPost.findMany({
-      where: {
-        id: { in: ids },
-        status: "published", // Always restrict similar posts to published
-      },
-      include: {
-        translations: { where: { language: lang } },
+    const postsRes = await db.query.blogPost.findMany({
+      where: and(inArray(blogPost.id, ids), eq(blogPost.status, "published")),
+      with: {
+        translations: { where: eq(blogPostTranslation.language, lang) },
       },
     });
 
     return ids
       .map((id) => {
-        const p = posts.find((post) => post.id === id);
+        const p = postsRes.find((post) => post.id === id);
         if (!p) return null;
         const translation = p.translations[0] || {};
         return {

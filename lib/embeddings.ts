@@ -1,7 +1,10 @@
+import { db } from "@/lib/db";
+import { blogPost, profile, project, workExperience } from "@/lib/db/schema";
 import { getEmbeddingModel } from "@/lib/gemini";
-import { prisma } from "@/lib/prisma";
 import { deleteEmbeddingsBySource, upsertEmbedding } from "@/lib/vectordb";
-import { Language } from "@prisma/client";
+import { eq } from "drizzle-orm";
+
+const Language = { tr: "tr", en: "en" } as const;
 
 const MAX_CHUNK_SIZE = 1000;
 
@@ -67,7 +70,7 @@ export async function processAndEmbed(
         `CRITICAL: Failed to embed chunk ${i} for ${sourceType} ${sourceId}:`,
         error,
       );
-      throw error; // Re-throw to stop silent failures
+      throw error;
     }
   }
 }
@@ -79,9 +82,9 @@ export async function syncSingleContent(
   await deleteEmbeddingsBySource(sourceType, sourceId);
 
   if (sourceType === "blog") {
-    const blog = await prisma.blogPost.findUnique({
-      where: { id: sourceId },
-      include: { translations: true },
+    const blog = await db.query.blogPost.findFirst({
+      where: eq(blogPost.id, sourceId),
+      with: { translations: true },
     });
     if (blog) {
       for (const t of blog.translations) {
@@ -103,27 +106,27 @@ export async function syncSingleContent(
       }
     }
   } else if (sourceType === "project") {
-    const project = await prisma.project.findUnique({
-      where: { id: sourceId },
-      include: { translations: true, technologies: true },
+    const prj = await db.query.project.findFirst({
+      where: eq(project.id, sourceId),
+      with: { translations: true, technologies: { with: { skill: true } } },
     });
-    if (project) {
-      for (const t of project.translations) {
+    if (prj) {
+      for (const t of prj.translations) {
         if (t.language === Language.tr || t.language === Language.en) {
-          const techs = project.technologies
-            .map((tech) => tech.name)
+          const techs = prj.technologies
+            .map((tech) => tech.skill.name)
             .join(", ");
           const header =
             `[project] Title: ${t.title}` +
-            ` | Slug: ${project.slug}` +
-            ` | Category: ${project.category}` +
-            ` | Status: ${project.status}` +
+            ` | Slug: ${prj.slug}` +
+            ` | Category: ${prj.category}` +
+            ` | Status: ${prj.status}` +
             (techs ? ` | Technologies: ${techs}` : "") +
-            (project.github ? ` | GitHub: ${project.github}` : "") +
-            (project.liveDemo ? ` | Live Demo: ${project.liveDemo}` : "");
+            (prj.github ? ` | GitHub: ${prj.github}` : "") +
+            (prj.liveDemo ? ` | Live Demo: ${prj.liveDemo}` : "");
           await processAndEmbed(
             "project",
-            project.id,
+            prj.id,
             t.language,
             header,
             t.shortDescription,
@@ -133,22 +136,22 @@ export async function syncSingleContent(
       }
     }
   } else if (sourceType === "profile") {
-    const profile = await prisma.profile.findUnique({
-      where: { id: sourceId },
-      include: { translations: true },
+    const prof = await db.query.profile.findFirst({
+      where: eq(profile.id, sourceId),
+      with: { translations: true },
     });
-    if (profile) {
-      for (const t of profile.translations) {
+    if (prof) {
+      for (const t of prof.translations) {
         if (t.language === Language.tr || t.language === Language.en) {
           const header =
             `[profile] Name: ${t.name}` +
             ` | Title: ${t.title}` +
-            (profile.email ? ` | Email: ${profile.email}` : "") +
-            (profile.github ? ` | GitHub: ${profile.github}` : "") +
-            (profile.linkedin ? ` | LinkedIn: ${profile.linkedin}` : "");
+            (prof.email ? ` | Email: ${prof.email}` : "") +
+            (prof.github ? ` | GitHub: ${prof.github}` : "") +
+            (prof.linkedin ? ` | LinkedIn: ${prof.linkedin}` : "");
           await processAndEmbed(
             "profile",
-            profile.id,
+            prof.id,
             t.language,
             header,
             t.title,
@@ -158,9 +161,9 @@ export async function syncSingleContent(
       }
     }
   } else if (sourceType === "experience") {
-    const exp = await prisma.workExperience.findUnique({
-      where: { id: sourceId },
-      include: { translations: true },
+    const exp = await db.query.workExperience.findFirst({
+      where: eq(workExperience.id, sourceId),
+      with: { translations: true },
     });
     if (exp) {
       for (const t of exp.translations) {
@@ -191,8 +194,8 @@ export async function syncSingleContent(
 }
 
 export async function syncAllContent() {
-  const blogs = await prisma.blogPost.findMany({
-    include: { translations: true },
+  const blogs = await db.query.blogPost.findMany({
+    with: { translations: true },
   });
 
   for (const blog of blogs) {
@@ -215,25 +218,27 @@ export async function syncAllContent() {
     }
   }
 
-  const projects = await prisma.project.findMany({
-    include: { translations: true, technologies: true },
+  const projects = await db.query.project.findMany({
+    with: { translations: true, technologies: { with: { skill: true } } },
   });
 
-  for (const project of projects) {
-    for (const t of project.translations) {
+  for (const prj of projects) {
+    for (const t of prj.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
-        const techs = project.technologies.map((tech) => tech.name).join(", ");
+        const techs = prj.technologies
+          .map((tech) => tech.skill.name)
+          .join(", ");
         const header =
           `[project] Title: ${t.title}` +
-          ` | Slug: ${project.slug}` +
-          ` | Category: ${project.category}` +
-          ` | Status: ${project.status}` +
+          ` | Slug: ${prj.slug}` +
+          ` | Category: ${prj.category}` +
+          ` | Status: ${prj.status}` +
           (techs ? ` | Technologies: ${techs}` : "") +
-          (project.github ? ` | GitHub: ${project.github}` : "") +
-          (project.liveDemo ? ` | Live Demo: ${project.liveDemo}` : "");
+          (prj.github ? ` | GitHub: ${prj.github}` : "") +
+          (prj.liveDemo ? ` | Live Demo: ${prj.liveDemo}` : "");
         await processAndEmbed(
           "project",
-          project.id,
+          prj.id,
           t.language,
           header,
           t.shortDescription,
@@ -243,22 +248,22 @@ export async function syncAllContent() {
     }
   }
 
-  const profiles = await prisma.profile.findMany({
-    include: { translations: true },
+  const profiles = await db.query.profile.findMany({
+    with: { translations: true },
   });
 
-  for (const profile of profiles) {
-    for (const t of profile.translations) {
+  for (const prof of profiles) {
+    for (const t of prof.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
         const header =
           `[profile] Name: ${t.name}` +
           ` | Title: ${t.title}` +
-          (profile.email ? ` | Email: ${profile.email}` : "") +
-          (profile.github ? ` | GitHub: ${profile.github}` : "") +
-          (profile.linkedin ? ` | LinkedIn: ${profile.linkedin}` : "");
+          (prof.email ? ` | Email: ${prof.email}` : "") +
+          (prof.github ? ` | GitHub: ${prof.github}` : "") +
+          (prof.linkedin ? ` | LinkedIn: ${prof.linkedin}` : "");
         await processAndEmbed(
           "profile",
-          profile.id,
+          prof.id,
           t.language,
           header,
           t.title,
@@ -268,8 +273,8 @@ export async function syncAllContent() {
     }
   }
 
-  const experiences = await prisma.workExperience.findMany({
-    include: { translations: true },
+  const experiences = await db.query.workExperience.findMany({
+    with: { translations: true },
   });
 
   for (const exp of experiences) {

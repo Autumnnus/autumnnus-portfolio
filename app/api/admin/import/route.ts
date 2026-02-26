@@ -1,12 +1,20 @@
-import {
-  BlogData,
-  ExperienceData,
-  ProfileData,
-  ProjectData,
-} from "@/app/[locale]/admin/actions";
 import { auth } from "@/auth";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { db } from "@/lib/db";
+import {
+  _projectToSkill,
+  blogPost,
+  blogPostTranslation,
+  profileTranslation,
+  project,
+  projectTranslation,
+  quest,
+  questTranslation,
+  skill,
+  workExperience,
+  workExperienceTranslation,
+} from "@/lib/db/schema";
 import { uploadFile } from "@/lib/minio";
-import { prisma } from "@/lib/prisma";
 import JSZip from "jszip";
 import path from "path";
 
@@ -39,126 +47,182 @@ export async function POST(request: Request) {
     const { data } = JSON.parse(jsonContent);
     const { projects, blogs, profile, experiences, skills } = data;
 
-    await prisma.$transaction(async (tx) => {
-      await tx.projectTranslation.deleteMany();
-      await tx.project.deleteMany();
-      await tx.blogPostTranslation.deleteMany();
-      await tx.blogPost.deleteMany();
-      await tx.workExperienceTranslation.deleteMany();
-      await tx.workExperience.deleteMany();
-      await tx.profileTranslation.deleteMany();
-      await tx.profile.deleteMany();
-      await tx.skill.deleteMany();
+    await db.transaction(async (tx) => {
+      await tx.delete(projectTranslation);
+      await tx.delete(_projectToSkill);
+      await tx.delete(project);
+      await tx.delete(blogPostTranslation);
+      await tx.delete(blogPost);
+      await tx.delete(workExperienceTranslation);
+      await tx.delete(workExperience);
+      await tx.delete(questTranslation);
+      await tx.delete(quest);
+      await tx.delete(profileTranslation);
+      await tx.delete(profile);
+      await tx.delete(skill);
 
       if (skills?.length) {
-        await tx.skill.createMany({
-          data: (
-            skills as { id: string; key: string; name: string; icon: string }[]
-          ).map((s) => ({
+        await tx.insert(skill).values(
+          (skills as any[]).map((s) => ({
             id: s.id,
             key: s.key,
             name: s.name,
             icon: s.icon,
           })),
-        });
+        );
       }
 
       if (profile) {
-        const pr = profile as ProfileData;
-        await tx.profile.create({
-          data: {
+        const pr = profile as any;
+        const newProfileRes = (await tx
+          .insert(profile)
+          .values({
+            id: pr.id,
             avatar: pr.avatar,
             email: pr.email,
             github: pr.github,
             linkedin: pr.linkedin,
-            translations: {
-              create: pr.translations.map((t) => ({
-                language: t.language,
-                name: t.name,
-                title: t.title,
-                greetingText: t.greetingText,
-                description: t.description,
-                aboutTitle: t.aboutTitle,
-                aboutDescription: t.aboutDescription,
-              })),
-            },
-          },
-        });
+          })
+          .returning()) as any;
+        const newProfile = newProfileRes[0];
+
+        if (pr.translations?.length) {
+          await tx.insert(profileTranslation).values(
+            pr.translations.map((t: any) => ({
+              profileId: newProfile.id,
+              language: t.language,
+              name: t.name,
+              title: t.title,
+              greetingText: t.greetingText,
+              description: t.description,
+              aboutTitle: t.aboutTitle,
+              aboutDescription: t.aboutDescription,
+            })),
+          );
+        }
+
+        if (pr.quests?.length) {
+          for (const q of pr.quests as any[]) {
+            const newQuestRes = (await tx
+              .insert(quest)
+              .values({
+                profileId: newProfile.id,
+                order: q.order,
+                id: q.id,
+              })
+              .returning()) as any;
+            const newQuest = newQuestRes[0];
+
+            if (q.translations?.length) {
+              await tx.insert(questTranslation).values(
+                q.translations.map((t: any) => ({
+                  questId: newQuest.id,
+                  language: t.language,
+                  title: t.title,
+                  description: t.description,
+                })),
+              );
+            }
+          }
+        }
       }
 
       if (experiences?.length) {
-        for (const exp of experiences as ExperienceData[]) {
-          await tx.workExperience.create({
-            data: {
+        for (const exp of experiences as any[]) {
+          const newExperienceRes = (await tx
+            .insert(workExperience)
+            .values({
+              id: exp.id,
               company: exp.company,
               logo: exp.logo,
-              startDate: exp.startDate,
-              endDate: exp.endDate,
-              translations: {
-                create: exp.translations.map((t) => ({
-                  language: t.language,
-                  role: t.role,
-                  description: t.description,
-                  locationType: t.locationType,
-                })),
-              },
-            },
-          });
+              startDate: exp.startDate ? new Date(exp.startDate) : null,
+              endDate: exp.endDate ? new Date(exp.endDate) : null,
+            })
+            .returning()) as any;
+          const newExperience = newExperienceRes[0];
+
+          if (exp.translations?.length) {
+            await tx.insert(workExperienceTranslation).values(
+              exp.translations.map((t: any) => ({
+                workExperienceId: newExperience.id,
+                language: t.language,
+                role: t.role,
+                description: t.description,
+                locationType: t.locationType,
+              })),
+            );
+          }
         }
       }
 
       if (blogs?.length) {
-        for (const blog of blogs as BlogData[]) {
-          await tx.blogPost.create({
-            data: {
+        for (const blog of blogs as any[]) {
+          const newBlogRes = (await tx
+            .insert(blogPost)
+            .values({
+              id: blog.id,
               slug: blog.slug,
               coverImage: blog.coverImage,
               featured: blog.featured,
               tags: blog.tags,
-              translations: {
-                create: blog.translations.map((t) => ({
-                  language: t.language,
-                  title: t.title,
-                  description: t.description,
-                  content: t.content,
-                  readTime: t.readTime,
-                  date: t.date,
-                })),
-              },
-            },
-          });
+            })
+            .returning()) as any;
+          const newBlog = newBlogRes[0];
+
+          if (blog.translations?.length) {
+            await tx.insert(blogPostTranslation).values(
+              blog.translations.map((t: any) => ({
+                blogPostId: newBlog.id,
+                language: t.language,
+                title: t.title,
+                description: t.description,
+                content: t.content,
+                readTime: t.readTime,
+                date: t.date ? String(t.date) : new Date().toISOString(),
+              })),
+            );
+          }
         }
       }
 
       if (projects?.length) {
-        for (const project of projects as ProjectData[]) {
-          await tx.project.create({
-            data: {
-              slug: project.slug,
-              status: project.status,
-              category: project.category,
-              github: project.github,
-              liveDemo: project.liveDemo,
-              featured: project.featured,
-              coverImage: project.coverImage,
-              images: project.images,
-              technologies: {
-                connect: (
-                  project.technologies as unknown as { id: string }[]
-                ).map((tech) => ({
-                  id: tech.id,
-                })),
-              },
-              translations: {
-                create: project.translations.map((t) => ({
-                  language: t.language,
-                  title: t.title,
-                  shortDescription: t.shortDescription,
-                  fullDescription: t.fullDescription,
-                })),
-              },
-            },
-          });
+        for (const prj of projects as any[]) {
+          const newProjectRes = (await tx
+            .insert(project)
+            .values({
+              id: prj.id,
+              slug: prj.slug,
+              status: prj.status,
+              category: prj.category,
+              github: prj.github,
+              liveDemo: prj.liveDemo,
+              featured: prj.featured,
+              coverImage: prj.coverImage,
+              images: prj.images,
+            })
+            .returning()) as any;
+          const newProject = newProjectRes[0];
+
+          if (prj.technologies?.length) {
+            await tx.insert(_projectToSkill).values(
+              (prj.technologies as any[]).map((tech) => ({
+                A: newProject.id,
+                B: tech.id,
+              })),
+            );
+          }
+
+          if (prj.translations?.length) {
+            await tx.insert(projectTranslation).values(
+              prj.translations.map((t: any) => ({
+                projectId: newProject.id,
+                language: t.language,
+                title: t.title,
+                shortDescription: t.shortDescription,
+                fullDescription: t.fullDescription,
+              })),
+            );
+          }
         }
       }
     });

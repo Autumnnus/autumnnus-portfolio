@@ -1,7 +1,7 @@
 import { getProjectFilters, getProjects } from "@/app/actions";
 import ProjectsClient from "@/components/projects/ProjectsClient";
+import { LanguageType as Language } from "@/lib/db/schema";
 import { Project } from "@/types/contents";
-import { Language } from "@prisma/client";
 
 interface ProjectsPageProps {
   params: Promise<{ locale: string }>;

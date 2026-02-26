@@ -1,10 +1,27 @@
 "use server";
 
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import {
+  _projectToSkill,
+  blogPost,
+  blogPostTranslation,
+  comment as commentTable,
+  LanguageType as Language,
+  profile,
+  profileTranslation,
+  project,
+  projectTranslation,
+  quest,
+  questTranslation,
+  skill,
+  socialLink,
+  workExperience,
+  workExperienceTranslation,
+} from "@/lib/db/schema";
 import { deleteFolder, uploadFile } from "@/lib/minio";
-import { prisma } from "@/lib/prisma";
 import { deleteEmbeddingsBySource } from "@/lib/vectordb";
-import { Language } from "@prisma/client";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export interface ProjectTranslationInput {
@@ -136,8 +153,8 @@ export async function createProjectAction(data: ProjectData) {
 
   const { translations, technologies, images, ...projectData } = data;
 
-  const existingProject = await prisma.project.findUnique({
-    where: { slug: projectData.slug },
+  const existingProject = await db.query.project.findFirst({
+    where: eq(project.slug, projectData.slug),
   });
 
   if (existingProject) {
@@ -146,18 +163,33 @@ export async function createProjectAction(data: ProjectData) {
     );
   }
 
-  return await prisma.project.create({
-    data: {
+  const [newProject] = await db
+    .insert(project)
+    .values({
       ...projectData,
       images,
-      translations: {
-        create: translations,
-      },
-      technologies: {
-        connect: technologies.map((id: string) => ({ id })),
-      },
-    },
-  });
+    })
+    .returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(projectTranslation).values(
+      translations.map((t) => ({
+        ...t,
+        projectId: newProject.id,
+      })),
+    );
+  }
+
+  if (technologies && technologies.length > 0) {
+    await db.insert(_projectToSkill).values(
+      technologies.map((techId) => ({
+        A: newProject.id,
+        B: techId,
+      })),
+    );
+  }
+
+  return newProject;
 }
 
 export async function updateProjectAction(id: string, data: ProjectData) {
@@ -171,11 +203,8 @@ export async function updateProjectAction(id: string, data: ProjectData) {
 
   const { translations, technologies, images, ...projectData } = data;
 
-  const existingProject = await prisma.project.findFirst({
-    where: {
-      slug: projectData.slug,
-      NOT: { id },
-    },
+  const existingProject = await db.query.project.findFirst({
+    where: and(eq(project.slug, projectData.slug), ne(project.id, id)),
   });
 
   if (existingProject) {
@@ -184,21 +213,39 @@ export async function updateProjectAction(id: string, data: ProjectData) {
     );
   }
 
-  await prisma.projectTranslation.deleteMany({ where: { projectId: id } });
+  await db
+    .delete(projectTranslation)
+    .where(eq(projectTranslation.projectId, id));
+  await db.delete(_projectToSkill).where(eq(_projectToSkill.A, id));
 
-  return await prisma.project.update({
-    where: { id },
-    data: {
+  const [updatedProject] = await db
+    .update(project)
+    .set({
       ...projectData,
       images,
-      translations: {
-        create: translations,
-      },
-      technologies: {
-        set: technologies.map((id: string) => ({ id })),
-      },
-    },
-  });
+    })
+    .where(eq(project.id, id))
+    .returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(projectTranslation).values(
+      translations.map((t) => ({
+        ...t,
+        projectId: id,
+      })),
+    );
+  }
+
+  if (technologies && technologies.length > 0) {
+    await db.insert(_projectToSkill).values(
+      technologies.map((techId) => ({
+        A: id,
+        B: techId,
+      })),
+    );
+  }
+
+  return updatedProject;
 }
 
 export async function deleteProjectAction(id: string) {
@@ -210,20 +257,18 @@ export async function deleteProjectAction(id: string) {
     throw new Error("Unauthorized");
   }
 
-  const project = await prisma.project.findUnique({
-    where: { id },
-    select: { slug: true },
+  const existingProject = await db.query.project.findFirst({
+    where: eq(project.id, id),
+    columns: { slug: true },
   });
 
-  if (project?.slug) {
-    await deleteFolder(`projects/${project.slug}`);
+  if (existingProject?.slug) {
+    await deleteFolder(`projects/${existingProject.slug}`);
   }
 
   await deleteEmbeddingsBySource("project", id);
 
-  return await prisma.project.delete({
-    where: { id },
-  });
+  return await db.delete(project).where(eq(project.id, id)).returning();
 }
 
 export async function createBlogAction(data: BlogData) {
@@ -237,8 +282,8 @@ export async function createBlogAction(data: BlogData) {
 
   const { translations, ...blogData } = data;
 
-  const existingBlog = await prisma.blogPost.findUnique({
-    where: { slug: blogData.slug },
+  const existingBlog = await db.query.blogPost.findFirst({
+    where: eq(blogPost.slug, blogData.slug),
   });
 
   if (existingBlog) {
@@ -247,14 +292,18 @@ export async function createBlogAction(data: BlogData) {
     );
   }
 
-  return await prisma.blogPost.create({
-    data: {
-      ...blogData,
-      translations: {
-        create: translations,
-      },
-    },
-  });
+  const [newBlog] = await db.insert(blogPost).values(blogData).returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(blogPostTranslation).values(
+      translations.map((t) => ({
+        ...t,
+        blogPostId: newBlog.id,
+      })),
+    );
+  }
+
+  return newBlog;
 }
 
 export async function updateBlogAction(id: string, data: BlogData) {
@@ -268,11 +317,8 @@ export async function updateBlogAction(id: string, data: BlogData) {
 
   const { translations, ...blogData } = data;
 
-  const existingBlog = await prisma.blogPost.findFirst({
-    where: {
-      slug: blogData.slug,
-      NOT: { id },
-    },
+  const existingBlog = await db.query.blogPost.findFirst({
+    where: and(eq(blogPost.slug, blogData.slug), ne(blogPost.id, id)),
   });
 
   if (existingBlog) {
@@ -281,17 +327,26 @@ export async function updateBlogAction(id: string, data: BlogData) {
     );
   }
 
-  await prisma.blogPostTranslation.deleteMany({ where: { blogPostId: id } });
+  await db
+    .delete(blogPostTranslation)
+    .where(eq(blogPostTranslation.blogPostId, id));
 
-  return await prisma.blogPost.update({
-    where: { id },
-    data: {
-      ...blogData,
-      translations: {
-        create: translations,
-      },
-    },
-  });
+  const [updatedBlog] = await db
+    .update(blogPost)
+    .set(blogData)
+    .where(eq(blogPost.id, id))
+    .returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(blogPostTranslation).values(
+      translations.map((t) => ({
+        ...t,
+        blogPostId: id,
+      })),
+    );
+  }
+
+  return updatedBlog;
 }
 
 export async function deleteBlogAction(id: string) {
@@ -303,20 +358,18 @@ export async function deleteBlogAction(id: string) {
     throw new Error("Unauthorized");
   }
 
-  const blog = await prisma.blogPost.findUnique({
-    where: { id },
-    select: { slug: true },
+  const existingBlog = await db.query.blogPost.findFirst({
+    where: eq(blogPost.id, id),
+    columns: { slug: true },
   });
 
-  if (blog?.slug) {
-    await deleteFolder(`blog/${blog.slug}`);
+  if (existingBlog?.slug) {
+    await deleteFolder(`blog/${existingBlog.slug}`);
   }
 
   await deleteEmbeddingsBySource("blog", id);
 
-  return await prisma.blogPost.delete({
-    where: { id },
-  });
+  return await db.delete(blogPost).where(eq(blogPost.id, id)).returning();
 }
 
 export async function createSkillAction(data: { name: string; icon: string }) {
@@ -330,13 +383,16 @@ export async function createSkillAction(data: { name: string; icon: string }) {
 
   const key = data.name.toUpperCase().replace(/\s+/g, "_");
 
-  return await prisma.skill.create({
-    data: {
+  const [newSkill] = await db
+    .insert(skill)
+    .values({
       name: data.name,
       icon: data.icon,
       key,
-    },
-  });
+    })
+    .returning();
+
+  return newSkill;
 }
 export async function updateProfileAction(data: ProfileData) {
   const session = await auth();
@@ -349,66 +405,104 @@ export async function updateProfileAction(data: ProfileData) {
 
   const { translations, quests, ...profileData } = data;
 
-  const profile = await prisma.profile.findFirst();
+  const existingProfile = await db.query.profile.findFirst();
 
-  if (profile) {
-    await prisma.$transaction([
-      prisma.profileTranslation.deleteMany({
-        where: { profileId: profile.id },
-      }),
-      prisma.questTranslation.deleteMany({
-        where: { quest: { profileId: profile.id } },
-      }),
-      prisma.quest.deleteMany({
-        where: { profileId: profile.id },
-      }),
-      prisma.profile.update({
-        where: { id: profile.id },
-        data: {
-          ...profileData,
-          translations: {
-            create: translations,
-          },
-          quests: {
-            create: quests.map((q) => ({
-              completed: q.completed,
-              order: q.order,
-              translations: {
-                create: q.translations.map((t) => ({
-                  language: t.language,
-                  title: t.title,
-                })),
-              },
+  if (existingProfile) {
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(profileTranslation)
+        .where(eq(profileTranslation.profileId, existingProfile.id));
+
+      const existingQuests = await tx.query.quest.findMany({
+        where: eq(quest.profileId, existingProfile.id),
+      });
+
+      if (existingQuests.length > 0) {
+        const questIds = existingQuests.map((q) => q.id);
+        await tx
+          .delete(questTranslation)
+          .where(inArray(questTranslation.questId, questIds));
+        await tx.delete(quest).where(eq(quest.profileId, existingProfile.id));
+      }
+
+      await tx
+        .update(profile)
+        .set(profileData)
+        .where(eq(profile.id, existingProfile.id));
+
+      if (translations && translations.length > 0) {
+        await tx
+          .insert(profileTranslation)
+          .values(
+            translations.map((t) => ({ ...t, profileId: existingProfile.id })),
+          );
+      }
+
+      for (const q of quests) {
+        const [newQuest] = await tx
+          .insert(quest)
+          .values({
+            completed: q.completed,
+            order: q.order,
+            profileId: existingProfile.id,
+          })
+          .returning();
+
+        if (q.translations && q.translations.length > 0) {
+          await tx.insert(questTranslation).values(
+            q.translations.map((t) => ({
+              language: t.language,
+              title: t.title,
+              questId: newQuest.id,
             })),
-          },
-        },
-      }),
-    ]);
+          );
+        }
+      }
+    });
+
     revalidatePath("/[locale]", "layout");
     return { success: true };
   } else {
-    const newProfile = await prisma.profile.create({
-      data: {
-        ...profileData,
-        translations: {
-          create: translations,
-        },
-        quests: {
-          create: quests.map((q) => ({
+    let newProfileData: any = null;
+    await db.transaction(async (tx) => {
+      const [newProfile] = await tx
+        .insert(profile)
+        .values(profileData)
+        .returning();
+      newProfileData = newProfile;
+
+      if (translations && translations.length > 0) {
+        await tx
+          .insert(profileTranslation)
+          .values(
+            translations.map((t) => ({ ...t, profileId: newProfile.id })),
+          );
+      }
+
+      for (const q of quests) {
+        const [newQuest] = await tx
+          .insert(quest)
+          .values({
             completed: q.completed,
             order: q.order,
-            translations: {
-              create: q.translations.map((t) => ({
-                language: t.language,
-                title: t.title,
-              })),
-            },
-          })),
-        },
-      },
+            profileId: newProfile.id,
+          })
+          .returning();
+
+        if (q.translations && q.translations.length > 0) {
+          await tx.insert(questTranslation).values(
+            q.translations.map((t) => ({
+              language: t.language,
+              title: t.title,
+              questId: newQuest.id,
+            })),
+          );
+        }
+      }
     });
+
     revalidatePath("/[locale]", "layout");
-    return newProfile;
+    return newProfileData;
   }
 }
 
@@ -423,14 +517,21 @@ export async function createExperienceAction(data: ExperienceData) {
 
   const { translations, ...experienceData } = data;
 
-  return await prisma.workExperience.create({
-    data: {
-      ...experienceData,
-      translations: {
-        create: translations,
-      },
-    },
-  });
+  const [newExp] = await db
+    .insert(workExperience)
+    .values(experienceData)
+    .returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(workExperienceTranslation).values(
+      translations.map((t) => ({
+        ...t,
+        workExperienceId: newExp.id,
+      })),
+    );
+  }
+
+  return newExp;
 }
 
 export async function updateExperienceAction(id: string, data: ExperienceData) {
@@ -444,19 +545,26 @@ export async function updateExperienceAction(id: string, data: ExperienceData) {
 
   const { translations, ...experienceData } = data;
 
-  await prisma.workExperienceTranslation.deleteMany({
-    where: { workExperienceId: id },
-  });
+  await db
+    .delete(workExperienceTranslation)
+    .where(eq(workExperienceTranslation.workExperienceId, id));
 
-  return await prisma.workExperience.update({
-    where: { id },
-    data: {
-      ...experienceData,
-      translations: {
-        create: translations,
-      },
-    },
-  });
+  const [updatedExp] = await db
+    .update(workExperience)
+    .set(experienceData)
+    .where(eq(workExperience.id, id))
+    .returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(workExperienceTranslation).values(
+      translations.map((t) => ({
+        ...t,
+        workExperienceId: id,
+      })),
+    );
+  }
+
+  return updatedExp;
 }
 
 export async function deleteExperienceAction(id: string) {
@@ -468,9 +576,10 @@ export async function deleteExperienceAction(id: string) {
     throw new Error("Unauthorized");
   }
 
-  return await prisma.workExperience.delete({
-    where: { id },
-  });
+  return await db
+    .delete(workExperience)
+    .where(eq(workExperience.id, id))
+    .returning();
 }
 
 export async function createQuestAction(data: QuestData) {
@@ -482,27 +591,32 @@ export async function createQuestAction(data: QuestData) {
     throw new Error("Unauthorized");
   }
 
-  const profile = await prisma.profile.findFirst();
-  if (!profile)
+  const profileRow = await db.query.profile.findFirst();
+  if (!profileRow)
     throw new Error("Profil bulunamadı. Lütfen önce profil oluşturun.");
 
   const { translations, ...questData } = data;
 
-  const quest = await prisma.quest.create({
-    data: {
+  const [newQuest] = await db
+    .insert(quest)
+    .values({
       ...questData,
-      profileId: profile.id,
-      translations: {
-        create: translations.map((t) => ({
-          language: t.language,
-          title: t.title,
-        })),
-      },
-    },
-  });
+      profileId: profileRow.id,
+    })
+    .returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(questTranslation).values(
+      translations.map((t) => ({
+        language: t.language,
+        title: t.title,
+        questId: newQuest.id,
+      })),
+    );
+  }
 
   revalidatePath("/[locale]", "layout");
-  return quest;
+  return newQuest;
 }
 
 export async function updateQuestAction(id: string, data: QuestData) {
@@ -516,23 +630,26 @@ export async function updateQuestAction(id: string, data: QuestData) {
 
   const { translations, ...questData } = data;
 
-  await prisma.questTranslation.deleteMany({ where: { questId: id } });
+  await db.delete(questTranslation).where(eq(questTranslation.questId, id));
 
-  const quest = await prisma.quest.update({
-    where: { id },
-    data: {
-      ...questData,
-      translations: {
-        create: translations.map((t) => ({
-          language: t.language,
-          title: t.title,
-        })),
-      },
-    },
-  });
+  const [updatedQuest] = await db
+    .update(quest)
+    .set(questData)
+    .where(eq(quest.id, id))
+    .returning();
+
+  if (translations && translations.length > 0) {
+    await db.insert(questTranslation).values(
+      translations.map((t) => ({
+        language: t.language,
+        title: t.title,
+        questId: id,
+      })),
+    );
+  }
 
   revalidatePath("/[locale]", "layout");
-  return quest;
+  return updatedQuest;
 }
 
 export async function deleteQuestAction(id: string) {
@@ -544,12 +661,13 @@ export async function deleteQuestAction(id: string) {
     throw new Error("Unauthorized");
   }
 
-  const quest = await prisma.quest.delete({
-    where: { id },
-  });
+  const deletedQuest = await db
+    .delete(quest)
+    .where(eq(quest.id, id))
+    .returning();
 
   revalidatePath("/[locale]", "layout");
-  return quest;
+  return deletedQuest[0];
 }
 
 export async function toggleQuestStatusAction(id: string, completed: boolean) {
@@ -561,13 +679,14 @@ export async function toggleQuestStatusAction(id: string, completed: boolean) {
     throw new Error("Unauthorized");
   }
 
-  const quest = await prisma.quest.update({
-    where: { id },
-    data: { completed },
-  });
+  const updatedQuest = await db
+    .update(quest)
+    .set({ completed })
+    .where(eq(quest.id, id))
+    .returning();
 
   revalidatePath("/[locale]", "layout");
-  return quest;
+  return updatedQuest[0];
 }
 
 export async function exportDatabaseAction() {
@@ -581,22 +700,22 @@ export async function exportDatabaseAction() {
 
   const [projects, blogs, profile, experiences, socialLinks, skills, quests] =
     await Promise.all([
-      prisma.project.findMany({
-        include: { translations: true, technologies: true },
+      db.query.project.findMany({
+        with: { translations: true, technologies: { with: { skill: true } } },
       }),
-      prisma.blogPost.findMany({
-        include: { translations: true },
+      db.query.blogPost.findMany({
+        with: { translations: true },
       }),
-      prisma.profile.findFirst({
-        include: { translations: true },
+      db.query.profile.findFirst({
+        with: { translations: true },
       }),
-      prisma.workExperience.findMany({
-        include: { translations: true },
+      db.query.workExperience.findMany({
+        with: { translations: true },
       }),
-      prisma.socialLink.findMany(),
-      prisma.skill.findMany(),
-      prisma.quest.findMany({
-        include: { translations: true },
+      db.query.socialLink.findMany(),
+      db.query.skill.findMany(),
+      db.query.quest.findMany({
+        with: { translations: true },
       }),
     ]);
 
@@ -624,167 +743,204 @@ export async function importDatabaseAction(jsonData: string) {
   }
 
   const { data } = JSON.parse(jsonData);
-  const { projects, blogs, profile, experiences, skills, quests } = data;
+  const {
+    projects: impProjects,
+    blogs: impBlogs,
+    profile: impProfile,
+    experiences: impExperiences,
+    skills: impSkills,
+    quests: impQuests,
+  } = data;
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.projectTranslation.deleteMany();
-      await tx.project.deleteMany();
-      await tx.blogPostTranslation.deleteMany();
-      await tx.blogPost.deleteMany();
-      await tx.workExperienceTranslation.deleteMany();
-      await tx.workExperience.deleteMany();
-      await tx.profileTranslation.deleteMany();
-      await tx.profile.deleteMany();
-      await tx.skill.deleteMany();
-      await tx.questTranslation.deleteMany();
-      await tx.quest.deleteMany();
+    await db.transaction(async (tx) => {
+      await tx.delete(projectTranslation);
+      await tx.delete(_projectToSkill);
+      await tx.delete(project);
+      await tx.delete(blogPostTranslation);
+      await tx.delete(blogPost);
+      await tx.delete(workExperienceTranslation);
+      await tx.delete(workExperience);
+      await tx.delete(profileTranslation);
+      await tx.delete(profile);
+      await tx.delete(skill);
+      await tx.delete(questTranslation);
+      await tx.delete(quest);
 
-      if (skills && skills.length > 0) {
-        await tx.skill.createMany({
-          data: (
-            skills as { id: string; key: string; name: string; icon: string }[]
+      if (impSkills && impSkills.length > 0) {
+        await tx.insert(skill).values(
+          (
+            impSkills as {
+              id: string;
+              key: string;
+              name: string;
+              icon: string;
+            }[]
           ).map((s) => ({
             id: s.id,
             key: s.key,
             name: s.name,
             icon: s.icon,
           })),
-        });
+        );
       }
-      if (profile) {
-        const p = profile as ProfileData;
-        const createdProfile = await tx.profile.create({
-          data: {
+      if (impProfile) {
+        const p = impProfile as ProfileData;
+        const [createdProfile] = await tx
+          .insert(profile)
+          .values({
             avatar: p.avatar,
             email: p.email,
             github: p.github,
             linkedin: p.linkedin,
-            translations: {
-              create: p.translations.map((t) => ({
-                language: t.language,
-                name: t.name,
-                title: t.title,
-                greetingText: t.greetingText,
-                description: t.description,
-                aboutTitle: t.aboutTitle,
-                aboutDescription: t.aboutDescription,
-              })),
-            },
-          },
-        });
+          })
+          .returning();
 
-        if (quests && quests.length > 0) {
-          for (const quest of quests as {
+        if (p.translations && p.translations.length > 0) {
+          await tx.insert(profileTranslation).values(
+            p.translations.map((t) => ({
+              language: t.language,
+              name: t.name,
+              title: t.title,
+              greetingText: t.greetingText,
+              description: t.description,
+              aboutTitle: t.aboutTitle,
+              aboutDescription: t.aboutDescription,
+              profileId: createdProfile.id,
+            })),
+          );
+        }
+
+        if (impQuests && impQuests.length > 0) {
+          for (const q of impQuests as {
             completed: boolean;
             order: number;
-            profileId?: string;
             translations: { language: Language; title: string }[];
           }[]) {
-            await tx.quest.create({
-              data: {
-                completed: quest.completed,
-                order: quest.order,
+            const [newQuest] = await tx
+              .insert(quest)
+              .values({
+                completed: q.completed,
+                order: q.order,
                 profileId: createdProfile.id,
-                translations: {
-                  create: quest.translations.map(
-                    (t: { language: Language; title: string }) => ({
-                      language: t.language,
-                      title: t.title,
-                    }),
-                  ),
-                },
-              },
-            });
+              })
+              .returning();
+
+            if (q.translations && q.translations.length > 0) {
+              await tx.insert(questTranslation).values(
+                q.translations.map((t) => ({
+                  language: t.language,
+                  title: t.title,
+                  questId: newQuest.id,
+                })),
+              );
+            }
           }
         }
       }
 
-      if (experiences && experiences.length > 0) {
-        for (const exp of experiences as ExperienceData[]) {
-          await tx.workExperience.create({
-            data: {
+      if (impExperiences && impExperiences.length > 0) {
+        for (const exp of impExperiences as ExperienceData[]) {
+          const [newExp] = await tx
+            .insert(workExperience)
+            .values({
               company: exp.company,
               logo: exp.logo,
               startDate: exp.startDate,
               endDate: exp.endDate,
-              translations: {
-                create: exp.translations.map((t) => ({
-                  language: t.language,
-                  role: t.role,
-                  description: t.description,
-                  locationType: t.locationType,
-                })),
-              },
-            },
-          });
+            })
+            .returning();
+
+          if (exp.translations && exp.translations.length > 0) {
+            await tx.insert(workExperienceTranslation).values(
+              exp.translations.map((t) => ({
+                language: t.language,
+                role: t.role,
+                description: t.description,
+                locationType: t.locationType,
+                workExperienceId: newExp.id,
+              })),
+            );
+          }
         }
       }
 
-      if (blogs && blogs.length > 0) {
-        for (const blog of blogs as BlogData[]) {
-          await tx.blogPost.create({
-            data: {
-              slug: blog.slug,
-              coverImage: blog.coverImage,
-              imageAlt: blog.imageAlt,
-              status: blog.status || "published",
-              category: blog.category,
-              commentsEnabled: blog.commentsEnabled ?? true,
-              featured: blog.featured,
-              tags: blog.tags,
-              translations: {
-                create: blog.translations.map((t) => ({
-                  language: t.language,
-                  title: t.title,
-                  description: t.description,
-                  content: t.content,
-                  readTime: t.readTime,
-                  date: t.date,
-                  excerpt: t.excerpt,
-                  metaTitle: t.metaTitle,
-                  metaDescription: t.metaDescription,
-                  keywords: t.keywords,
-                })),
-              },
-            },
-          });
+      if (impBlogs && impBlogs.length > 0) {
+        for (const b of impBlogs as BlogData[]) {
+          const [newBlog] = await tx
+            .insert(blogPost)
+            .values({
+              slug: b.slug,
+              coverImage: b.coverImage,
+              imageAlt: b.imageAlt,
+              status: b.status || "published",
+              category: b.category,
+              commentsEnabled: b.commentsEnabled ?? true,
+              featured: b.featured,
+              tags: b.tags,
+            })
+            .returning();
+
+          if (b.translations && b.translations.length > 0) {
+            await tx.insert(blogPostTranslation).values(
+              b.translations.map((t) => ({
+                language: t.language,
+                title: t.title,
+                description: t.description,
+                content: t.content,
+                readTime: t.readTime,
+                date: t.date,
+                excerpt: t.excerpt,
+                metaTitle: t.metaTitle,
+                metaDescription: t.metaDescription,
+                keywords: t.keywords,
+                blogPostId: newBlog.id,
+              })),
+            );
+          }
         }
       }
 
-      if (projects && projects.length > 0) {
-        for (const project of projects as ProjectData[]) {
-          await tx.project.create({
-            data: {
-              slug: project.slug,
-              status: project.status,
-              category: project.category,
-              github: project.github,
-              liveDemo: project.liveDemo,
-              featured: project.featured,
-              coverImage: project.coverImage,
-              imageAlt: project.imageAlt,
-              images: project.images,
-              technologies: {
-                connect: (
-                  project.technologies as unknown as { id: string }[]
-                ).map((tech) => ({
-                  id: tech.id,
-                })),
-              },
-              translations: {
-                create: project.translations.map((t) => ({
-                  language: t.language,
-                  title: t.title,
-                  shortDescription: t.shortDescription,
-                  fullDescription: t.fullDescription,
-                  metaTitle: t.metaTitle,
-                  metaDescription: t.metaDescription,
-                  keywords: t.keywords,
-                })),
-              },
-            },
-          });
+      if (impProjects && impProjects.length > 0) {
+        for (const prj of impProjects as ProjectData[]) {
+          const [newProject] = await tx
+            .insert(project)
+            .values({
+              slug: prj.slug,
+              status: prj.status,
+              category: prj.category,
+              github: prj.github,
+              liveDemo: prj.liveDemo,
+              featured: prj.featured,
+              coverImage: prj.coverImage,
+              imageAlt: prj.imageAlt,
+              images: prj.images,
+            })
+            .returning();
+
+          if (prj.translations && prj.translations.length > 0) {
+            await tx.insert(projectTranslation).values(
+              prj.translations.map((t) => ({
+                language: t.language,
+                title: t.title,
+                shortDescription: t.shortDescription,
+                fullDescription: t.fullDescription,
+                metaTitle: t.metaTitle,
+                metaDescription: t.metaDescription,
+                keywords: t.keywords,
+                projectId: newProject.id,
+              })),
+            );
+          }
+
+          if (prj.technologies && prj.technologies.length > 0) {
+            await tx.insert(_projectToSkill).values(
+              (prj.technologies as unknown as { id: string }[]).map((tech) => ({
+                A: newProject.id,
+                B: tech.id,
+              })),
+            );
+          }
         }
       }
     });
@@ -805,9 +961,11 @@ export async function deleteCommentAction(id: string) {
     throw new Error("Unauthorized");
   }
 
-  return await prisma.comment.delete({
-    where: { id },
-  });
+  const [deletedComment] = await db
+    .delete(commentTable)
+    .where(eq(commentTable.id, id))
+    .returning();
+  return deletedComment;
 }
 
 export async function fetchGithubReposAction() {
@@ -879,14 +1037,16 @@ export async function createSocialLinkAction(data: {
     session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
   )
     throw new Error("Unauthorized");
-  return await prisma.socialLink.create({
-    data: {
+  const [newLink] = await db
+    .insert(socialLink)
+    .values({
       key: data.name.toLowerCase().replace(/\s+/g, "-"),
       name: data.name,
       href: data.href,
       icon: data.icon,
-    },
-  });
+    })
+    .returning();
+  return newLink;
 }
 
 export async function deleteSocialLinkAction(id: string) {
@@ -896,7 +1056,7 @@ export async function deleteSocialLinkAction(id: string) {
     session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
   )
     throw new Error("Unauthorized");
-  await prisma.socialLink.delete({ where: { id } });
+  await db.delete(socialLink).where(eq(socialLink.id, id));
   revalidatePath("/[locale]", "layout");
 }
 
@@ -907,6 +1067,6 @@ export async function deleteSkillAction(id: string) {
     session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
   )
     throw new Error("Unauthorized");
-  await prisma.skill.delete({ where: { id } });
+  await db.delete(skill).where(eq(skill.id, id));
   revalidatePath("/[locale]", "layout");
 }

@@ -1,11 +1,11 @@
 import { deleteExperienceAction } from "@/app/[locale]/admin/actions";
 import { auth } from "@/auth";
 import Container from "@/components/common/Container";
-import { prisma } from "@/lib/prisma";
+import { Link } from "@/i18n/routing";
+import { db } from "@/lib/db";
 import { Briefcase, Pencil, Plus, Trash2 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
-import { Link } from "@/i18n/routing";
 import { redirect } from "next/navigation";
 
 export default async function AdminExperiencePage() {
@@ -19,13 +19,13 @@ export default async function AdminExperiencePage() {
 
   const t = await getTranslations("Admin.Dashboard.experience");
   const tCommon = await getTranslations("Admin.Common");
-  const experiences = await prisma.workExperience.findMany({
-    include: {
+  const experiences = await db.query.workExperience.findMany({
+    with: {
       translations: {
-        where: { language: "tr" },
+        where: (t, { eq }) => eq(t.language, "tr"),
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: (e, { desc }) => [desc(e.createdAt)],
   });
 
   return (
@@ -51,7 +51,7 @@ export default async function AdminExperiencePage() {
       </div>
 
       <div className="grid gap-4 sm:gap-6">
-        {experiences.map((exp) => (
+        {experiences.map((exp: any) => (
           <div
             key={exp.id}
             className="p-4 sm:p-6 bg-card border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group hover:border-primary/50 transition-all"

@@ -1,8 +1,9 @@
+import { db } from "@/lib/db";
+import { aiChatMessage, aiChatSession, chatRateLimit } from "@/lib/db/schema";
 import { generateEmbedding } from "@/lib/embeddings";
-import { prisma } from "@/lib/prisma";
 import { searchSimilar } from "@/lib/vectordb";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Prisma } from "@prisma/client";
+import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
@@ -40,19 +41,26 @@ async function checkRateLimit(ip: string): Promise<boolean> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const limitRecord = await prisma.chatRateLimit.findUnique({
-    where: { ipAddress_date: { ipAddress: ip, date: today } },
+  const limitRecord = await db.query.chatRateLimit.findFirst({
+    where: (table, { and, eq }) =>
+      and(eq(table.ipAddress, ip), eq(table.date, today)),
   });
 
   if (limitRecord && limitRecord.requestCount >= RATE_LIMIT_DAILY) {
     return false;
   }
 
-  await prisma.chatRateLimit.upsert({
-    where: { ipAddress_date: { ipAddress: ip, date: today } },
-    update: { requestCount: { increment: 1 } },
-    create: { ipAddress: ip, date: today, requestCount: 1 },
-  });
+  await db
+    .insert(chatRateLimit)
+    .values({
+      ipAddress: ip,
+      date: today,
+      requestCount: 1,
+    })
+    .onConflictDoUpdate({
+      target: [chatRateLimit.ipAddress, chatRateLimit.date],
+      set: { requestCount: sql`${chatRateLimit.requestCount} + 1` },
+    });
 
   return true;
 }
@@ -93,9 +101,9 @@ async function fetchMetadataForChunks(
 
   const [projects, blogs, profiles, experiences] = await Promise.all([
     projectIds.length > 0
-      ? prisma.project.findMany({
-          where: { id: { in: projectIds } },
-          select: {
+      ? db.query.project.findMany({
+          where: (p, { inArray }) => inArray(p.id, projectIds),
+          columns: {
             id: true,
             slug: true,
             github: true,
@@ -103,56 +111,67 @@ async function fetchMetadataForChunks(
             category: true,
             status: true,
             coverImage: true,
-            technologies: { select: { name: true } },
+          },
+          with: {
+            technologies: {
+              columns: {},
+              with: { skill: { columns: { name: true } } },
+            },
             translations: {
-              where: { language: lang === "tr" ? "tr" : "en" },
-              select: { title: true, shortDescription: true },
+              where: (t, { eq }) => eq(t.language, lang === "tr" ? "tr" : "en"),
+              columns: { title: true, shortDescription: true },
             },
           },
         })
       : [],
     blogIds.length > 0
-      ? prisma.blogPost.findMany({
-          where: { id: { in: blogIds } },
-          select: {
+      ? db.query.blogPost.findMany({
+          where: (b, { inArray }) => inArray(b.id, blogIds),
+          columns: {
             id: true,
             slug: true,
             category: true,
             tags: true,
             coverImage: true,
+          },
+          with: {
             translations: {
-              where: { language: lang === "tr" ? "tr" : "en" },
-              select: { title: true, description: true },
+              where: (t, { eq }) => eq(t.language, lang === "tr" ? "tr" : "en"),
+              columns: { title: true, description: true },
             },
           },
         })
       : [],
     profileIds.length > 0
-      ? prisma.profile.findMany({
-          where: { id: { in: profileIds } },
-          select: {
+      ? db.query.profile.findMany({
+          where: (p, { inArray }) => inArray(p.id, profileIds),
+          columns: {
             id: true,
             email: true,
             github: true,
             linkedin: true,
+          },
+          with: {
             translations: {
-              where: { language: lang === "tr" ? "tr" : "en" },
-              select: { name: true, title: true },
+              where: (t, { eq }) => eq(t.language, lang === "tr" ? "tr" : "en"),
+              columns: { name: true, title: true },
             },
           },
         })
       : [],
     experienceIds.length > 0
-      ? prisma.workExperience.findMany({
-          where: { id: { in: experienceIds } },
-          select: {
+      ? db.query.workExperience.findMany({
+          where: (e, { inArray }) => inArray(e.id, experienceIds),
+          columns: {
             id: true,
             company: true,
             startDate: true,
             endDate: true,
+          },
+          with: {
             translations: {
-              where: { language: lang === "tr" ? "tr" : "en" },
-              select: { role: true, description: true, locationType: true },
+              where: (t, { eq }) => eq(t.language, lang === "tr" ? "tr" : "en"),
+              columns: { role: true, description: true, locationType: true },
             },
           },
         })
@@ -164,7 +183,11 @@ async function fetchMetadataForChunks(
 
   for (const project of projects) {
     const translation = project.translations[0];
-    const techs = project.technologies.map((t) => t.name);
+    const techs = (
+      project.technologies as { skill: { name: string | null } | null }[]
+    )
+      .map((t) => t.skill?.name)
+      .filter((name): name is string => !!name);
     const portfolioUrl = `/${lang}/projects/${project.slug}`;
 
     contextBlocks.push(
@@ -301,9 +324,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const recentSession = await prisma.aiChatSession.findFirst({
-      where: { ipAddress: ip },
-      orderBy: { updatedAt: "desc" },
+    const recentSession = await db.query.aiChatSession.findFirst({
+      where: (s, { eq }) => eq(s.ipAddress, ip),
+      orderBy: (s, { desc }) => [desc(s.updatedAt)],
     });
 
     let sessionId = recentSession?.id;
@@ -313,23 +336,22 @@ export async function POST(req: NextRequest) {
       !recentSession ||
       new Date().getTime() - recentSession.updatedAt.getTime() > TWO_HOURS_MS
     ) {
-      const newSession = await prisma.aiChatSession.create({
-        data: { ipAddress: ip },
-      });
+      const [newSession] = await db
+        .insert(aiChatSession)
+        .values({ ipAddress: ip })
+        .returning({ id: aiChatSession.id });
       sessionId = newSession.id;
-    } else {
-      await prisma.aiChatSession.update({
-        where: { id: sessionId },
-        data: { updatedAt: new Date() },
-      });
+    } else if (sessionId) {
+      await db
+        .update(aiChatSession)
+        .set({ updatedAt: new Date() })
+        .where(eq(aiChatSession.id, sessionId));
     }
 
-    await prisma.aiChatMessage.create({
-      data: {
-        sessionId: sessionId!,
-        role: "user",
-        content: message,
-      },
+    await db.insert(aiChatMessage).values({
+      sessionId: sessionId!,
+      role: "user",
+      content: message,
     });
 
     const recentHistory = history.slice(-HISTORY_LIMIT);
@@ -437,19 +459,17 @@ ${message}`;
     let usageMetadata = null;
     try {
       usageMetadata = result.response.usageMetadata;
-    } catch (_e) {
+    } catch (e) {
       // ignore
     }
 
-    await prisma.aiChatMessage.create({
-      data: {
-        sessionId: sessionId!,
-        role: "ai",
-        content: response,
-        metadata: {
-          systemPrompt: systemPrompt,
-          usage: usageMetadata as unknown as Prisma.InputJsonValue,
-        },
+    await db.insert(aiChatMessage).values({
+      sessionId: sessionId!,
+      role: "ai",
+      content: response,
+      metadata: {
+        systemPrompt: systemPrompt,
+        usage: usageMetadata as unknown as any,
       },
     });
 
@@ -458,7 +478,7 @@ ${message}`;
     );
 
     return NextResponse.json({ response, sources: relevantSources });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat API Error:", error);
     return NextResponse.json(
       {

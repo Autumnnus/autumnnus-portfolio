@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { embedding } from "@/lib/db/schema";
+import { sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
@@ -20,50 +22,52 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const projects = await prisma.project.findMany({
-      select: {
+    const projects = await db.query.project.findMany({
+      columns: {
         id: true,
         slug: true,
         updatedAt: true,
-        translations: { select: { title: true, language: true } },
       },
+      with: { translations: { columns: { title: true, language: true } } },
     });
-    const blogs = await prisma.blogPost.findMany({
-      select: {
+    const blogs = await db.query.blogPost.findMany({
+      columns: {
         id: true,
         slug: true,
         updatedAt: true,
-        translations: { select: { title: true, language: true } },
       },
+      with: { translations: { columns: { title: true, language: true } } },
     });
-    const profiles = await prisma.profile.findMany({
-      select: {
+    const profiles = await db.query.profile.findMany({
+      columns: {
         id: true,
         updatedAt: true,
-        translations: { select: { name: true, language: true } },
       },
+      with: { translations: { columns: { name: true, language: true } } },
     });
-    const experiences = await prisma.workExperience.findMany({
-      select: {
+    const experiences = await db.query.workExperience.findMany({
+      columns: {
         id: true,
         company: true,
         updatedAt: true,
-        translations: { select: { role: true, language: true } },
       },
+      with: { translations: { columns: { role: true, language: true } } },
     });
 
-    const embeddings = await prisma.embedding.groupBy({
-      by: ["sourceType", "sourceId"],
-      _max: {
-        updatedAt: true,
-      },
-    });
+    const embeddings = await db
+      .select({
+        sourceType: embedding.sourceType,
+        sourceId: embedding.sourceId,
+        maxUpdatedAt: sql<Date>`max(${embedding.updatedAt})`,
+      })
+      .from(embedding)
+      .groupBy(embedding.sourceType, embedding.sourceId);
 
     const items: any[] = [];
 
     const getEmbUpdate = (type: string, id: string) =>
-      embeddings.find((e) => e.sourceType === type && e.sourceId === id)?._max
-        .updatedAt;
+      embeddings.find((e: any) => e.sourceType === type && e.sourceId === id)
+        ?.maxUpdatedAt;
 
     const getStatus = (
       sourceUpdate: Date,

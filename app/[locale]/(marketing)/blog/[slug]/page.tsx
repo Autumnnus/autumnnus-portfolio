@@ -4,8 +4,8 @@ import {
   getSimilarBlogPosts,
 } from "@/app/actions";
 import BlogPostView from "@/components/blog/BlogPostView";
+import { LanguageType as Language } from "@/lib/db/schema";
 import { BlogPost } from "@/types/contents";
-import { Language } from "@prisma/client";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -15,7 +15,7 @@ interface BlogPostPageProps {
 
 export async function generateStaticParams() {
   const result = await getBlogPosts({
-    lang: Language.en,
+    lang: "en",
     limit: 100,
     skipAuth: true,
   });

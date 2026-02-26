@@ -20,7 +20,7 @@ import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
 import { ProjectFormValues, ProjectSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Language, Project, ProjectTranslation, Skill } from "@prisma/client";
+import { LanguageType as Language, Project, ProjectTranslation, Skill } from "@/lib/db/schema";
 import {
   ChevronLeft,
   ChevronRight,

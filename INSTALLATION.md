@@ -42,56 +42,59 @@ Then, open the `.env` file in a code editor and configure the necessary keys (Te
 - **Turnstile:** Cloudflare's free API endpoint keys to prevent spam bots.
 - **Telegram & Gemini:** For AI features and Notification integrations within the project.
 
-### 4. Start the Database and MinIO
+## Deployment (Coolify & Nixpacks)
 
-Spin up the PostgreSQL and MinIO services in the background using `docker-compose.yml` located in the root folder:
+This project is optimized for deployment on **Coolify** using **Nixpacks**. Nixpacks will automatically detect the Next.js environment and handle the build process.
 
-```bash
-docker-compose up -d
-```
+1.  Connect your repository to Coolify.
+2.  Set the **Build Pack** to `Nixpacks`.
+3.  Configure your environment variables in the Coolify dashboard (copy from `.env.example`).
+4.  Coolify will build and serve the application automatically.
 
-_Note: Make sure the containers are running successfully using Docker Desktop or the `docker ps` command._
+### Running Locally
 
-### 5. Setup Database Schema and Seed Data
+To run the project locally for development:
 
-Since you just set up the database locally, you need to push the project schemas to the SQL database, generate the Prisma Client, and populate essential data (like your Profile and Chat settings):
+1.  **Clone & Install:**
 
-```bash
-# Generate Prisma Client
-yarn db:generate
+    ```bash
+    git clone <repo_url>
+    cd autumnnus-portfolio
+    yarn install
+    ```
 
-# Push schema to database
-# Note: If this fails with "vector extension" error,
-# make sure the pgvector extension is enabled in your DB.
-yarn db:push
+2.  **Environment Variables:**
+    Copy `.env.example` to `.env` and fill in your local Postgres and MinIO credentials.
 
-# Populate initial data (Profile, Live Chat config, etc.)
-npx prisma db seed
-```
+3.  **Start Local Services (Docker):**
+    Run Postgres and MinIO using the provided `docker-compose.yml`:
 
-> [!IMPORTANT]
-> If `db:push` fails with a "vector type does not exist" error, run this command to enable it:
-> `docker exec autumnnus_postgres psql -U postgres -d autumnnus_portfolio -c "CREATE EXTENSION IF NOT EXISTS vector;"`
+    ```bash
+    docker-compose up -d
+    ```
 
-### 6. Run the Project
+4.  **Database Setup:**
 
-Once all the steps are complete, you can start the Next.js development server:
+    ```bash
+    yarn db:generate
+    yarn db:push
+    npx tsx lib/db/seed.ts
+    ```
 
-```bash
-yarn dev
-```
+5.  **Start Development Server:**
+    ```bash
+    yarn dev
+    ```
 
-You're all set! 🎉 You can now view your portfolio by navigating to `http://localhost:3001`.
+## Useful Drizzle Commands
 
-## Useful Prisma Commands
+When you make changes to `lib/db/schema.ts`, use these commands:
 
-When you make changes to `prisma/schema.prisma`, use these commands:
-
-| Command              | Description                                                               |
-| -------------------- | ------------------------------------------------------------------------- |
-| `yarn db:push`       | Syncs schema changes directly to the DB without migrations (Development). |
-| `yarn db:migrate`    | Creates a migration file and applies it (Production/Stable changes).      |
-| `yarn db:generate`   | Regenerates the Prisma Client (Run this if types are missing).            |
-| `yarn db:studio`     | Opens a web browser GUI to view/edit your database data.                  |
-| `yarn db:validate`   | Checks if your `schema.prisma` file is valid.                             |
-| `npx prisma db seed` | Populates the database with initial data (Profile, Settings, etc.).       |
+| Command                  | Description                                                               |
+| ------------------------ | ------------------------------------------------------------------------- |
+| `yarn db:push`           | Syncs schema changes directly to the DB without migrations (Development). |
+| `yarn db:migrate`        | Creates a migration file and applies it (Production/Stable changes).      |
+| `yarn db:generate`       | Generates migration files based on schema changes.                        |
+| `yarn db:studio`         | Opens a web browser GUI to view/edit your database data.                  |
+| `yarn db:validate`       | Checks if your types are valid.                                           |
+| `npx tsx lib/db/seed.ts` | Populates the database with initial data (Profile, Settings, etc.).       |

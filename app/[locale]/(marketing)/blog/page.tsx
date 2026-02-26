@@ -1,7 +1,7 @@
 import { getBlogFilters, getBlogPosts } from "@/app/actions";
 import BlogClient from "@/components/blog/BlogClient";
+import { LanguageType as Language } from "@/lib/db/schema";
 import { BlogPost } from "@/types/contents";
-import { Language } from "@prisma/client";
 
 interface BlogPageProps {
   params: Promise<{ locale: string }>;

@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 import { languageNames } from "@/i18n/routing";
 import { handleAction } from "@/lib/api-client";
-import { Language } from "@prisma/client";
+import { LanguageType as Language } from "@/lib/db/schema";
 import {
   Globe,
   Layout,

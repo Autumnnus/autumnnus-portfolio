@@ -12,7 +12,7 @@ import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
 import { BlogFormValues, BlogSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BlogPost, BlogPostTranslation, Language } from "@prisma/client";
+import { BlogPost, BlogPostTranslation, LanguageType as Language } from "@/lib/db/schema";
 import {
   FileText,
   ImagePlus,

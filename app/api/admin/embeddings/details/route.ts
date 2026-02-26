@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
@@ -30,13 +30,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const embeddings = await prisma.embedding.findMany({
-      where: {
-        sourceType,
-        sourceId,
-      },
-      orderBy: [{ language: "asc" }, { chunkIndex: "asc" }],
-      select: {
+    const embeddings = await db.query.embedding.findMany({
+      where: (e, { and, eq }) =>
+        and(eq(e.sourceType, sourceType), eq(e.sourceId, sourceId)),
+      orderBy: (e, { asc }) => [asc(e.language), asc(e.chunkIndex)],
+      columns: {
         id: true,
         chunkText: true,
         chunkIndex: true,
