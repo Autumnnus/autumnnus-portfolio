@@ -2,10 +2,9 @@ import { getBlogPosts } from "@/app/actions";
 import AdminBlogList from "@/components/admin/AdminBlogList";
 import AdminSearch from "@/components/admin/AdminSearch";
 import Container from "@/components/common/Container";
-import { Language } from "@prisma/client";
+import { Link } from "@/i18n/routing";
 import { ArrowLeft, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/routing";
 
 export default async function AdminBlogPage({
   searchParams,
@@ -16,7 +15,7 @@ export default async function AdminBlogPage({
   const t = await getTranslations("Admin.Dashboard.blog");
   const tNav = await getTranslations("Admin.Navigation");
   const result = await getBlogPosts({
-    lang: Language.tr,
+    lang: "tr",
     limit: 100,
     search: query,
   });

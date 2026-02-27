@@ -32,6 +32,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   };
 
   const visibleTechs = project.technologies.slice(0, 7);
+  console.log("visibleTechs", visibleTechs);
   const remainingCount = project.technologies.length - 7;
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);

@@ -1,9 +1,15 @@
 "use server";
 
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import {
+  LanguageType as Language,
+  liveChatConfig,
+  liveChatGreeting,
+  liveChatGreetingTranslation,
+} from "@/lib/db/schema";
 import { uploadFile } from "@/lib/minio";
-import { prisma } from "@/lib/prisma";
-import { Language } from "@prisma/client";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export interface GreetingTranslationInput {
@@ -39,10 +45,10 @@ async function checkAdmin() {
 export async function getLiveChatConfigAction() {
   await checkAdmin();
 
-  let config = await prisma.liveChatConfig.findFirst({
-    include: {
+  let config = await db.query.liveChatConfig.findFirst({
+    with: {
       greetings: {
-        include: {
+        with: {
           translations: true,
         },
       },
@@ -50,19 +56,15 @@ export async function getLiveChatConfigAction() {
   });
 
   if (!config) {
-    config = await prisma.liveChatConfig.create({
-      data: {
+    const [newConfig] = await db
+      .insert(liveChatConfig)
+      .values({
         isEnabled: true,
         allowedPaths: [],
-      },
-      include: {
-        greetings: {
-          include: {
-            translations: true,
-          },
-        },
-      },
-    });
+      })
+      .returning();
+
+    return { ...newConfig, greetings: [] };
   }
 
   return config;
@@ -77,12 +79,12 @@ export async function updateLiveChatConfigAction(data: {
 }) {
   await checkAdmin();
 
-  const config = await prisma.liveChatConfig.findFirst();
+  const config = await db.query.liveChatConfig.findFirst();
 
   if (config) {
-    await prisma.liveChatConfig.update({
-      where: { id: config.id },
-      data: {
+    await db
+      .update(liveChatConfig)
+      .set({
         isEnabled: data.isEnabled,
         allowedPaths: data.allowedPaths,
         excludedPaths: data.excludedPaths,
@@ -92,17 +94,15 @@ export async function updateLiveChatConfigAction(data: {
           data.notificationSoundUrl !== undefined
             ? data.notificationSoundUrl
             : undefined,
-      },
-    });
+      })
+      .where(eq(liveChatConfig.id, config.id));
   } else {
-    await prisma.liveChatConfig.create({
-      data: {
-        isEnabled: data.isEnabled,
-        allowedPaths: data.allowedPaths,
-        excludedPaths: data.excludedPaths,
-        pingSoundUrl: data.pingSoundUrl,
-        notificationSoundUrl: data.notificationSoundUrl,
-      },
+    await db.insert(liveChatConfig).values({
+      isEnabled: data.isEnabled,
+      allowedPaths: data.allowedPaths,
+      excludedPaths: data.excludedPaths,
+      pingSoundUrl: data.pingSoundUrl,
+      notificationSoundUrl: data.notificationSoundUrl,
     });
   }
 
@@ -122,14 +122,14 @@ export async function uploadLiveChatSoundAction(formData: FormData) {
   const filename = `sounds/livechat-${type}-${Date.now()}.mp3`;
   const url = await uploadFile(filename, buffer, file.type);
 
-  const config = await prisma.liveChatConfig.findFirst();
+  const config = await db.query.liveChatConfig.findFirst();
   if (config) {
-    await prisma.liveChatConfig.update({
-      where: { id: config.id },
-      data: {
+    await db
+      .update(liveChatConfig)
+      .set({
         [type === "ping" ? "pingSoundUrl" : "notificationSoundUrl"]: url,
-      },
-    });
+      })
+      .where(eq(liveChatConfig.id, config.id));
   }
 
   revalidatePath("/", "layout");
@@ -139,14 +139,14 @@ export async function uploadLiveChatSoundAction(formData: FormData) {
 export async function resetLiveChatSoundAction(type: "ping" | "notification") {
   await checkAdmin();
 
-  const config = await prisma.liveChatConfig.findFirst();
+  const config = await db.query.liveChatConfig.findFirst();
   if (config) {
-    await prisma.liveChatConfig.update({
-      where: { id: config.id },
-      data: {
+    await db
+      .update(liveChatConfig)
+      .set({
         [type === "ping" ? "pingSoundUrl" : "notificationSoundUrl"]: null,
-      },
-    });
+      })
+      .where(eq(liveChatConfig.id, config.id));
   }
 
   revalidatePath("/", "layout");
@@ -158,36 +158,43 @@ export async function upsertLiveChatGreetingAction(
 ) {
   await checkAdmin();
 
-  const config = await prisma.liveChatConfig.findFirst();
+  const config = await db.query.liveChatConfig.findFirst();
   if (!config) throw new Error("Live chat config not found");
 
-  const existingGreeting = await prisma.liveChatGreeting.findUnique({
-    where: { pathname: data.pathname },
+  const existingGreeting = await db.query.liveChatGreeting.findFirst({
+    where: (g, { eq }) => eq(g.pathname, data.pathname),
   });
 
   if (existingGreeting) {
-    await prisma.$transaction([
-      prisma.liveChatGreetingTranslation.deleteMany({
-        where: { greetingId: existingGreeting.id },
-      }),
-      prisma.liveChatGreeting.update({
-        where: { id: existingGreeting.id },
-        data: {
-          translations: {
-            create: data.translations,
-          },
-        },
-      }),
-    ]);
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(liveChatGreetingTranslation)
+        .where(eq(liveChatGreetingTranslation.greetingId, existingGreeting.id));
+      await tx.insert(liveChatGreetingTranslation).values(
+        data.translations.map((t) => ({
+          ...t,
+          greetingId: existingGreeting.id,
+          quickAnswers: t.quickAnswers || [],
+        })),
+      );
+    });
   } else {
-    await prisma.liveChatGreeting.create({
-      data: {
-        pathname: data.pathname,
-        configId: config.id,
-        translations: {
-          create: data.translations,
-        },
-      },
+    await db.transaction(async (tx) => {
+      const [newGreeting] = await tx
+        .insert(liveChatGreeting)
+        .values({
+          pathname: data.pathname,
+          configId: config.id,
+        })
+        .returning();
+
+      await tx.insert(liveChatGreetingTranslation).values(
+        data.translations.map((t) => ({
+          ...t,
+          greetingId: newGreeting.id,
+          quickAnswers: t.quickAnswers || [],
+        })),
+      );
     });
   }
 
@@ -198,9 +205,7 @@ export async function upsertLiveChatGreetingAction(
 export async function deleteLiveChatGreetingAction(id: string) {
   await checkAdmin();
 
-  await prisma.liveChatGreeting.delete({
-    where: { id },
-  });
+  await db.delete(liveChatGreeting).where(eq(liveChatGreeting.id, id));
 
   revalidatePath("/", "layout");
   return { success: true };

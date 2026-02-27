@@ -1,6 +1,6 @@
 import { getBlogPosts, getProjects } from "@/app/actions";
 import { routing } from "@/i18n/routing";
-import { Language } from "@prisma/client";
+import { Language } from "@/lib/db/schema";
 import { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

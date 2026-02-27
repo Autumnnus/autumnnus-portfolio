@@ -2,7 +2,7 @@ import AiLogsClient, {
   Session,
 } from "@/app/[locale]/admin/ai-logs/AiLogsClient";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
@@ -33,11 +33,11 @@ export default async function AdminAiLogsPage({
 
   const t = await getTranslations({ locale });
 
-  const aiSessions = await prisma.aiChatSession.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: {
+  const aiSessions = await db.query.aiChatSession.findMany({
+    orderBy: (s, { desc }) => [desc(s.updatedAt)],
+    with: {
       messages: {
-        orderBy: { createdAt: "asc" },
+        orderBy: (m, { asc }) => [asc(m.createdAt)],
       },
     },
   });

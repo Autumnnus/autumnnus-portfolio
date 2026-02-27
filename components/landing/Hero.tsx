@@ -1,6 +1,6 @@
 "use client";
 import Icon from "@/components/common/Icon";
-import { Skill, SocialLink } from "@prisma/client";
+import { Skill, SocialLink } from "@/lib/db/schema";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 

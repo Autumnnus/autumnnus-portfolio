@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { getFile } from "@/lib/minio";
-import { prisma } from "@/lib/prisma";
 import JSZip from "jszip";
 
 export async function GET() {
@@ -14,19 +14,19 @@ export async function GET() {
     }
 
     const [projects, blogs, profile, experiences, skills] = await Promise.all([
-      prisma.project.findMany({
-        include: { translations: true, technologies: true },
+      db.query.project.findMany({
+        with: { translations: true, technologies: true },
       }),
-      prisma.blogPost.findMany({
-        include: { translations: true },
+      db.query.blogPost.findMany({
+        with: { translations: true },
       }),
-      prisma.profile.findFirst({
-        include: { translations: true },
+      db.query.profile.findFirst({
+        with: { translations: true },
       }),
-      prisma.workExperience.findMany({
-        include: { translations: true },
+      db.query.workExperience.findMany({
+        with: { translations: true },
       }),
-      prisma.skill.findMany(),
+      db.query.skill.findMany(),
     ]);
 
     const data = {
@@ -72,8 +72,10 @@ export async function GET() {
 
     for (const p of projects) {
       if (p.coverImage) downloadPromises.push(addFileToZip(p.coverImage));
-      for (const img of p.images) {
-        downloadPromises.push(addFileToZip(img));
+      if (p.images) {
+        for (const img of p.images) {
+          downloadPromises.push(addFileToZip(img));
+        }
       }
     }
 

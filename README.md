@@ -6,7 +6,7 @@ Autumnnus Portfolio is a modern, full-featured, multi-lingual (i18n), and AI-pow
 
 - **Modular Modern Interface:** Fully responsive UI designed with Next.js (App Router), Tailwind CSS, and Framer Motion. Uses Radix UI Primitives for enhanced accessibility.
 - **Multi-language (i18n) Support:** Localization with `next-intl` (English, Turkish, etc.).
-- **Database & ORM:** Type-safe database interactions with PostgreSQL and Prisma ORM.
+- **Database & ORM:** Type-safe database interactions with PostgreSQL and Drizzle ORM.
 - **Role-based Authentication:** Different roles like Admin and Visitor (e.g., GitHub Auth) using Auth.js.
 - **Object Storage (S3 Compatible):** Storing images, media, and other files locally or on your own server with MinIO.
 - **Artificial Intelligence (AI) Integration:** Smart operations (AI Actions) powered by Google Gemini API.
@@ -28,7 +28,7 @@ To install the project on your local machine, configure environment variables in
 
 - **Framework:** Next.js (App Router), React 19
 - **Styling & Animation:** Tailwind CSS v4, Framer Motion, Radix UI Primitives, Lucide Icons
-- **Backend & Database:** Node.js, PostgreSQL, Prisma, MinIO
+- **Backend & Database:** Node.js, PostgreSQL, Drizzle ORM, MinIO
 - **Security & Auth:** Auth.js (NextAuth), Cloudflare Turnstile
 - **Language & Forms:** `next-intl`, React Hook Form, Zod
 - **AI Integration:** `@google/generative-ai`

@@ -1,8 +1,8 @@
 import { getWorkExperiences } from "@/app/actions";
 import Container from "@/components/common/Container";
 import WorkCard from "@/components/work/WorkCard";
+import { LanguageType as Language } from "@/lib/db/schema";
 import { WorkExperience } from "@/types/contents";
-import { Language } from "@prisma/client";
 import * as Separator from "@radix-ui/react-separator";
 import { getTranslations } from "next-intl/server";
 

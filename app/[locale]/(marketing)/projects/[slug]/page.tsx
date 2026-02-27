@@ -4,8 +4,8 @@ import {
   getSimilarProjects,
 } from "@/app/actions";
 import ProjectDetailView from "@/components/projects/ProjectDetailView";
+import { LanguageType as Language } from "@/lib/db/schema";
 import { Project } from "@/types/contents";
-import { Language } from "@prisma/client";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -14,7 +14,7 @@ interface ProjectDetailPageProps {
 }
 
 export async function generateStaticParams() {
-  const result = await getProjects({ lang: Language.en, limit: 100 });
+  const result = await getProjects({ lang: "en", limit: 100 });
   return result.items.map((project) => ({
     slug: project.slug,
   }));

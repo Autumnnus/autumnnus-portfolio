@@ -1,7 +1,9 @@
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { embedding } from "@/lib/db/schema";
 import { syncAllContent } from "@/lib/embeddings";
-import { prisma } from "@/lib/prisma";
 import { deleteAllEmbeddings, deleteEmbeddingsBySource } from "@/lib/vectordb";
+import { sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
@@ -14,7 +16,7 @@ async function checkAdmin() {
   return true;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     const isAdmin = await checkAdmin();
     if (!isAdmin) {
@@ -71,20 +73,31 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const isAdmin = await checkAdmin();
     if (!isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const totalCount = await prisma.embedding.count();
-    const bySource = await prisma.embedding.groupBy({
-      by: ["sourceType"],
+    const totalCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(embedding)
+      .then((res) => Number(res[0].count));
+    const bySourceRaw = await db
+      .select({
+        sourceType: embedding.sourceType,
+        count: sql<number>`count(*)`,
+      })
+      .from(embedding)
+      .groupBy(embedding.sourceType);
+
+    const bySource = bySourceRaw.map((row) => ({
+      sourceType: row.sourceType,
       _count: {
-        _all: true,
+        _all: Number(row.count),
       },
-    });
+    }));
 
     return NextResponse.json({
       totalCount,

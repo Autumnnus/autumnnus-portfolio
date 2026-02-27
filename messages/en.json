@@ -594,5 +594,11 @@
     "comment": "Comment",
     "yourReplyTo": "Your reply to {name}",
     "delete": "Delete"
+  },
+  "NotFound": {
+    "title": "404",
+    "subtitle": "Like a Lost Leaf...",
+    "description": "It seems this page has been blown away by winter winds or lost in the autumn foliage. We can't find the content you're looking for.",
+    "backToHome": "Return to Home"
   }
 }

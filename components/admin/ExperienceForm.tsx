@@ -13,11 +13,7 @@ import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
 import { ExperienceFormValues, ExperienceSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Language,
-  WorkExperience,
-  WorkExperienceTranslation,
-} from "@prisma/client";
+import { LanguageType as Language, WorkExperience, WorkExperienceTranslation } from "@/lib/db/schema";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";

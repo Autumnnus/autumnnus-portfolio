@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import ExperienceForm, { Experience } from "@/components/admin/ExperienceForm";
 import Container from "@/components/common/Container";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -20,9 +20,9 @@ export default async function EditExperiencePage({
   }
 
   const [experience, t] = await Promise.all([
-    prisma.workExperience.findUnique({
-      where: { id },
-      include: {
+    db.query.workExperience.findFirst({
+      where: (e, { eq }) => eq(e.id, id),
+      with: {
         translations: true,
       },
     }),
