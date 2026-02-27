@@ -596,5 +596,11 @@
     "comment": "Yorum",
     "yourReplyTo": "{name} kişisine yanıtınız",
     "delete": "Sil"
+  },
+  "NotFound": {
+    "title": "404",
+    "subtitle": "Kayıp Bir Yaprak Gibi...",
+    "description": "Görünüşe göre bu sayfa kış rüzgarlarına kapılıp gitmiş veya yaprak dökümünde kaybolmuş. Aradığınız içeriği bulamıyoruz.",
+    "backToHome": "Ana Sayfaya Dön"
   }
 }

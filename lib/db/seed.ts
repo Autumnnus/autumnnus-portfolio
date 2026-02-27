@@ -42,26 +42,46 @@ async function main() {
     const skillsRes = await db
       .insert(skill)
       .values([
-        { key: "nextjs", name: "Next.js", icon: "simpleicons:nextdotjs" },
+        {
+          key: "nextjs",
+          name: "Next.js",
+          icon: "https://cdn.simpleicons.org/nextdotjs/000000",
+        },
         {
           key: "typescript",
           name: "TypeScript",
-          icon: "simpleicons:typescript",
+          icon: "https://cdn.simpleicons.org/typescript/2496ED",
         },
         {
           key: "tailwind",
           name: "Tailwind CSS",
-          icon: "simpleicons:tailwindcss",
+          icon: "https://cdn.simpleicons.org/tailwindcss/61DAFB",
         },
-        { key: "drizzle", name: "Drizzle ORM", icon: "simpleicons:drizzle" },
+        {
+          key: "drizzle",
+          name: "Drizzle ORM",
+          icon: "https://cdn.simpleicons.org/drizzle/C5F74F",
+        },
         {
           key: "postgresql",
           name: "PostgreSQL",
-          icon: "simpleicons:postgresql",
+          icon: "https://cdn.simpleicons.org/postgresql/336791",
         },
-        { key: "docker", name: "Docker", icon: "simpleicons:docker" },
-        { key: "react", name: "React", icon: "simpleicons:react" },
-        { key: "nodejs", name: "Node.js", icon: "simpleicons:nodedotjs" },
+        {
+          key: "docker",
+          name: "Docker",
+          icon: "https://cdn.simpleicons.org/docker/2496ED",
+        },
+        {
+          key: "react",
+          name: "React",
+          icon: "https://cdn.simpleicons.org/react/61DAFB",
+        },
+        {
+          key: "nodejs",
+          name: "Node.js",
+          icon: "https://cdn.simpleicons.org/nodejs/339933",
+        },
       ])
       .returning();
 
@@ -73,7 +93,6 @@ async function main() {
       .insert(profile)
       .values({
         email: process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@example.com",
-        avatar: "/assets/avatar.png",
         github: "https://github.com/autumnnus",
         linkedin: "https://linkedin.com/in/autumnnus",
       })
@@ -146,13 +165,13 @@ async function main() {
         key: "github",
         name: "GitHub",
         href: "https://github.com/autumnnus",
-        icon: "simpleicons:github",
+        icon: "https://cdn.simpleicons.org/github/181717",
       },
       {
         key: "linkedin",
         name: "LinkedIn",
         href: "https://linkedin.com/in/autumnnus",
-        icon: "simpleicons:linkedin",
+        icon: "https://s.magecdn.com/social/tc-linkedin.svg",
       },
     ] as any);
 
@@ -163,7 +182,6 @@ async function main() {
       .values([
         {
           company: "Tech Solutions",
-          logo: "/assets/tech-solutions.png",
           startDate: new Date("2022-01-01"),
           endDate: null,
         },
@@ -199,8 +217,6 @@ async function main() {
           github: "https://github.com/autumnnus/portfolio",
           liveDemo: "https://portfolio.example.com",
           featured: true,
-          coverImage: "/assets/portfolio-cover.png",
-          images: ["/assets/portfolio-1.png", "/assets/portfolio-2.png"],
         },
       ])
       .returning();
@@ -245,7 +261,6 @@ async function main() {
       .values([
         {
           slug: "why-drizzle-orm",
-          coverImage: "/assets/drizzle-blog.png",
           featured: true,
           tags: ["drizzle", "orm", "typescript"],
           status: "published",

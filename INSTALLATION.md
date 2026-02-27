@@ -1,13 +1,13 @@
 # Installation Guide
 
-This guide contains the necessary steps to successfully install and run the **Autumnnus Portfolio** project on your local system (localhost).
+This guide contains the necessary steps to successfully install and run the **Autumnnus Portfolio** project on your local system (localhost) or production environment.
 
 ## Prerequisites
 
-- Node.js (v18+)
-- Yarn or npm package manager
-- Docker and Docker Compose (To spin up PostgreSQL and MinIO databases)
-- Git
+- **Node.js**: v18+ (v20+ recommended)
+- **Package Manager**: Yarn (recommended) or npm
+- **Docker**: For running PostgreSQL (with pgvector) and MinIO locally
+- **Git**: For cloning the repository
 
 ## Installation Steps
 
@@ -20,81 +20,79 @@ cd autumnnus-portfolio
 
 ### 2. Install Dependencies
 
-The project is configured to use `yarn` for dependency management.
-
 ```bash
 yarn install
 ```
 
 ### 3. Set Up Environment Variables
 
-Create a new file named `.env` in the root directory by copying the `.env.example` file:
+Copy the example environment file and update the values:
 
 ```bash
 cp .env.example .env
 ```
 
-Then, open the `.env` file in a code editor and configure the necessary keys (Telegram tokens, GitHub Client ID, Gemini Key, etc.) according to your setup:
+Open `.env` and fill in the following:
 
-- **Database:** You do not need to change the username, password, or local connection URL; they are automatically configured via `docker-compose`.
-- **MinIO (Image/Object Storage):** Contains the bucket credentials where portfolio images will be stored. You can use defaults for local development.
-- **Auth.js:** Used for comment infrastructure and Admin privileges. Generate a random secret for `AUTH_SECRET` and specify the admin email in `NEXT_PUBLIC_ADMIN_EMAIL`.
-- **Turnstile:** Cloudflare's free API endpoint keys to prevent spam bots.
-- **Telegram & Gemini:** For AI features and Notification integrations within the project.
+- **Auth.js**: Generate `AUTH_SECRET` using `openssl rand -base64 32`.
+- **API Keys**: Configure GitHub, Gemini, Turnstile, and Telegram tokens.
+- **Database**: The default `DATABASE_URL` in `.env.example` points to the local Docker container (Port 5433).
 
-## Deployment (Coolify & Nixpacks)
+### 4. Start Local Services (Docker)
 
-This project is optimized for deployment on **Coolify** using **Nixpacks**. Nixpacks will automatically detect the Next.js environment and handle the build process.
+Spin up the PostgreSQL and MinIO containers:
+
+```bash
+docker-compose up -d
+```
+
+### 5. Database Initialization
+
+Since the project uses `pgvector` for AI features, the extension must be enabled.
+
+**Enable pgvector (Local Only):**
+
+```bash
+docker exec -it autumnnus_postgres psql -U postgres -d autumnnus_portfolio -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
+
+**Sync Schema & Seed:**
+
+```bash
+yarn db:push
+yarn db:seed
+```
+
+### 6. Start Development Server
+
+```bash
+yarn dev
+```
+
+The application will be available at `http://localhost:3001`.
+
+---
+
+## Deployment (Production)
+
+### Coolify & Nixpacks
+
+The project is optimized for **Coolify** using **Nixpacks**.
 
 1.  Connect your repository to Coolify.
 2.  Set the **Build Pack** to `Nixpacks`.
-3.  Configure your environment variables in the Coolify dashboard (copy from `.env.example`).
-4.  Coolify will build and serve the application automatically.
+3.  Configure all environment variables in the Coolify dashboard.
+4.  **Important**: Ensure your production PostgreSQL database has the `pgvector` extension installed. You may need to run `CREATE EXTENSION IF NOT EXISTS vector;` manually once in your production DB.
 
-### Running Locally
+---
 
-To run the project locally for development:
+## Useful Commands
 
-1.  **Clone & Install:**
-
-    ```bash
-    git clone <repo_url>
-    cd autumnnus-portfolio
-    yarn install
-    ```
-
-2.  **Environment Variables:**
-    Copy `.env.example` to `.env` and fill in your local Postgres and MinIO credentials.
-
-3.  **Start Local Services (Docker):**
-    Run Postgres and MinIO using the provided `docker-compose.yml`:
-
-    ```bash
-    docker-compose up -d
-    ```
-
-4.  **Database Setup:**
-
-    ```bash
-    yarn db:generate
-    yarn db:push
-    npx tsx lib/db/seed.ts
-    ```
-
-5.  **Start Development Server:**
-    ```bash
-    yarn dev
-    ```
-
-## Useful Drizzle Commands
-
-When you make changes to `lib/db/schema.ts`, use these commands:
-
-| Command                  | Description                                                               |
-| ------------------------ | ------------------------------------------------------------------------- |
-| `yarn db:push`           | Syncs schema changes directly to the DB without migrations (Development). |
-| `yarn db:migrate`        | Creates a migration file and applies it (Production/Stable changes).      |
-| `yarn db:generate`       | Generates migration files based on schema changes.                        |
-| `yarn db:studio`         | Opens a web browser GUI to view/edit your database data.                  |
-| `yarn db:validate`       | Checks if your types are valid.                                           |
-| `npx tsx lib/db/seed.ts` | Populates the database with initial data (Profile, Settings, etc.).       |
+| Command          | Description                                 |
+| :--------------- | :------------------------------------------ |
+| `yarn dev`       | Starts the development server               |
+| `yarn db:push`   | Syncs schema changes directly to the DB     |
+| `yarn db:seed`   | Populates the database with initial data    |
+| `yarn db:studio` | Opens Drizzle Studio (GUI for the database) |
+| `yarn lint`      | Runs ESLint                                 |
+| `yarn build`     | Builds the production bundle                |

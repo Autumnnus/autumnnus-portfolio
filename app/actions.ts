@@ -143,6 +143,7 @@ export async function getProjects({
         title: translation.title || p.slug,
         shortDescription: translation.shortDescription || "",
         fullDescription: translation.fullDescription || "",
+        technologies: p.technologies.map((t) => t.skill),
       };
     });
 
@@ -208,6 +209,7 @@ export async function getProjectBySlug(slugStr: string, lang: Language) {
       metaTitle: translation.metaTitle,
       metaDescription: translation.metaDescription,
       keywords: translation.keywords || [],
+      technologies: prj.technologies.map((t) => t.skill),
     };
   } catch (error) {
     console.error(`Failed to fetch project by slug ${slugStr}:`, error);

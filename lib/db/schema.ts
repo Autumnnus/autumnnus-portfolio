@@ -220,7 +220,7 @@ export const view = pgTable("View", {
 export const workExperience = pgTable("WorkExperience", {
   id: uuid("id").primaryKey().defaultRandom(),
   company: text("company").notNull(),
-  logo: text("logo").notNull(),
+  logo: text("logo"),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" })
     .defaultNow()
@@ -257,7 +257,7 @@ export const socialLink = pgTable("SocialLink", {
 
 export const profile = pgTable("Profile", {
   id: uuid("id").primaryKey().defaultRandom(),
-  avatar: text("avatar").notNull(),
+  avatar: text("avatar"),
   email: text("email").notNull(),
   github: text("github").notNull(),
   linkedin: text("linkedin").notNull(),
