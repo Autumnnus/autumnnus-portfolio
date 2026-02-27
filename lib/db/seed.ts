@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
 import { db } from "./index";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type * as schema from "./schema";
 import {
   _projectToSkill,
   blogPost,
@@ -17,29 +19,31 @@ import {
   workExperienceTranslation,
 } from "./schema";
 
-async function main() {
+export async function seedDatabase(
+  database: NodePgDatabase<typeof schema> = db,
+) {
   console.log("🌱 Seeding database...");
 
   try {
     // Clear existing data
     console.log("Emptying tables...");
-    await db.delete(projectTranslation);
-    await db.delete(_projectToSkill);
-    await db.delete(project);
-    await db.delete(blogPostTranslation);
-    await db.delete(blogPost);
-    await db.delete(workExperienceTranslation);
-    await db.delete(workExperience);
-    await db.delete(questTranslation);
-    await db.delete(quest);
-    await db.delete(profileTranslation);
-    await db.delete(socialLink);
-    await db.delete(profile);
-    await db.delete(skill);
+    await database.delete(projectTranslation);
+    await database.delete(_projectToSkill);
+    await database.delete(project);
+    await database.delete(blogPostTranslation);
+    await database.delete(blogPost);
+    await database.delete(workExperienceTranslation);
+    await database.delete(workExperience);
+    await database.delete(questTranslation);
+    await database.delete(quest);
+    await database.delete(profileTranslation);
+    await database.delete(socialLink);
+    await database.delete(profile);
+    await database.delete(skill);
 
     // 1. Skills
     console.log("Seeding skills...");
-    const skillsRes = await db
+    const skillsRes = await database
       .insert(skill)
       .values([
         {
@@ -89,7 +93,7 @@ async function main() {
 
     // 2. Profile
     console.log("Seeding profile...");
-    const [myProfile] = await db
+    const [myProfile] = await database
       .insert(profile)
       .values({
         email: process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@example.com",
@@ -98,7 +102,7 @@ async function main() {
       })
       .returning();
 
-    await db.insert(profileTranslation).values([
+    await database.insert(profileTranslation).values([
       {
         profileId: myProfile.id,
         language: "tr",
@@ -127,7 +131,7 @@ async function main() {
 
     // 3. Quests
     console.log("Seeding quests...");
-    const questsRes = await db
+    const questsRes = await database
       .insert(quest)
       .values([
         { profileId: myProfile.id, order: 1, completed: true },
@@ -135,7 +139,7 @@ async function main() {
       ])
       .returning();
 
-    await db.insert(questTranslation).values([
+    await database.insert(questTranslation).values([
       {
         questId: questsRes[0].id,
         language: "tr",
@@ -160,7 +164,7 @@ async function main() {
 
     // 4. Social Links
     console.log("Seeding social links...");
-    await db.insert(socialLink).values([
+    await database.insert(socialLink).values([
       {
         key: "github",
         name: "GitHub",
@@ -177,7 +181,7 @@ async function main() {
 
     // 5. Work Experience
     console.log("Seeding work experience...");
-    const experiencesRes = await db
+    const experiencesRes = await database
       .insert(workExperience)
       .values([
         {
@@ -188,7 +192,7 @@ async function main() {
       ])
       .returning();
 
-    await db.insert(workExperienceTranslation).values([
+    await database.insert(workExperienceTranslation).values([
       {
         workExperienceId: experiencesRes[0].id,
         language: "tr",
@@ -207,7 +211,7 @@ async function main() {
 
     // 6. Projects
     console.log("Seeding projects...");
-    const projectsRes = await db
+    const projectsRes = await database
       .insert(project)
       .values([
         {
@@ -221,7 +225,7 @@ async function main() {
       ])
       .returning();
 
-    await db.insert(projectTranslation).values([
+    await database.insert(projectTranslation).values([
       {
         projectId: projectsRes[0].id,
         language: "tr",
@@ -247,7 +251,7 @@ async function main() {
       "drizzle",
       "postgresql",
     ];
-    await db.insert(_projectToSkill).values(
+    await database.insert(_projectToSkill).values(
       projectSkills.map((key) => ({
         A: projectsRes[0].id,
         B: skillMap.get(key)!,
@@ -256,7 +260,7 @@ async function main() {
 
     // 7. Blog Posts
     console.log("Seeding blog posts...");
-    const blogsRes = await db
+    const blogsRes = await database
       .insert(blogPost)
       .values([
         {
@@ -268,7 +272,7 @@ async function main() {
       ])
       .returning();
 
-    await db.insert(blogPostTranslation).values([
+    await database.insert(blogPostTranslation).values([
       {
         blogPostId: blogsRes[0].id,
         language: "tr",
@@ -295,6 +299,10 @@ async function main() {
     console.error("❌ Seed failed:", error);
     throw error;
   }
+}
+
+async function main() {
+  await seedDatabase();
 }
 
 main().catch((err) => {
