@@ -108,7 +108,7 @@ async function fetchMetadataForChunks(
             slug: true,
             github: true,
             liveDemo: true,
-            category: true,
+            categoryId: true,
             status: true,
             coverImage: true,
           },
@@ -130,7 +130,7 @@ async function fetchMetadataForChunks(
           columns: {
             id: true,
             slug: true,
-            category: true,
+            categoryId: true,
             tags: true,
             coverImage: true,
           },
@@ -198,7 +198,7 @@ async function fetchMetadataForChunks(
         `PORTFOLIO URL: ${portfolioUrl}`,
         project.github ? `GITHUB: ${project.github}` : null,
         project.liveDemo ? `LIVE DEMO: ${project.liveDemo}` : null,
-        `CATEGORY: ${project.category}`,
+        `CATEGORY: ${project.categoryId}`,
         `STATUS: ${project.status}`,
         techs.length ? `TECHNOLOGIES: ${techs.join(", ")}` : null,
       ]
@@ -214,7 +214,7 @@ async function fetchMetadataForChunks(
       imageUrl: project.coverImage ?? undefined,
       github: project.github ?? undefined,
       liveDemo: project.liveDemo ?? undefined,
-      category: project.category,
+      category: project.categoryId ?? "",
       technologies: techs,
     });
   }
@@ -229,7 +229,7 @@ async function fetchMetadataForChunks(
         `TITLE: ${translation?.title ?? blog.slug}`,
         `DESCRIPTION: ${translation?.description ?? ""}`,
         `PORTFOLIO URL: ${portfolioUrl}`,
-        blog.category ? `CATEGORY: ${blog.category}` : null,
+        blog.categoryId ? `CATEGORY: ${blog.categoryId}` : null,
         blog.tags?.length ? `TAGS: ${blog.tags.join(", ")}` : null,
       ]
         .filter(Boolean)
@@ -242,7 +242,7 @@ async function fetchMetadataForChunks(
       description: translation?.description ?? "",
       url: portfolioUrl,
       imageUrl: blog.coverImage ?? undefined,
-      category: blog.category ?? undefined,
+      category: blog.categoryId ?? "",
       tags: blog.tags ?? [],
     });
   }
@@ -469,7 +469,7 @@ ${message}`;
       content: response,
       metadata: {
         systemPrompt: systemPrompt,
-        usage: usageMetadata as unknown as any,
+        usage: usageMetadata,
       },
     });
 
@@ -478,7 +478,7 @@ ${message}`;
     );
 
     return NextResponse.json({ response, sources: relevantSources });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Chat API Error:", error);
     return NextResponse.json(
       {

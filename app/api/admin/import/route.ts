@@ -197,7 +197,7 @@ export async function POST(request: Request) {
               tags: blog.tags,
               status: blog.status ?? "draft",
               commentsEnabled: blog.commentsEnabled ?? true,
-              category: blog.category,
+              categoryId: blog.categoryId,
               imageAlt: blog.imageAlt,
             })
             .returning();
@@ -236,7 +236,7 @@ export async function POST(request: Request) {
               id: prj.id,
               slug: prj.slug,
               status: prj.status,
-              category: prj.category,
+              categoryId: prj.categoryId,
               github: prj.github,
               liveDemo: prj.liveDemo,
               featured: prj.featured,

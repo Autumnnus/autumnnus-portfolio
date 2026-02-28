@@ -81,7 +81,7 @@ export async function syncSingleContent(
   if (sourceType === "blog") {
     const blog = await db.query.blogPost.findFirst({
       where: eq(blogPost.id, sourceId),
-      with: { translations: true },
+      with: { translations: true, category: true },
     });
     if (blog) {
       for (const t of blog.translations) {
@@ -89,7 +89,7 @@ export async function syncSingleContent(
           const header =
             `[blog] Title: ${t.title}` +
             ` | Slug: ${blog.slug}` +
-            (blog.category ? ` | Category: ${blog.category}` : "") +
+            (blog.category ? ` | Category: ${blog.category.name}` : "") +
             (blog.tags?.length ? ` | Tags: ${blog.tags.join(", ")}` : "");
           await processAndEmbed(
             "blog",
@@ -105,7 +105,11 @@ export async function syncSingleContent(
   } else if (sourceType === "project") {
     const prj = await db.query.project.findFirst({
       where: eq(project.id, sourceId),
-      with: { translations: true, technologies: { with: { skill: true } } },
+      with: {
+        translations: true,
+        technologies: { with: { skill: true } },
+        category: true,
+      },
     });
     if (prj) {
       for (const t of prj.translations) {
@@ -116,7 +120,7 @@ export async function syncSingleContent(
           const header =
             `[project] Title: ${t.title}` +
             ` | Slug: ${prj.slug}` +
-            ` | Category: ${prj.category}` +
+            (prj.category ? ` | Category: ${prj.category.name}` : "") +
             ` | Status: ${prj.status}` +
             (techs ? ` | Technologies: ${techs}` : "") +
             (prj.github ? ` | GitHub: ${prj.github}` : "") +
@@ -192,7 +196,7 @@ export async function syncSingleContent(
 
 export async function syncAllContent() {
   const blogs = await db.query.blogPost.findMany({
-    with: { translations: true },
+    with: { translations: true, category: true },
   });
 
   for (const blog of blogs) {
@@ -201,7 +205,7 @@ export async function syncAllContent() {
         const header =
           `[blog] Title: ${t.title}` +
           ` | Slug: ${blog.slug}` +
-          (blog.category ? ` | Category: ${blog.category}` : "") +
+          (blog.category ? ` | Category: ${blog.category.name}` : "") +
           (blog.tags?.length ? ` | Tags: ${blog.tags.join(", ")}` : "");
         await processAndEmbed(
           "blog",
@@ -216,7 +220,11 @@ export async function syncAllContent() {
   }
 
   const projects = await db.query.project.findMany({
-    with: { translations: true, technologies: { with: { skill: true } } },
+    with: {
+      translations: true,
+      technologies: { with: { skill: true } },
+      category: true,
+    },
   });
 
   for (const prj of projects) {
@@ -228,7 +236,7 @@ export async function syncAllContent() {
         const header =
           `[project] Title: ${t.title}` +
           ` | Slug: ${prj.slug}` +
-          ` | Category: ${prj.category}` +
+          (prj.category ? ` | Category: ${prj.category.name}` : "") +
           ` | Status: ${prj.status}` +
           (techs ? ` | Technologies: ${techs}` : "") +
           (prj.github ? ` | GitHub: ${prj.github}` : "") +
