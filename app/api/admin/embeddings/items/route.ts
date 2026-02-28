@@ -69,12 +69,10 @@ export async function GET(req: NextRequest) {
       embeddings.find((e: any) => e.sourceType === type && e.sourceId === id)
         ?.maxUpdatedAt;
 
-    const getStatus = (
-      sourceUpdate: Date,
-      embUpdate: Date | undefined | null,
-    ) => {
+    const getStatus = (sourceUpdate: any, embUpdate: any) => {
       if (!embUpdate) return "missing";
-      return sourceUpdate.getTime() - embUpdate.getTime() > 5000
+      return new Date(sourceUpdate).getTime() - new Date(embUpdate).getTime() >
+        5000
         ? "outdated"
         : "synced";
     };

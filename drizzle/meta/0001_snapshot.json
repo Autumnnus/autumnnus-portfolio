@@ -1,6 +1,6 @@
 {
-  "id": "c4ac6bd5-088e-4aa6-9d81-be1d64254ac7",
-  "prevId": "80331b0c-4026-4766-bcb1-9df55ccb4703",
+  "id": "effd9a49-cbff-4cdb-8609-f543e37d9958",
+  "prevId": "08197118-c5d7-4401-8c50-a8bd8d68b2df",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -718,7 +718,7 @@
         },
         "embedding": {
           "name": "embedding",
-          "type": "vector(768)",
+          "type": "vector(3072)",
           "primaryKey": false,
           "notNull": false
         },

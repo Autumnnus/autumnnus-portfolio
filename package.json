@@ -15,7 +15,8 @@
     "db:prod:init": "npx drizzle-kit push && npx tsx lib/db/seed.ts",
     "db:seed": "tsx lib/db/seed.ts",
     "i18n:scan": "tsx scripts/find-hardcoded-strings.ts",
-    "types:check": "tsc --noEmit"
+    "types:check": "tsc --noEmit",
+    "db:reset": "tsx scripts/reset-db.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -38,7 +38,7 @@ CREATE TABLE "BlogPost" (
 	"tags" text[],
 	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL,
-	"category" text,
+	"categoryId" uuid,
 	"commentsEnabled" boolean DEFAULT true NOT NULL,
 	"imageAlt" text,
 	"publishedAt" timestamp,
@@ -60,6 +60,13 @@ CREATE TABLE "BlogPostTranslation" (
 	"metaDescription" text,
 	"metaTitle" text,
 	CONSTRAINT "BlogPostTranslation_blogPostId_language_unique" UNIQUE("blogPostId","language")
+);
+--> statement-breakpoint
+CREATE TABLE "Category" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"type" text NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "ChatRateLimit" (
@@ -91,7 +98,7 @@ CREATE TABLE "Embedding" (
 	"language" text NOT NULL,
 	"chunkText" text NOT NULL,
 	"chunkIndex" integer NOT NULL,
-	"embedding" vector(768),
+	"embedding" vector(1536),
 	"metadata" json,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL,
@@ -160,7 +167,7 @@ CREATE TABLE "Project" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"slug" text NOT NULL,
 	"status" text NOT NULL,
-	"category" text NOT NULL,
+	"categoryId" uuid,
 	"github" text,
 	"liveDemo" text,
 	"featured" boolean DEFAULT false NOT NULL,
@@ -264,6 +271,7 @@ CREATE TABLE "WorkExperienceTranslation" (
 ALTER TABLE "_ProjectToSkill" ADD CONSTRAINT "_ProjectToSkill_A_Project_id_fk" FOREIGN KEY ("A") REFERENCES "public"."Project"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "_ProjectToSkill" ADD CONSTRAINT "_ProjectToSkill_B_Skill_id_fk" FOREIGN KEY ("B") REFERENCES "public"."Skill"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "AiChatMessage" ADD CONSTRAINT "AiChatMessage_sessionId_AiChatSession_id_fk" FOREIGN KEY ("sessionId") REFERENCES "public"."AiChatSession"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "BlogPost" ADD CONSTRAINT "BlogPost_categoryId_Category_id_fk" FOREIGN KEY ("categoryId") REFERENCES "public"."Category"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "BlogPostTranslation" ADD CONSTRAINT "BlogPostTranslation_blogPostId_BlogPost_id_fk" FOREIGN KEY ("blogPostId") REFERENCES "public"."BlogPost"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "Comment" ADD CONSTRAINT "Comment_blogPostId_BlogPost_id_fk" FOREIGN KEY ("blogPostId") REFERENCES "public"."BlogPost"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "Comment" ADD CONSTRAINT "Comment_projectId_Project_id_fk" FOREIGN KEY ("projectId") REFERENCES "public"."Project"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -272,6 +280,7 @@ ALTER TABLE "Like" ADD CONSTRAINT "Like_projectId_Project_id_fk" FOREIGN KEY ("p
 ALTER TABLE "LiveChatGreeting" ADD CONSTRAINT "LiveChatGreeting_configId_LiveChatConfig_id_fk" FOREIGN KEY ("configId") REFERENCES "public"."LiveChatConfig"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "LiveChatGreetingTranslation" ADD CONSTRAINT "LiveChatGreetingTranslation_greetingId_LiveChatGreeting_id_fk" FOREIGN KEY ("greetingId") REFERENCES "public"."LiveChatGreeting"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ProfileTranslation" ADD CONSTRAINT "ProfileTranslation_profileId_Profile_id_fk" FOREIGN KEY ("profileId") REFERENCES "public"."Profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "Project" ADD CONSTRAINT "Project_categoryId_Category_id_fk" FOREIGN KEY ("categoryId") REFERENCES "public"."Category"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ProjectTranslation" ADD CONSTRAINT "ProjectTranslation_projectId_Project_id_fk" FOREIGN KEY ("projectId") REFERENCES "public"."Project"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "Quest" ADD CONSTRAINT "Quest_profileId_Profile_id_fk" FOREIGN KEY ("profileId") REFERENCES "public"."Profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "QuestTranslation" ADD CONSTRAINT "QuestTranslation_questId_Quest_id_fk" FOREIGN KEY ("questId") REFERENCES "public"."Quest"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
