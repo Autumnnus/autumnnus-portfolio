@@ -36,7 +36,6 @@ export default async function ProjectsPage({
     }),
     getProjectFilters(),
   ]);
-  console.log("paginatedResult", paginatedResult);
 
   return (
     <ProjectsClient

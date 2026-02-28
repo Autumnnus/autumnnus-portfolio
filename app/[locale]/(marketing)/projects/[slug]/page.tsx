@@ -1,6 +1,5 @@
 import {
   getProjectBySlug,
-  getProjects,
   getSimilarProjects,
 } from "@/app/actions";
 import ProjectDetailView from "@/components/projects/ProjectDetailView";
@@ -9,22 +8,17 @@ import { Project } from "@/types/contents";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 interface ProjectDetailPageProps {
   params: Promise<{ locale: string; slug: string }>;
-}
-
-export async function generateStaticParams() {
-  const result = await getProjects({ lang: "en", limit: 100 });
-  return result.items.map((project) => ({
-    slug: project.slug,
-  }));
 }
 
 export async function generateMetadata({
   params,
 }: ProjectDetailPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const project = await getProjectBySlug(slug, locale as Language, true);
+  const project = await getProjectBySlug(slug, locale as Language);
 
   if (!project) {
     return {
@@ -73,7 +67,7 @@ export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
   const { locale, slug } = await params;
-  const project = await getProjectBySlug(slug, locale as Language, true);
+  const project = await getProjectBySlug(slug, locale as Language);
 
   if (!project) {
     notFound();

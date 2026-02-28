@@ -62,9 +62,6 @@ export async function processAndEmbed(
         chunk,
         embedding,
       );
-      console.log(
-        `Successfully embedded chunk ${i} for ${sourceType} ${sourceId} (${language})`,
-      );
     } catch (error) {
       console.error(
         `CRITICAL: Failed to embed chunk ${i} for ${sourceType} ${sourceId}:`,

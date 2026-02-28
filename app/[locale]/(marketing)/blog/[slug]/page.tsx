@@ -1,6 +1,5 @@
 import {
   getBlogPostBySlug,
-  getBlogPosts,
   getSimilarBlogPosts,
 } from "@/app/actions";
 import BlogPostView from "@/components/blog/BlogPostView";
@@ -9,26 +8,17 @@ import { BlogPost } from "@/types/contents";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 interface BlogPostPageProps {
   params: Promise<{ locale: string; slug: string }>;
-}
-
-export async function generateStaticParams() {
-  const result = await getBlogPosts({
-    lang: "en",
-    limit: 100,
-    skipAuth: true,
-  });
-  return result.items.map((post) => ({
-    slug: post.slug,
-  }));
 }
 
 export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const post = await getBlogPostBySlug(slug, locale as Language, true);
+  const post = await getBlogPostBySlug(slug, locale as Language);
 
   if (!post) {
     return {
@@ -78,7 +68,7 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { locale, slug } = await params;
-  const post = await getBlogPostBySlug(slug, locale as Language, true);
+  const post = await getBlogPostBySlug(slug, locale as Language);
 
   if (!post) {
     notFound();
