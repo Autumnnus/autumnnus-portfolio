@@ -5,7 +5,6 @@ import SectionHeading from "@/components/common/SectionHeading";
 import { WorkExperience as WorkExperienceType } from "@/types/contents";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 
 export default function WorkExperience({
   data,
@@ -14,12 +13,6 @@ export default function WorkExperience({
 }) {
   const t = useTranslations("Work");
   const locale = useLocale();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const workItems = data || [];
 
   const formatDate = (date: string | Date | null | undefined) => {
@@ -32,8 +25,6 @@ export default function WorkExperience({
       },
     );
   };
-
-  if (!mounted) return null;
 
   return (
     <section className="py-12" id="work">

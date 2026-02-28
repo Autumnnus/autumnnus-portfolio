@@ -8,7 +8,6 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 interface ProjectCardProps {
   project: Project;
@@ -35,18 +34,10 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   console.log("visibleTechs", visibleTechs);
   const remainingCount = project.technologies.length - 7;
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const isWinter = resolvedTheme === "dark";
   const seasonalGradient = isWinter
     ? "bg-linear-to-br from-slate-900 via-blue-950 to-slate-900"
     : "bg-linear-to-br from-orange-50 via-amber-100 to-orange-50";
-
-  if (!mounted) return null;
 
   return (
     <motion.div
