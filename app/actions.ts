@@ -1,5 +1,6 @@
 ﻿"use server";
 
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
   _projectToSkill,
@@ -36,6 +37,8 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export interface GetProjectsOptions {
   lang: Language;
@@ -143,7 +146,8 @@ export async function getProjects({
         title: translation.title || p.slug,
         shortDescription: translation.shortDescription || "",
         fullDescription: translation.fullDescription || "",
-        technologies: p.technologies.map((t) => t.skill),
+        technologies: p.technologies?.map((t) => t.skill) || [],
+        images: p.images || [],
       };
     });
 
@@ -178,7 +182,8 @@ export async function getProjectById(id: string) {
     if (!prj) return null;
     return {
       ...prj,
-      technologies: prj.technologies.map((t) => t.skill),
+      technologies: prj.technologies?.map((t) => t.skill) || [],
+      images: prj.images || [],
     };
   } catch (error) {
     console.error(`Failed to fetch project by id ${id}:`, error);
@@ -209,7 +214,8 @@ export async function getProjectBySlug(slugStr: string, lang: Language) {
       metaTitle: translation.metaTitle,
       metaDescription: translation.metaDescription,
       keywords: translation.keywords || [],
-      technologies: prj.technologies.map((t) => t.skill),
+      technologies: prj.technologies?.map((t) => t.skill) || [],
+      images: prj.images || [],
     };
   } catch (error) {
     console.error(`Failed to fetch project by slug ${slugStr}:`, error);
@@ -365,6 +371,7 @@ export async function getBlogPosts({
         readTime: translation.readTime || "",
         date: translation.date || "",
         status: p.status,
+        tags: p.tags || [],
       };
     });
 
@@ -444,6 +451,7 @@ export async function getBlogPostBySlug(
       metaTitle: translation.metaTitle,
       metaDescription: translation.metaDescription,
       keywords: translation.keywords || [],
+      tags: post.tags || [],
     };
   } catch (error) {
     console.error(`Failed to fetch blog post by slug ${slugStr}:`, error);
@@ -575,10 +583,6 @@ export async function getAboutStats() {
     };
   }
 }
-
-import { auth } from "@/auth";
-import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
 async function getIpIdentifier() {
   const headersList = await headers();
@@ -1436,10 +1440,12 @@ export async function getSimilarProjects(
         ORDER BY distance ASC
         LIMIT ${limit}
       `);
-      similarProjectIds = res.rows.map((r) => ({
-        sourceId: String((r as Record<string, unknown>).sourceId),
-        distance: Number((r as Record<string, unknown>).distance),
-      }));
+      similarProjectIds = res.rows
+        .map((r: any) => ({
+          sourceId: String(r.sourceId || r.sourceid),
+          distance: r.distance !== null ? Number(r.distance) : null,
+        }))
+        .filter((r) => r.sourceId !== "undefined");
     } catch (e) {
       console.error("Project similarity search failed:", e);
     }
@@ -1465,11 +1471,14 @@ export async function getSimilarProjects(
           title: translation.title || p.slug,
           shortDescription: translation.shortDescription || "",
           fullDescription: translation.fullDescription || "",
+          technologies: p.technologies?.map((t) => t.skill) || [],
+          images: p.images || [],
         };
       });
     }
 
     const ids = similarProjectIds.map((r) => r.sourceId);
+    if (!ids.length) return [];
 
     const projectsRes = await db.query.project.findMany({
       where: inArray(project.id, ids),
@@ -1489,6 +1498,8 @@ export async function getSimilarProjects(
           title: translation.title || p.slug,
           shortDescription: translation.shortDescription || "",
           fullDescription: translation.fullDescription || "",
+          technologies: p.technologies?.map((t) => t.skill) || [],
+          images: p.images || [],
         };
       })
       .filter(Boolean);
@@ -1530,10 +1541,12 @@ export async function getSimilarBlogPosts(
         ORDER BY distance ASC
         LIMIT ${limit}
       `);
-      similarBlogIds = res.rows.map((r) => ({
-        sourceId: String((r as Record<string, unknown>).sourceId),
-        distance: Number((r as Record<string, unknown>).distance),
-      }));
+      similarBlogIds = res.rows
+        .map((r: any) => ({
+          sourceId: String(r.sourceId || r.sourceid),
+          distance: r.distance !== null ? Number(r.distance) : null,
+        }))
+        .filter((r) => r.sourceId !== "undefined");
     } catch (e) {
       console.error("Blog similarity search failed:", e);
     }
@@ -1564,11 +1577,13 @@ export async function getSimilarBlogPosts(
           readTime: translation.readTime || "",
           date: translation.date || "",
           status: p.status,
+          tags: p.tags || [],
         };
       });
     }
 
     const ids = similarBlogIds.map((r) => r.sourceId);
+    if (!ids.length) return [];
 
     const postsRes = await db.query.blogPost.findMany({
       where: and(inArray(blogPost.id, ids), eq(blogPost.status, "published")),
@@ -1590,6 +1605,7 @@ export async function getSimilarBlogPosts(
           readTime: translation.readTime || "",
           date: translation.date || "",
           status: p.status,
+          tags: p.tags || [],
         };
       })
       .filter(Boolean);

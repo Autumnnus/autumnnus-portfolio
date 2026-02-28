@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
-import { db } from "./index";
+import { sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { db } from "./index";
 import type * as schema from "./schema";
 import {
   _projectToSkill,
@@ -23,7 +24,7 @@ export async function seedDatabase(
   database: NodePgDatabase<typeof schema> = db,
 ) {
   console.log("🌱 Seeding database...");
-
+  await database.execute(sql`CREATE EXTENSION IF NOT EXISTS vector;`);
   try {
     // Clear existing data
     console.log("Emptying tables...");
