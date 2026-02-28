@@ -20,7 +20,6 @@ export default async function MarketingLayout({
         <Navbar />
         <main className="flex-1 flex flex-col">
           {children}
-          {/* <PageTransition>{children}</PageTransition> */}
         </main>
         <LiveChat />
         <Footer locale={locale} />

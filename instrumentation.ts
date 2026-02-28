@@ -11,12 +11,14 @@ export async function register() {
       });
       console.log("✅ Migrations applied");
 
-      const profiles = await db.select().from(profile).limit(1);
-      if (profiles.length === 0) {
-        console.log("📭 No data found, running seed...");
-        const { seedDatabase } = await import("./lib/db/seed");
-        await seedDatabase(db);
-        console.log("✅ Seed completed");
+      if (process.env.DB_SEED === "true") {
+        const profiles = await db.select().from(profile).limit(1);
+        if (profiles.length === 0) {
+          console.log("📭 Running manual seed...");
+          const { seedDatabase } = await import("./lib/db/seed");
+          await seedDatabase(db);
+          console.log("✅ Seed completed");
+        }
       }
     } catch (error) {
       console.error("❌ DB initialization failed:", error);

@@ -24,7 +24,7 @@ export async function generateMetadata({
   params,
 }: ProjectDetailPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const project = await getProjectBySlug(slug, locale as Language);
+  const project = await getProjectBySlug(slug, locale as Language, true);
 
   if (!project) {
     return {
@@ -73,7 +73,7 @@ export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
   const { locale, slug } = await params;
-  const project = await getProjectBySlug(slug, locale as Language);
+  const project = await getProjectBySlug(slug, locale as Language, true);
 
   if (!project) {
     notFound();
