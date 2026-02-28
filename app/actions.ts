@@ -780,18 +780,18 @@ export async function createComment(
           where: eq(comment.id, parentId),
         });
         if (parent) {
-          parentCommentText = `\n\nâ†©ï¸  <b>Replying to:</b> <i>"${escapeHtml(parent.authorName)}: ${escapeHtml(parent.content.substring(0, 50))}${parent.content.length > 50 ? "..." : ""}"</i>`;
+          parentCommentText = `\n\n↩️ <b>Replying to:</b> <i>"${escapeHtml(parent.authorName)}: ${escapeHtml(parent.content.substring(0, 50))}${parent.content.length > 50 ? "..." : ""}"</i>`;
         }
       }
 
       const telegramMessage =
-        `<b>ğŸ’¬ New Comment on ${itemType === "blog" ? "Blog" : "Project"}</b>\n\n` +
-        `ğŸ“  <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
-        `ğŸ‘¤ <b>Author:</b> ${escapeHtml(authorName)}\n` +
-        `ğŸ“§ <b>Email:</b> ${escapeHtml(authorEmail)}\n` +
-        `ğŸ’¬ <b>Comment:</b>\n<i>"${escapeHtml(contentStr)}"</i>` +
+        `<b>💬 New Comment on ${itemType === "blog" ? "Blog" : "Project"}</b>\n\n` +
+        `📍 <b>Item:</b> ${escapeHtml(itemTitle)}\n` +
+        `👤 <b>Author:</b> ${escapeHtml(authorName)}\n` +
+        `📧 <b>Email:</b> ${escapeHtml(authorEmail)}\n` +
+        `💬 <b>Comment:</b>\n<i>"${escapeHtml(contentStr)}"</i>` +
         parentCommentText +
-        `\n\nğŸ”— <a href="${itemLink}">View on Website</a>`;
+        `\n\n🔗 <a href="${itemLink}">View on Website</a>`;
 
       await sendTelegramNotification(telegramMessage, coverImage);
 

@@ -642,7 +642,8 @@
     "email": "Email",
     "comment": "Comment",
     "yourReplyTo": "Your reply to {name}",
-    "delete": "Delete"
+    "delete": "Delete",
+    "cancel": "Cancel"
   },
   "NotFound": {
     "title": "404",

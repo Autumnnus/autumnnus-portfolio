@@ -157,7 +157,15 @@ export default function ProjectDetailView({
             {project.status}
           </span>
           {visibleTechs.map((tech) => (
-            <Badge key={tech.name} variant="outline">
+            <Badge key={tech.name} variant="outline" className="gap-1.5 py-1">
+              {tech.icon && (
+                <Icon
+                  src={tech.icon}
+                  alt={tech.name}
+                  size={14}
+                  className="opacity-80"
+                />
+              )}
               {tech.name}
             </Badge>
           ))}
@@ -166,8 +174,9 @@ export default function ProjectDetailView({
               +{tCommon("more", { count: remainingCount })}
             </Badge>
           )}
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-4">
             <ViewCounter itemId={project.id} itemType="project" />
+            <LikeButton itemId={project.id} itemType="project" />
           </div>
         </div>
       </FadeIn>
@@ -276,7 +285,6 @@ export default function ProjectDetailView({
               {t("sourceCode")}
             </a>
           )}
-          <LikeButton itemId={project.id} itemType="project" />
         </div>
       </FadeIn>
       {/* Full Description */}

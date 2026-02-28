@@ -644,7 +644,8 @@
     "email": "E-posta",
     "comment": "Yorum",
     "yourReplyTo": "{name} kişisine yanıtınız",
-    "delete": "Sil"
+    "delete": "Sil",
+    "cancel": "İptal"
   },
   "NotFound": {
     "title": "404",

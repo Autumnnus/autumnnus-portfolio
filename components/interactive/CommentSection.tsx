@@ -81,6 +81,7 @@ export default function CommentSection({
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [adminAvatar, setAdminAvatar] = useState<string>("");
   const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const turnstileRef = useRef<any>(null);
   const { data: session } = useSession();
   const locale = useLocale();
   const formRef = useRef<HTMLDivElement>(null);
@@ -198,6 +199,9 @@ export default function CommentSection({
         });
         setReplyTo(null);
         setTurnstileToken("");
+        if (turnstileRef.current) {
+          turnstileRef.current.reset();
+        }
       } else {
         toast.error(result.error || t("postCommentError"));
       }
@@ -424,6 +428,7 @@ export default function CommentSection({
 
               {!isDev && (
                 <Turnstile
+                  ref={turnstileRef}
                   siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
                   onSuccess={(token) => setTurnstileToken(token)}
                   onExpire={() => setTurnstileToken("")}
@@ -432,6 +437,20 @@ export default function CommentSection({
                 />
               )}
             </div>
+            {replyTo && (
+              <div className="flex justify-start">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setReplyTo(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  {t("cancel")}
+                </Button>
+              </div>
+            )}
           </form>
         </Form>
       </div>
