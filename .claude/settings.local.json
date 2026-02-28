@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cd /c/Software/autumnnus-portfolio && npx drizzle-kit generate 2>&1)"
+      "Bash(cd /c/Software/autumnnus-portfolio && npx drizzle-kit generate 2>&1)",
+      "Bash(xargs cat:*)",
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

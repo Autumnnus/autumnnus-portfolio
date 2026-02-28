@@ -142,6 +142,18 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+/* Lenis smooth scroll — must be outside @layer to ensure correct specificity */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
 @layer base {
   * {
     @apply border-border;

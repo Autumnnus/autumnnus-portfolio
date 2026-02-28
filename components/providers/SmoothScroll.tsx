@@ -1,19 +1,13 @@
 "use client";
 
 import Lenis from "lenis";
-import { ReactNode, useEffect } from "react";
-
-let lenisInstance: Lenis | null = null;
-
-export function scrollToTop() {
-  if (lenisInstance) {
-    lenisInstance.scrollTo(0, { immediate: true });
-  } else {
-    window.scrollTo(0, 0);
-  }
-}
+import { usePathname } from "next/navigation";
+import { ReactNode, useEffect, useRef } from "react";
 
 export default function SmoothScroll({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const lenisRef = useRef<Lenis | null>(null);
+
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -21,20 +15,30 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
       touchMultiplier: 2,
     });
 
-    lenisInstance = lenis;
+    lenisRef.current = lenis;
 
+    let rafId: number;
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
+      cancelAnimationFrame(rafId);
       lenis.destroy();
-      lenisInstance = null;
+      lenisRef.current = null;
     };
   }, []);
+
+  // Reset Lenis scroll state on every navigation.
+  // This must happen here (not in PageTransition) because Lenis's RAF loop
+  // runs continuously and will override any external window.scrollTo(0,0)
+  // call by re-applying its own animatedScroll value every frame.
+  useEffect(() => {
+    lenisRef.current?.scrollTo(0, { immediate: true });
+  }, [pathname]);
 
   return <>{children}</>;
 }
