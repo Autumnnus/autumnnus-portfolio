@@ -6,7 +6,16 @@ import FadeIn from "@/components/common/FadeIn";
 import Icon from "@/components/common/Icon";
 import RelatedProjectCard from "@/components/projects/RelatedProjectCard";
 import { GithubRepoStats, Project } from "@/types/contents";
-import { ArrowLeft, ArrowRight, ExternalLink, Github } from "lucide-react";
+import {
+  Archive,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Construction,
+  ExternalLink,
+  Github,
+  Hammer,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
@@ -57,6 +66,22 @@ export default function ProjectDetailView({
         return "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20";
       default:
         return "bg-secondary/10 text-secondary border-secondary/20";
+    }
+  };
+
+  const getStatusIcon = (status: Project["status"]) => {
+    const iconSize = 14;
+    switch (status) {
+      case "Completed":
+        return <CheckCircle2 size={iconSize} />;
+      case "Working":
+        return <Hammer size={iconSize} />;
+      case "Building":
+        return <Construction size={iconSize} />;
+      case "Archived":
+        return <Archive size={iconSize} />;
+      default:
+        return null;
     }
   };
 
@@ -150,11 +175,12 @@ export default function ProjectDetailView({
       <FadeIn delay={0.3}>
         <div className="flex flex-wrap gap-2 mb-6">
           <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
               project.status,
             )}`}
           >
-            {project.status}
+            {getStatusIcon(project.status)}
+            {t(`statusLabels.${project.status}`)}
           </span>
           {visibleTechs.map((tech) => (
             <Badge key={tech.name} variant="outline" className="gap-1.5 py-1">
@@ -198,7 +224,9 @@ export default function ProjectDetailView({
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
               {t("category")}
             </p>
-            <p className="text-base font-medium">{project.category}</p>
+            <p className="text-base font-medium">
+              {project.category?.name || "-"}
+            </p>
           </div>
 
           <div className="p-4 bg-muted/30 rounded-lg">
@@ -207,11 +235,12 @@ export default function ProjectDetailView({
             </p>
             <p className="text-base font-medium">
               <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                   project.status,
                 )}`}
               >
-                {project.status}
+                {getStatusIcon(project.status)}
+                {t(`statusLabels.${project.status}`)}
               </span>
             </p>
           </div>

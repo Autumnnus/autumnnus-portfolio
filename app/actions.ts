@@ -7,6 +7,7 @@ import {
   auditLog,
   blogPost,
   blogPostTranslation,
+  category as categoryTable,
   comment,
   LanguageType as Language,
   like,
@@ -73,7 +74,15 @@ export async function getProjects({
     }
 
     if (category !== "All") {
-      filters.push(eq(project.category, category));
+      const cat = await db.query.category.findFirst({
+        where: and(
+          eq(categoryTable.name, category),
+          eq(categoryTable.type, "project"),
+        ),
+      });
+      if (cat) {
+        filters.push(eq(project.categoryId, cat.id));
+      }
     }
 
     if (search) {
@@ -133,6 +142,7 @@ export async function getProjects({
         technologies: {
           with: { skill: true },
         },
+        category: true,
       },
       orderBy: [desc(project.createdAt)],
       offset: skip,
@@ -204,6 +214,7 @@ export async function getProjectBySlug(
           where: eq(projectTranslation.language, lang),
         },
         technologies: { with: { skill: true } },
+        category: true,
       },
     });
 
@@ -263,9 +274,13 @@ export async function getProjectFilters() {
       .groupBy(project.status);
 
     const categories = await db
-      .select({ category: project.category, count: count() })
+      .select({
+        category: categoryTable.name,
+        count: count(),
+      })
       .from(project)
-      .groupBy(project.category);
+      .innerJoin(categoryTable, eq(project.categoryId, categoryTable.id))
+      .groupBy(categoryTable.name);
 
     return {
       statuses: statuses.map((s) => ({
@@ -365,6 +380,7 @@ export async function getBlogPosts({
         translations: {
           where: eq(blogPostTranslation.language, lang),
         },
+        category: true,
       },
       orderBy: [desc(blogPost.createdAt)],
       offset: skip,
@@ -431,6 +447,7 @@ export async function getBlogPostBySlug(
         translations: {
           where: eq(blogPostTranslation.language, lang),
         },
+        category: true,
       },
     });
 
@@ -476,15 +493,28 @@ export async function getBlogFilters() {
       });
     });
 
+    const categories = await db
+      .select({
+        category: categoryTable.name,
+        count: count(),
+      })
+      .from(blogPost)
+      .innerJoin(categoryTable, eq(blogPost.categoryId, categoryTable.id))
+      .groupBy(categoryTable.name);
+
     return {
       tags: Array.from(tagCounts.entries()).map(([name, count]) => ({
         name,
         count,
       })),
+      categories: categories.map((c) => ({
+        category: c.category,
+        count: c.count,
+      })),
     };
   } catch (error) {
     console.error("Failed to fetch blog filters:", error);
-    return { tags: [] };
+    return { tags: [], categories: [] };
   }
 }
 export async function getProfile(lang: Language) {

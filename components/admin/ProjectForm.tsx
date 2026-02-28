@@ -18,9 +18,14 @@ import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import Icon from "@/components/common/Icon";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
+import {
+  LanguageType as Language,
+  Project,
+  ProjectTranslation,
+  Skill,
+} from "@/lib/db/schema";
 import { ProjectFormValues, ProjectSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LanguageType as Language, Project, ProjectTranslation, Skill } from "@/lib/db/schema";
 import {
   ChevronLeft,
   ChevronRight,
@@ -39,6 +44,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { FieldError, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { CategorySelector } from "./CategorySelector";
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
@@ -178,7 +184,7 @@ export default function ProjectForm({
     defaultValues: {
       slug: initialData?.slug || "",
       status: initialData?.status || "Completed",
-      category: initialData?.category || "",
+      categoryId: initialData?.categoryId || "",
       github: initialData?.github || "",
       liveDemo: initialData?.liveDemo || "",
       featured: initialData?.featured ?? false,
@@ -485,7 +491,7 @@ export default function ProjectForm({
     const submitData: ProjectData = {
       slug: data.slug,
       status: data.status,
-      category: data.category,
+      categoryId: data.categoryId,
       github: data.github || "",
       liveDemo: data.liveDemo || "",
       featured: data.featured,
@@ -720,15 +726,28 @@ export default function ProjectForm({
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
                 {t("status")}
               </label>
-              <select
-                {...register("status")}
-                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm cursor-pointer appearance-none"
-              >
-                <option>Completed</option>
-                <option>Working</option>
-                <option>Building</option>
-                <option>Archived</option>
-              </select>
+              <div className="relative group">
+                <select
+                  {...register("status")}
+                  className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm cursor-pointer appearance-none shadow-sm"
+                >
+                  <option value="Working">
+                    🛠️ {t("Working") || "Working"}
+                  </option>
+                  <option value="Building">
+                    🏗️ {t("Building") || "Building"}
+                  </option>
+                  <option value="Completed">
+                    ✅ {t("Completed") || "Completed"}
+                  </option>
+                  <option value="Archived">
+                    📦 {t("Archived") || "Archived"}
+                  </option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity">
+                  <ChevronRight size={16} className="rotate-90" />
+                </div>
+              </div>
               {errors.status && (
                 <p className="text-xs text-destructive font-medium px-1">
                   {errors.status.message}
@@ -739,17 +758,17 @@ export default function ProjectForm({
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
                 {t("category")}
               </label>
-              <input
-                {...register("category")}
-                required
-                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
-                placeholder="Web App"
+              <CategorySelector
+                type="project"
+                value={watch("categoryId")}
+                onChange={(val) =>
+                  setValue("categoryId", val, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                error={errors.categoryId?.message}
               />
-              {errors.category && (
-                <p className="text-xs text-destructive font-medium px-1">
-                  {errors.category.message}
-                </p>
-              )}
             </div>
           </div>
 

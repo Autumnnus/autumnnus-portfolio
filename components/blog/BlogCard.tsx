@@ -57,9 +57,15 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
           {/* Title */}
           <h3 className="text-xl sm:text-2xl font-bold leading-tight group-hover:text-primary transition-colors flex items-center gap-2">
             {post.title}
-            {post.status === "draft" && (
-              <span className="bg-amber-500/10 text-amber-500 text-[10px] py-0.5 px-2 rounded-full uppercase font-bold tracking-tighter border border-amber-500/20">
+            {post.status === "draft" ? (
+              <span className="bg-amber-500/10 text-amber-500 text-[10px] py-0.5 px-2 rounded-full uppercase font-bold tracking-tighter border border-amber-500/20 flex items-center gap-1">
+                <FileText size={10} />
                 {bT("draft")}
+              </span>
+            ) : (
+              <span className="bg-green-500/10 text-green-500 text-[10px] py-0.5 px-2 rounded-full uppercase font-bold tracking-tighter border border-green-500/20 flex items-center gap-1">
+                <ArrowRight size={10} />
+                {bT("published")}
               </span>
             )}
           </h3>

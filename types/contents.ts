@@ -76,7 +76,8 @@ export interface Project {
   images: (string | StaticImageData)[];
   technologies: Technology[];
   status: ProjectStatus;
-  category: string;
+  categoryId: string;
+  category?: { id: string; name: string };
   github?: string | null;
   liveDemo?: string | null;
   featured?: boolean;
@@ -93,7 +94,9 @@ export interface BlogPost {
   tags: string[];
   featured?: boolean;
   content: string;
-  status?: string;
+  status: "draft" | "published";
+  categoryId: string;
+  category?: { id: string; name: string };
 }
 
 export interface WorkExperience {

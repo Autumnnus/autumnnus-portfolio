@@ -8,6 +8,7 @@ import {
   _projectToSkill,
   blogPost,
   blogPostTranslation,
+  category,
   profile,
   profileTranslation,
   project,
@@ -41,6 +42,7 @@ export async function seedDatabase(
     await database.delete(socialLink);
     await database.delete(profile);
     await database.delete(skill);
+    await database.delete(category);
 
     // 1. Skills
     console.log("Seeding skills...");
@@ -210,6 +212,29 @@ export async function seedDatabase(
       },
     ]);
 
+    // 5.5 Categories
+    console.log("Seeding categories...");
+    const categoriesRes = await database
+      .insert(category)
+      .values([
+        { name: "Web Development", type: "project" },
+        { name: "Mobile App", type: "project" },
+        { name: "DevOps", type: "project" },
+        { name: "Software Engineering", type: "blog" },
+        { name: "Tutorial", type: "blog" },
+        { name: "AI & Machine Learning", type: "blog" },
+      ])
+      .returning();
+
+    const projectCatMap = new Map(
+      categoriesRes
+        .filter((c) => c.type === "project")
+        .map((c) => [c.name, c.id]),
+    );
+    const blogCatMap = new Map(
+      categoriesRes.filter((c) => c.type === "blog").map((c) => [c.name, c.id]),
+    );
+
     // 6. Projects
     console.log("Seeding projects...");
     const projectsRes = await database
@@ -217,8 +242,8 @@ export async function seedDatabase(
       .values([
         {
           slug: "autumnnus-portfolio",
-          status: "completed",
-          category: "web",
+          status: "Completed",
+          categoryId: projectCatMap.get("Web Development"),
           github: "https://github.com/autumnnus/portfolio",
           liveDemo: "https://portfolio.example.com",
           featured: true,
@@ -269,6 +294,7 @@ export async function seedDatabase(
           featured: true,
           tags: ["drizzle", "orm", "typescript"],
           status: "published",
+          categoryId: blogCatMap.get("Software Engineering"),
         },
       ])
       .returning();

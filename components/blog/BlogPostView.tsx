@@ -9,7 +9,7 @@ import ViewCounter from "@/components/interactive/ViewCounter";
 import JsonLd from "@/components/seo/JsonLd";
 import Badge from "@/components/ui/badge";
 import { BlogPost } from "@/types/contents";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle2, FileEdit } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -66,6 +66,11 @@ export default function BlogPostView({
       {/* Tags */}
       <FadeIn delay={0.3}>
         <div className="flex flex-wrap gap-2 mb-6">
+          {post.category && (
+            <Badge variant="secondary" className="gap-1.5 py-1">
+              {t("category")}: {post.category.name}
+            </Badge>
+          )}
           {post.tags.map((tag) => (
             <Badge key={tag} variant="outline">
               {tag}
@@ -79,9 +84,15 @@ export default function BlogPostView({
         <div className="space-y-4 mb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight flex items-center gap-3">
             {post.title}
-            {post.status === "draft" && (
-              <span className="bg-amber-500/10 text-amber-500 text-sm py-1 px-3 rounded-full uppercase font-bold tracking-tighter border border-amber-500/20 shadow-sm whitespace-nowrap">
+            {post.status === "draft" ? (
+              <span className="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-500 text-sm py-1 px-3 rounded-full uppercase font-bold tracking-tighter border border-amber-500/20 shadow-sm whitespace-nowrap">
+                <FileEdit size={14} />
                 {t("draft")}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 bg-green-500/10 text-green-500 text-sm py-1 px-3 rounded-full uppercase font-bold tracking-tighter border border-green-500/20 shadow-sm whitespace-nowrap">
+                <CheckCircle2 size={14} />
+                {t("published")}
               </span>
             )}
           </h1>

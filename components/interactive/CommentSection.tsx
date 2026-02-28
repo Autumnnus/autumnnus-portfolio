@@ -417,7 +417,12 @@ export default function CommentSection({
             <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
               <Button
                 type="submit"
-                disabled={submitting || (!isDev && !turnstileToken)}
+                disabled={
+                  submitting ||
+                  (!isDev &&
+                    !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
+                    !turnstileToken)
+                }
                 className="w-full sm:w-auto"
               >
                 {submitting && (
@@ -426,10 +431,10 @@ export default function CommentSection({
                 {replyTo ? t("postReply") : t("postComment")}
               </Button>
 
-              {!isDev && (
+              {!isDev && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
                 <Turnstile
                   ref={turnstileRef}
-                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
                   onSuccess={(token) => setTurnstileToken(token)}
                   onExpire={() => setTurnstileToken("")}
                   onError={() => setTurnstileToken("")}
@@ -441,13 +446,13 @@ export default function CommentSection({
               <div className="flex justify-start">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => setReplyTo(null)}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground border-dashed"
                 >
                   <X className="mr-2 h-4 w-4" />
-                  {t("cancel")}
+                  {t("cancelReply") || t("cancel")}
                 </Button>
               </div>
             )}

@@ -62,6 +62,13 @@ const vector = customType<{ data: number[]; driverData: string }>({
   },
 });
 
+export const category = pgTable("Category", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  type: text("type").$type<"project" | "blog">().notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+});
+
 export const skill = pgTable("Skill", {
   id: uuid("id").primaryKey().defaultRandom(),
   key: text("key").notNull().unique(),
@@ -73,7 +80,9 @@ export const project = pgTable("Project", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
   status: text("status").notNull(),
-  category: text("category").notNull(),
+  categoryId: uuid("categoryId").references(() => category.id, {
+    onDelete: "set null",
+  }),
   github: text("github"),
   liveDemo: text("liveDemo"),
   featured: boolean("featured").default(false).notNull(),
@@ -138,7 +147,9 @@ export const blogPost = pgTable("BlogPost", {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
-  category: text("category"),
+  categoryId: uuid("categoryId").references(() => category.id, {
+    onDelete: "set null",
+  }),
   commentsEnabled: boolean("commentsEnabled").default(true).notNull(),
   imageAlt: text("imageAlt"),
   publishedAt: timestamp("publishedAt", { mode: "date" }),
@@ -437,9 +448,13 @@ export const aiChatMessage = pgTable("AiChatMessage", {
 });
 
 // Relations
-export const projectRelations = relations(project, ({ many }) => ({
+export const projectRelations = relations(project, ({ one, many }) => ({
   technologies: many(_projectToSkill),
   translations: many(projectTranslation),
+  category: one(category, {
+    fields: [project.categoryId],
+    references: [category.id],
+  }),
   comments: many(comment),
   likes: many(like),
   views: many(view),
@@ -470,8 +485,12 @@ export const projectTranslationRelations = relations(
   }),
 );
 
-export const blogPostRelations = relations(blogPost, ({ many }) => ({
+export const blogPostRelations = relations(blogPost, ({ one, many }) => ({
   translations: many(blogPostTranslation),
+  category: one(category, {
+    fields: [blogPost.categoryId],
+    references: [category.id],
+  }),
   comments: many(comment),
   likes: many(like),
   views: many(view),
@@ -632,3 +651,4 @@ export type ProfileTranslation = typeof profileTranslation.$inferSelect;
 export type Quest = typeof quest.$inferSelect;
 export type QuestTranslation = typeof questTranslation.$inferSelect;
 export type AuditLog = typeof auditLog.$inferSelect;
+export type Category = typeof category.$inferSelect;

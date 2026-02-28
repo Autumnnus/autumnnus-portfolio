@@ -22,7 +22,7 @@ export const ProjectSchema = z.object({
       "Slug sadece küçük harf, rakam ve tire (-) içerebilir, boşluk içeremez.",
     ),
   status: z.string().min(1, "Durum zorunludur"),
-  category: z.string().min(1, "Kategori zorunludur"),
+  categoryId: z.string().min(1, "Kategori zorunludur"),
   github: z.string().optional().or(z.literal("")),
   liveDemo: z.string().optional().or(z.literal("")),
   featured: z.boolean().default(false),
@@ -83,7 +83,7 @@ export const BlogSchema = z.object({
   imageAlt: z.string().default(""),
   featured: z.boolean().default(false),
   tags: z.string().default(""),
-  category: z.string().default(""),
+  categoryId: z.string().default(""),
   status: z.string().default("draft"),
   commentsEnabled: z.boolean().default(true),
   translations: z

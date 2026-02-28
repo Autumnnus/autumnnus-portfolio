@@ -71,6 +71,12 @@
     "nextSlide": "Sonraki slayt",
     "mainTechAlt": "Ana Teknoloji",
     "techAlt": "Proje Teknolojisi",
+    "statusLabels": {
+      "Working": "Üzerinde Çalışılıyor",
+      "Building": "Geliştiriliyor",
+      "Completed": "Tamamlandı",
+      "Archived": "Arşivlendi"
+    },
     "draft": "Taslak",
     "published": "Yayınlandı"
   },
@@ -142,6 +148,23 @@
     "liveDemo": "Canlı Demo"
   },
   "Admin": {
+    "Category": {
+      "title": "Kategoriler",
+      "add": "Yeni Kategori Ekle",
+      "namePlaceholder": "Kategori adı...",
+      "deleteConfirm": "\"{name}\" kategorisini silmek istediğinize emin misiniz?",
+      "project": "Proje Kategorisi",
+      "blog": "Blog Kategorisi",
+      "quickAdd": "Hızlı Ekle",
+      "select": "Kategori Seç",
+      "loading": "Yükleniyor...",
+      "noResults": "Kategori bulunamadı.",
+      "fetchError": "Kategoriler yüklenemedi.",
+      "createSuccess": "Kategori başarıyla oluşturuldu.",
+      "createError": "Kategori oluşturulamadı.",
+      "deleteSuccess": "Kategori başarıyla silindi.",
+      "deleteError": "Kategori silinemedi."
+    },
     "Dashboard": {
       "title": "Admin Paneli",
       "welcome": "Hoş geldin,",
@@ -390,6 +413,10 @@
       "contentError": "İçerik Hatası",
       "loadingEditor": "Editör yükleniyor...",
       "status": "Durum",
+      "Working": "Üzerinde Çalışılıyor",
+      "Building": "Geliştiriliyor",
+      "Completed": "Tamamlandı",
+      "Archived": "Arşivlendi",
       "category": "Kategori",
       "featured": "Öne Çıkarılan",
       "githubUrl": "GitHub URL",

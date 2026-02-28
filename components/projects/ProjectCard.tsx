@@ -30,6 +30,21 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
     }
   };
 
+  const getStatusIcon = (status: Project["status"]) => {
+    switch (status) {
+      case "Completed":
+        return "✅";
+      case "Working":
+        return "🛠️";
+      case "Building":
+        return "🏗️";
+      case "Archived":
+        return "📦";
+      default:
+        return null;
+    }
+  };
+
   const visibleTechs = project.technologies.slice(0, 7);
   const remainingCount = project.technologies.length - 7;
   const { resolvedTheme } = useTheme();
@@ -160,10 +175,8 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
                 project.status,
               )}`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {project.status === "Working"
-                ? t("allSystemsOperational")
-                : project.status}
+              <span>{getStatusIcon(project.status)}</span>
+              {tProjects(`statusLabels.${project.status}`)}
             </span>
           </div>
 

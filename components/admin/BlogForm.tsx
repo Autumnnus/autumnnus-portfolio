@@ -10,9 +10,13 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
+import {
+  BlogPost,
+  BlogPostTranslation,
+  LanguageType as Language,
+} from "@/lib/db/schema";
 import { BlogFormValues, BlogSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BlogPost, BlogPostTranslation, LanguageType as Language } from "@/lib/db/schema";
 import {
   FileText,
   ImagePlus,
@@ -32,6 +36,7 @@ import TipTapEditor from "./TipTapEditor";
 import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { CategorySelector } from "./CategorySelector";
 
 const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
   const result: Record<
@@ -102,7 +107,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       coverImage: initialData?.coverImage || "",
       imageAlt: initialData?.imageAlt || "",
       tags: initialData?.tags?.join(", ") || "",
-      category: initialData?.category || "",
+      categoryId: initialData?.categoryId || "",
       status: initialData?.status || "draft",
       commentsEnabled: initialData?.commentsEnabled ?? true,
       translations: initialData?.translations
@@ -289,7 +294,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             .filter((t: string) => t !== "")
         : [],
       featured: data.featured,
-      category: data.category,
+      categoryId: data.categoryId,
       status: data.status,
       commentsEnabled: data.commentsEnabled,
       translations: translationsArray,
@@ -418,10 +423,16 @@ export default function BlogForm({ initialData }: BlogFormProps) {
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
                 {t("category")}
               </label>
-              <input
-                {...register("category")}
-                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
-                placeholder="..."
+              <CategorySelector
+                type="blog"
+                value={watch("categoryId")}
+                onChange={(val) =>
+                  setValue("categoryId", val, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                error={errors.categoryId?.message}
               />
             </div>
 
@@ -429,13 +440,18 @@ export default function BlogForm({ initialData }: BlogFormProps) {
               <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
                 {t("status")}
               </label>
-              <select
-                {...register("status")}
-                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-bold cursor-pointer appearance-none"
-              >
-                <option value="draft">{t("draft")}</option>
-                <option value="published">{t("publish")}</option>
-              </select>
+              <div className="relative group">
+                <select
+                  {...register("status")}
+                  className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-bold cursor-pointer appearance-none shadow-sm"
+                >
+                  <option value="draft">📝 {t("draft")}</option>
+                  <option value="published">🚀 {t("publish")}</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity">
+                  <Layout size={16} className="rotate-90 text-primary" />
+                </div>
+              </div>
             </div>
           </div>
 

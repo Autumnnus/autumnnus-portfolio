@@ -1,10 +1,9 @@
 "use client";
 
 import { deleteBlogAction } from "@/app/[locale]/admin/actions";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
@@ -13,11 +12,14 @@ interface BlogListProps {
     id: string;
     title: string;
     slug: string;
+    status: string;
+    category?: { id: string; name: string } | null;
   }[];
 }
 
 export default function AdminBlogList({ posts }: BlogListProps) {
   const t = useTranslations("Admin.Common");
+  const tBlog = useTranslations("Blog");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -43,6 +45,12 @@ export default function AdminBlogList({ posts }: BlogListProps) {
               <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap">
                 {t("title")}
               </th>
+              <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                {t("status")}
+              </th>
+              <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                {t("category")}
+              </th>
               <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">
                 {t("actions")}
               </th>
@@ -61,6 +69,21 @@ export default function AdminBlogList({ posts }: BlogListProps) {
                   <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-tighter opacity-60">
                     /{post.slug}
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm ${
+                      post.status === "published"
+                        ? "bg-green-500/10 text-green-500"
+                        : "bg-amber-500/10 text-amber-500"
+                    }`}
+                  >
+                    {post.status === "published" ? "✅ " : "📝 "}
+                    {tBlog(post.status) || post.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-xs font-bold uppercase tracking-tight text-muted-foreground/80 whitespace-nowrap">
+                  {post.category?.name || "-"}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1.5 sm:gap-3">
@@ -86,7 +109,7 @@ export default function AdminBlogList({ posts }: BlogListProps) {
             {posts.length === 0 && (
               <tr>
                 <td
-                  colSpan={2}
+                  colSpan={4}
                   className="p-12 text-center text-muted-foreground font-medium italic opacity-60"
                 >
                   {t("noResults")}

@@ -1,10 +1,9 @@
 "use client";
 
 import { deleteProjectAction } from "@/app/[locale]/admin/actions";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
@@ -14,12 +13,13 @@ interface ProjectListProps {
     title: string;
     slug: string;
     status: string;
-    category: string;
+    category?: { id: string; name: string } | null;
   }[];
 }
 
 export default function AdminProjectList({ projects }: ProjectListProps) {
   const t = useTranslations("Admin.Common");
+  const tForm = useTranslations("Admin.Form");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -34,6 +34,21 @@ export default function AdminProjectList({ projects }: ProjectListProps) {
         toast.error(t("deleteError"));
       }
     });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "✅";
+      case "Working":
+        return "🛠️";
+      case "Building":
+        return "🏗️";
+      case "Archived":
+        return "📦";
+      default:
+        return null;
+    }
   };
 
   return (
@@ -71,12 +86,13 @@ export default function AdminProjectList({ projects }: ProjectListProps) {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
-                    {project.status}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
+                    {getStatusIcon(project.status)}
+                    {tForm(project.status) || project.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-xs font-bold uppercase tracking-tight text-muted-foreground/80 whitespace-nowrap">
-                  {project.category}
+                  {project.category?.name || "-"}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1.5 sm:gap-3">

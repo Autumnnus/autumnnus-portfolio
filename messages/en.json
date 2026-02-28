@@ -71,6 +71,12 @@
     "nextSlide": "Next slide",
     "mainTechAlt": "Main Tech",
     "techAlt": "Project Tech",
+    "statusLabels": {
+      "Working": "Working On",
+      "Building": "Building",
+      "Completed": "Completed",
+      "Archived": "Archived"
+    },
     "draft": "Draft",
     "published": "Published"
   },
@@ -142,6 +148,23 @@
     "liveDemo": "Live Demo"
   },
   "Admin": {
+    "Category": {
+      "title": "Categories",
+      "add": "Add New Category",
+      "namePlaceholder": "Category name...",
+      "deleteConfirm": "Are you sure you want to delete \"{name}\"?",
+      "project": "Project Category",
+      "blog": "Blog Category",
+      "quickAdd": "Quick Add",
+      "select": "Select Category",
+      "loading": "Loading...",
+      "noResults": "No categories found.",
+      "fetchError": "Failed to fetch categories.",
+      "createSuccess": "Category created successfully.",
+      "createError": "Failed to create category.",
+      "deleteSuccess": "Category deleted successfully.",
+      "deleteError": "Failed to delete category."
+    },
     "Dashboard": {
       "title": "Admin Dashboard",
       "welcome": "Welcome back,",
@@ -389,6 +412,10 @@
       "clear": "Clear",
       "loadingEditor": "Loading editor...",
       "status": "Status",
+      "Working": "Working On",
+      "Building": "Building",
+      "Completed": "Completed",
+      "Archived": "Archived",
       "category": "Category",
       "featured": "Featured",
       "githubUrl": "GitHub URL",

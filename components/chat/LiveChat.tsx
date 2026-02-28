@@ -222,7 +222,7 @@ export default function LiveChat() {
   }, []);
   useEffect(() => {
     // Determine the final greeting text
-    const currentGreeting = teaserText || t.raw("greeting");
+    const currentGreeting = teaserText;
 
     // If there's no custom or default greeting (indicated by translation key or empty), abort
     if (!currentGreeting || currentGreeting === "Chat.greeting") return;
@@ -271,7 +271,7 @@ export default function LiveChat() {
 
   const handleNewChat = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
-    const currentGreeting = teaserText || t.raw("greeting");
+    const currentGreeting = teaserText;
 
     if (currentGreeting && currentGreeting !== "Chat.greeting") {
       const welcomeMsg: Message = {

@@ -6,6 +6,7 @@ import {
   _projectToSkill,
   blogPost,
   blogPostTranslation,
+  category as categoryTable,
   comment as commentTable,
   LanguageType as Language,
   profile,
@@ -21,7 +22,7 @@ import {
 } from "@/lib/db/schema";
 import { deleteFolder, uploadFile } from "@/lib/minio";
 import { deleteEmbeddingsBySource } from "@/lib/vectordb";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export interface ProjectTranslationInput {
@@ -37,7 +38,7 @@ export interface ProjectTranslationInput {
 export interface ProjectData {
   slug: string;
   status: string;
-  category: string;
+  categoryId?: string | null;
   github?: string | null;
   liveDemo?: string | null;
   featured: boolean;
@@ -67,7 +68,7 @@ export interface BlogData {
   imageAlt?: string | null;
   featured: boolean;
   tags: string[];
-  category?: string;
+  categoryId?: string | null;
   status: string;
   commentsEnabled: boolean;
   translations: BlogTranslationInput[];
@@ -140,6 +141,56 @@ export async function uploadImageAction(formData: FormData) {
 
   const url = await uploadFile(filename, buffer, file.type);
   return { url };
+}
+
+export async function getCategoriesAction(type: "project" | "blog") {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  return await db.query.category.findMany({
+    where: eq(categoryTable.type, type),
+    orderBy: [asc(categoryTable.name)],
+  });
+}
+
+export async function createCategoryAction(
+  name: string,
+  type: "project" | "blog",
+) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const [newCategory] = await db
+    .insert(categoryTable)
+    .values({ name, type })
+    .returning();
+
+  return newCategory;
+}
+
+export async function deleteCategoryAction(id: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  return await db
+    .delete(categoryTable)
+    .where(eq(categoryTable.id, id))
+    .returning();
 }
 
 export async function createProjectAction(data: ProjectData) {
@@ -698,26 +749,35 @@ export async function exportDatabaseAction() {
     throw new Error("Unauthorized");
   }
 
-  const [projects, blogs, profile, experiences, socialLinks, skills, quests] =
-    await Promise.all([
-      db.query.project.findMany({
-        with: { translations: true, technologies: { with: { skill: true } } },
-      }),
-      db.query.blogPost.findMany({
-        with: { translations: true },
-      }),
-      db.query.profile.findFirst({
-        with: { translations: true },
-      }),
-      db.query.workExperience.findMany({
-        with: { translations: true },
-      }),
-      db.query.socialLink.findMany(),
-      db.query.skill.findMany(),
-      db.query.quest.findMany({
-        with: { translations: true },
-      }),
-    ]);
+  const [
+    projects,
+    blogs,
+    profile,
+    experiences,
+    socialLinks,
+    skills,
+    quests,
+    categories,
+  ] = await Promise.all([
+    db.query.project.findMany({
+      with: { translations: true, technologies: { with: { skill: true } } },
+    }),
+    db.query.blogPost.findMany({
+      with: { translations: true },
+    }),
+    db.query.profile.findFirst({
+      with: { translations: true },
+    }),
+    db.query.workExperience.findMany({
+      with: { translations: true },
+    }),
+    db.query.socialLink.findMany(),
+    db.query.skill.findMany(),
+    db.query.quest.findMany({
+      with: { translations: true },
+    }),
+    db.query.category.findMany(),
+  ]);
 
   return {
     timestamp: new Date().toISOString(),
@@ -729,6 +789,7 @@ export async function exportDatabaseAction() {
       skills,
       quests,
       socialLinks,
+      categories,
     },
   };
 }
@@ -750,6 +811,7 @@ export async function importDatabaseAction(jsonData: string) {
     experiences: impExperiences,
     skills: impSkills,
     quests: impQuests,
+    categories: impCategories,
   } = data;
 
   try {
@@ -766,6 +828,23 @@ export async function importDatabaseAction(jsonData: string) {
       await tx.delete(skill);
       await tx.delete(questTranslation);
       await tx.delete(quest);
+      await tx.delete(categoryTable);
+
+      if (impCategories && impCategories.length > 0) {
+        await tx.insert(categoryTable).values(
+          (
+            impCategories as {
+              id: string;
+              name: string;
+              type: "project" | "blog";
+            }[]
+          ).map((c) => ({
+            id: c.id,
+            name: c.name,
+            type: c.type,
+          })),
+        );
+      }
 
       if (impSkills && impSkills.length > 0) {
         await tx.insert(skill).values(
@@ -874,7 +953,7 @@ export async function importDatabaseAction(jsonData: string) {
               coverImage: b.coverImage,
               imageAlt: b.imageAlt,
               status: b.status || "published",
-              category: b.category,
+              categoryId: b.categoryId,
               commentsEnabled: b.commentsEnabled ?? true,
               featured: b.featured,
               tags: b.tags,
@@ -908,7 +987,7 @@ export async function importDatabaseAction(jsonData: string) {
             .values({
               slug: prj.slug,
               status: prj.status,
-              category: prj.category,
+              categoryId: prj.categoryId,
               github: prj.github,
               liveDemo: prj.liveDemo,
               featured: prj.featured,
