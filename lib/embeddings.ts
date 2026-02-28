@@ -200,6 +200,7 @@ export async function syncAllContent() {
   });
 
   for (const blog of blogs) {
+    await deleteEmbeddingsBySource("blog", blog.id);
     for (const t of blog.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
         const header =
@@ -228,6 +229,7 @@ export async function syncAllContent() {
   });
 
   for (const prj of projects) {
+    await deleteEmbeddingsBySource("project", prj.id);
     for (const t of prj.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
         const techs = prj.technologies
@@ -258,6 +260,7 @@ export async function syncAllContent() {
   });
 
   for (const prof of profiles) {
+    await deleteEmbeddingsBySource("profile", prof.id);
     for (const t of prof.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
         const header =
@@ -283,6 +286,7 @@ export async function syncAllContent() {
   });
 
   for (const exp of experiences) {
+    await deleteEmbeddingsBySource("experience", exp.id);
     for (const t of exp.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
         const startDate = exp.startDate

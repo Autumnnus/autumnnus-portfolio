@@ -21,15 +21,16 @@ export async function upsertEmbedding(
   embeddingData: number[],
 ) {
   const embeddingString = `[${embeddingData.join(",")}]`;
+  const now = new Date();
 
   await db.execute(sql`
     INSERT INTO "Embedding" ("id", "sourceType", "sourceId", "language", "chunkText", "chunkIndex", "embedding", "updatedAt")
-    VALUES (gen_random_uuid(), ${sourceType}, ${sourceId}, ${language}, ${chunkText}, ${chunkIndex}, ${embeddingString}::vector, NOW())
+    VALUES (gen_random_uuid(), ${sourceType}, ${sourceId}, ${language}, ${chunkText}, ${chunkIndex}, ${embeddingString}::vector, ${now})
     ON CONFLICT ("sourceType", "sourceId", "language", "chunkIndex")
     DO UPDATE SET
       "chunkText" = ${chunkText},
       "embedding" = ${embeddingString}::vector,
-      "updatedAt" = NOW()
+      "updatedAt" = ${now}
   `);
 }
 

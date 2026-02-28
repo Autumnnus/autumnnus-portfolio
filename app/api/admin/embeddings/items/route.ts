@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { embedding } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
@@ -15,7 +15,7 @@ async function checkAdmin() {
   return true;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const isAdmin = await checkAdmin();
     if (!isAdmin) {
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     const getStatus = (sourceUpdate: any, embUpdate: any) => {
       if (!embUpdate) return "missing";
       return new Date(sourceUpdate).getTime() - new Date(embUpdate).getTime() >
-        5000
+        30000
         ? "outdated"
         : "synced";
     };

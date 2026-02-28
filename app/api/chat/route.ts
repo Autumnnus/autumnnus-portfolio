@@ -27,6 +27,7 @@ export interface SourceItem {
   category?: string;
   tags?: string[];
   technologies?: string[];
+  similarity: number;
 }
 
 async function getClientIp(req: NextRequest): Promise<string> {
@@ -76,6 +77,14 @@ async function fetchMetadataForChunks(
 ): Promise<FetchResult> {
   const lang = locale === "tr" ? "tr" : "en";
 
+  const maxSimilarityBySourceId = new Map<string, number>();
+  for (const chunk of chunks) {
+    const current = maxSimilarityBySourceId.get(chunk.sourceId) ?? 0;
+    if (chunk.similarity > current) {
+      maxSimilarityBySourceId.set(chunk.sourceId, chunk.similarity);
+    }
+  }
+
   const projectIds = [
     ...new Set(
       chunks.filter((c) => c.sourceType === "project").map((c) => c.sourceId),
@@ -108,11 +117,11 @@ async function fetchMetadataForChunks(
             slug: true,
             github: true,
             liveDemo: true,
-            categoryId: true,
             status: true,
             coverImage: true,
           },
           with: {
+            category: { columns: { name: true } },
             technologies: {
               columns: {},
               with: { skill: { columns: { name: true } } },
@@ -130,11 +139,11 @@ async function fetchMetadataForChunks(
           columns: {
             id: true,
             slug: true,
-            categoryId: true,
             tags: true,
             coverImage: true,
           },
           with: {
+            category: { columns: { name: true } },
             translations: {
               where: (t, { eq }) => eq(t.language, lang === "tr" ? "tr" : "en"),
               columns: { title: true, description: true },
@@ -198,7 +207,7 @@ async function fetchMetadataForChunks(
         `PORTFOLIO URL: ${portfolioUrl}`,
         project.github ? `GITHUB: ${project.github}` : null,
         project.liveDemo ? `LIVE DEMO: ${project.liveDemo}` : null,
-        `CATEGORY: ${project.categoryId}`,
+        project.category ? `CATEGORY: ${project.category.name}` : null,
         `STATUS: ${project.status}`,
         techs.length ? `TECHNOLOGIES: ${techs.join(", ")}` : null,
       ]
@@ -214,8 +223,9 @@ async function fetchMetadataForChunks(
       imageUrl: project.coverImage ?? undefined,
       github: project.github ?? undefined,
       liveDemo: project.liveDemo ?? undefined,
-      category: project.categoryId ?? "",
+      category: project.category?.name ?? "",
       technologies: techs,
+      similarity: maxSimilarityBySourceId.get(project.id) ?? 0,
     });
   }
 
@@ -229,7 +239,7 @@ async function fetchMetadataForChunks(
         `TITLE: ${translation?.title ?? blog.slug}`,
         `DESCRIPTION: ${translation?.description ?? ""}`,
         `PORTFOLIO URL: ${portfolioUrl}`,
-        blog.categoryId ? `CATEGORY: ${blog.categoryId}` : null,
+        blog.category ? `CATEGORY: ${blog.category.name}` : null,
         blog.tags?.length ? `TAGS: ${blog.tags.join(", ")}` : null,
       ]
         .filter(Boolean)
@@ -242,8 +252,9 @@ async function fetchMetadataForChunks(
       description: translation?.description ?? "",
       url: portfolioUrl,
       imageUrl: blog.coverImage ?? undefined,
-      category: blog.categoryId ?? "",
+      category: blog.category?.name ?? "",
       tags: blog.tags ?? [],
+      similarity: maxSimilarityBySourceId.get(blog.id) ?? 0,
     });
   }
 
@@ -365,7 +376,7 @@ export async function POST(req: NextRequest) {
         : "";
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const intentPrompt = `Analyze the user's message and the conversation history to determine the intent and a refined search query.
 User Message: "${message}"
@@ -374,12 +385,12 @@ Recent History:
 ${historyText || "None"}
 
 Intents:
-- "greeting": The user is just saying hello, asking how you are, thanking you, or saying goodbye. No specific portfolio information is needed.
+- "greeting": The user is just saying hello, asking how you are, thanking you, or saying goodbye.
 - "inappropriate": The user is asking an inappropriate question, using profanity, or being abusive.
-- "general_chat": The user is asking a general question NOT related to Kadir's portfolio (e.g., "how to code in Python", "what is the weather", "tell me a joke").
-- "portfolio_query": The user is asking about Kadir's portfolio, projects, experience, skills, blog posts, or contact information. This requires searching the knowledge base.
+- "general_chat": ONLY use this for questions that are CLEARLY and OBVIOUSLY unrelated to any tech portfolio. Examples: weather, jokes, cooking recipes, politics, sports scores, romantic advice. Do NOT use this for any technology name, tool, framework, library, programming concept, or career topic — those might exist in the portfolio.
+- "portfolio_query": The user is asking about Kadir's portfolio, projects, experience, skills, blog posts, contact info, OR asking about any technology/tool/framework (e.g. "what is Drizzle", "tell me about TypeScript") since these may appear in portfolio projects or blog posts. When in doubt, use this.
 
-If the intent is "portfolio_query", provide a "refinedQuery" which is an optimized, keyword-rich search string in English useful for a vector database search. Otherwise, refinedQuery can be empty.
+If the intent is "portfolio_query", provide a "refinedQuery" which is an optimized, keyword-rich search string in English useful for a vector database search.
 Return JSON in this format: { "intent": "greeting"|"inappropriate"|"general_chat"|"portfolio_query", "refinedQuery": "..." }`;
 
     const intentResult = await model.generateContent({
@@ -401,7 +412,11 @@ Return JSON in this format: { "intent": "greeting"|"inappropriate"|"general_chat
     let sources: SourceItem[] = [];
     let contextText = "";
 
-    if (intentData.intent === "portfolio_query") {
+    const shouldSearch =
+      intentData.intent === "portfolio_query" ||
+      intentData.intent === "general_chat";
+
+    if (shouldSearch) {
       const queryEmbedding = await generateEmbedding(
         intentData.refinedQuery || message,
       );
@@ -412,15 +427,25 @@ Return JSON in this format: { "intent": "greeting"|"inappropriate"|"general_chat
         0.55,
       );
 
-      if (similarChunks.length > 0) {
+      const PORTFOLIO_UPGRADE_THRESHOLD = 0.65;
+      if (
+        intentData.intent === "general_chat" &&
+        similarChunks.some((c) => c.similarity >= PORTFOLIO_UPGRADE_THRESHOLD)
+      ) {
+        intentData.intent = "portfolio_query";
+      }
+
+      if (intentData.intent === "portfolio_query" && similarChunks.length > 0) {
         const result = await fetchMetadataForChunks(similarChunks, locale);
         contextBlocks = result.contextBlocks;
         sources = result.sources;
       }
       contextText =
-        contextBlocks.length > 0
-          ? contextBlocks.join("\n\n")
-          : "No relevant information found in the portfolio.";
+        intentData.intent === "portfolio_query"
+          ? contextBlocks.length > 0
+            ? contextBlocks.join("\n\n")
+            : "No relevant information found in the portfolio."
+          : "";
     }
 
     let intentInstructions = "";
@@ -444,6 +469,7 @@ ROLE & RESTRICTIONS:
 - Never invent URLs, project names, or details not found in the CONTEXT.
 - Use Markdown for formatting: bullet lists, bold text, inline links.
 - When mentioning a project or blog post, include its name as a clickable link using the PORTFOLIO URL. Keep it natural — do NOT repeat the full URL or image separately, those are handled by the UI.
+- The UI will display source cards automatically. Only link to a project or blog post if it is DIRECTLY relevant to the user's question. Do NOT reference projects or blog posts when the question is about work experience, personal info, or profile.
 - Answer in: ${locale === "tr" ? "Turkish (Türkçe)" : "English"}.
 ${historyText ? `\nCONVERSATION HISTORY:\n${historyText}\n` : ""}
 
@@ -456,12 +482,7 @@ ${message}`;
     const result = await model.generateContent(systemPrompt);
     const response = result.response.text();
 
-    let usageMetadata = null;
-    try {
-      usageMetadata = result.response.usageMetadata;
-    } catch (e) {
-      // ignore
-    }
+    const usageMetadata = result.response.usageMetadata ?? null;
 
     await db.insert(aiChatMessage).values({
       sessionId: sessionId!,
@@ -473,9 +494,15 @@ ${message}`;
       },
     });
 
-    const relevantSources = sources.filter(
-      (s) => s.sourceType === "project" || s.sourceType === "blog",
-    );
+    const SOURCE_DISPLAY_THRESHOLD = 0.7;
+    const relevantSources = sources
+      .filter(
+        (s) =>
+          (s.sourceType === "project" || s.sourceType === "blog") &&
+          s.similarity >= SOURCE_DISPLAY_THRESHOLD,
+      )
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 3);
 
     return NextResponse.json({ response, sources: relevantSources });
   } catch (error) {
