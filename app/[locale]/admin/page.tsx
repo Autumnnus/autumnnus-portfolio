@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import DatabaseManagement from "@/components/admin/DatabaseManagement";
+import SystemStatus from "@/components/admin/SystemStatus";
 import Container from "@/components/common/Container";
 import { Link } from "@/i18n/routing";
 import { FileText, Folder, Plus } from "lucide-react";
@@ -197,6 +198,11 @@ export default async function AdminDashboard() {
               {t("livechat.manage")}
             </Link>
           </div>
+        </div>
+
+        {/* Sistem Durumu Paneli */}
+        <div className="lg:col-span-3">
+          <SystemStatus />
         </div>
 
         {/* Veritabanı Yönetimi */}

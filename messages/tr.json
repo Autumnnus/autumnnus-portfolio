@@ -196,6 +196,25 @@
       "aiLogs": {
         "title": "Yapay Zeka Kayıtları",
         "description": "Yapay zeka (AI) sohbet görüşmelerini yönetin ve görüntüleyin."
+      },
+      "status": {
+        "title": "Sistem Durumu",
+        "db": "Veritabanı Bağlantısı",
+        "minio": "MinIO Bağlantısı",
+        "tables": "İlklendirilmiş Tablolar",
+        "bucket": "Bucket Durumu",
+        "bucketExists": "Bucket Hazır",
+        "bucketMissing": "Bucket Eksik",
+        "connected": "Bağlı",
+        "disconnected": "Bağlantı Yok",
+        "refresh": "Yenile",
+        "seed": "Veritabanını Tohumla (Seed)",
+        "seedConfirm": "BU İŞLEM TÜM VERİLERİ SİLECEK VE VARSAYILAN VERİLERİ YÜKLEYECEKTİR! Emin misiniz?",
+        "seedSuccess": "Veritabanı başarıyla tohumlandı.",
+        "seedError": "Tohumlama başarısız oldu.",
+        "seeding": "Tohumlanıyor...",
+        "checking": "Kontrol ediliyor...",
+        "allOperational": "Tüm Sistemler Çalışıyor"
       }
     },
     "LiveChat": {

@@ -196,6 +196,25 @@
       "aiLogs": {
         "title": "AI Logs",
         "description": "Manage and view AI chat conversations."
+      },
+      "status": {
+        "title": "System Status",
+        "db": "Database Connection",
+        "minio": "MinIO Connection",
+        "tables": "Initialized Tables",
+        "bucket": "Bucket Status",
+        "bucketExists": "Bucket Ready",
+        "bucketMissing": "Bucket Missing",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "refresh": "Refresh",
+        "seed": "Seed Database",
+        "seedConfirm": "THIS ACTION WILL DELETE ALL DATA AND LOAD DEFAULT DATA! Are you sure?",
+        "seedSuccess": "Database seeded successfully.",
+        "seedError": "Seeding failed.",
+        "seeding": "Seeding...",
+        "checking": "Checking...",
+        "allOperational": "All Systems Operational"
       }
     },
     "LiveChat": {
