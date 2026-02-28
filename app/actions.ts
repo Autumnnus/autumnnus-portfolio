@@ -1415,7 +1415,11 @@ export async function getSimilarProjects(
 ) {
   try {
     const targetLanguage = lang === "tr" ? "tr" : "en";
-    type RawResult = { sourceId: string; distance: number };
+    type RawResult = {
+      sourceId: string;
+      distance: number | null;
+      sourceid?: string | null;
+    };
 
     let similarProjectIds: RawResult[] = [];
 
@@ -1441,7 +1445,7 @@ export async function getSimilarProjects(
         LIMIT ${limit}
       `);
       similarProjectIds = res.rows
-        .map((r: any) => ({
+        .map((r) => ({
           sourceId: String(r.sourceId || r.sourceid),
           distance: r.distance !== null ? Number(r.distance) : null,
         }))
@@ -1516,7 +1520,11 @@ export async function getSimilarBlogPosts(
 ) {
   try {
     const targetLanguage = lang === "tr" ? "tr" : "en";
-    type RawResult = { sourceId: string; distance: number };
+    type RawResult = {
+      sourceId: string;
+      distance: number | null;
+      sourceid?: string;
+    };
 
     let similarBlogIds: RawResult[] = [];
 
@@ -1542,7 +1550,7 @@ export async function getSimilarBlogPosts(
         LIMIT ${limit}
       `);
       similarBlogIds = res.rows
-        .map((r: any) => ({
+        .map((r) => ({
           sourceId: String(r.sourceId || r.sourceid),
           distance: r.distance !== null ? Number(r.distance) : null,
         }))
