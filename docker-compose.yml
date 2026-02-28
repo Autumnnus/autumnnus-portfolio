@@ -17,8 +17,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
-    networks:
-      - coolify
 
   minio:
     image: minio/minio:latest
@@ -33,13 +31,7 @@ services:
       - "9003:9001"
     volumes:
       - minio_data:/data
-    networks:
-      - coolify
 
 volumes:
   postgres_data:
   minio_data:
-
-networks:
-  coolify:
-    external: true

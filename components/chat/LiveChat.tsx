@@ -221,12 +221,16 @@ export default function LiveChat() {
     }
   }, []);
   useEffect(() => {
-    if (!teaserText) return;
+    // Determine the final greeting text
+    const currentGreeting = teaserText || t.raw("greeting");
+
+    // If there's no custom or default greeting (indicated by translation key or empty), abort
+    if (!currentGreeting || currentGreeting === "Chat.greeting") return;
+
     setMessages((prev) => {
       const hasNonWelcome = prev.some((m) => m.id !== "welcome");
       if (hasNonWelcome) return prev;
 
-      const currentGreeting = teaserText || t("greeting");
       const alreadySet =
         prev.length === 1 &&
         prev[0].id === "welcome" &&
@@ -267,14 +271,21 @@ export default function LiveChat() {
 
   const handleNewChat = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
-    const welcomeMsg: Message = {
-      id: "welcome",
-      role: "ai",
-      content: teaserText || t("greeting"),
-      timestamp: new Date(),
-    };
-    playedMessageIdsRef.current = new Set(["welcome"]);
-    setMessages([welcomeMsg]);
+    const currentGreeting = teaserText || t.raw("greeting");
+
+    if (currentGreeting && currentGreeting !== "Chat.greeting") {
+      const welcomeMsg: Message = {
+        id: "welcome",
+        role: "ai",
+        content: currentGreeting,
+        timestamp: new Date(),
+      };
+      playedMessageIdsRef.current = new Set(["welcome"]);
+      setMessages([welcomeMsg]);
+    } else {
+      playedMessageIdsRef.current = new Set();
+      setMessages([]);
+    }
   }, [t, teaserText]);
 
   const processMessage = async (content: string) => {

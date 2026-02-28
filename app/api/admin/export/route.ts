@@ -3,7 +3,18 @@ import { db } from "@/lib/db";
 import { getFile } from "@/lib/minio";
 import JSZip from "jszip";
 
-export async function GET() {
+const BUCKET = process.env.MINIO_BUCKET_NAME || "autumnnus-assets";
+
+function getObjectName(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("http")) {
+    const parts = url.split(`/${BUCKET}/`);
+    return parts[1] ?? null;
+  }
+  return url;
+}
+
+export async function GET(request: Request) {
   try {
     const session = await auth();
     if (
@@ -13,82 +24,98 @@ export async function GET() {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const [projects, blogs, profile, experiences, skills] = await Promise.all([
-      db.query.project.findMany({
-        with: { translations: true, technologies: true },
-      }),
-      db.query.blogPost.findMany({
-        with: { translations: true },
-      }),
-      db.query.profile.findFirst({
-        with: { translations: true },
-      }),
-      db.query.workExperience.findMany({
-        with: { translations: true },
-      }),
-      db.query.skill.findMany(),
-    ]);
+    const url = new URL(request.url);
+    const sectionsParam = url.searchParams.get("sections");
+    const sections = sectionsParam
+      ? new Set(sectionsParam.split(","))
+      : new Set(["projects", "blogs", "skills", "experiences", "profile"]);
 
-    const data = {
-      projects,
-      blogs,
-      profile,
-      experiences,
-      skills,
-    };
+    const [projects, blogs, profileData, experiences, skills] =
+      await Promise.all([
+        sections.has("projects")
+          ? db.query.project.findMany({
+              with: { translations: true, technologies: true },
+            })
+          : Promise.resolve([]),
+        sections.has("blogs")
+          ? db.query.blogPost.findMany({ with: { translations: true } })
+          : Promise.resolve([]),
+        sections.has("profile")
+          ? db.query.profile.findFirst({
+              with: {
+                translations: true,
+                quests: { with: { translations: true } },
+              },
+            })
+          : Promise.resolve(undefined),
+        sections.has("experiences")
+          ? db.query.workExperience.findMany({ with: { translations: true } })
+          : Promise.resolve([]),
+        sections.has("skills")
+          ? db.query.skill.findMany()
+          : Promise.resolve([]),
+      ]);
 
     const zip = new JSZip();
     zip.file(
       "data.json",
-      JSON.stringify({ timestamp: new Date(), data }, null, 2),
+      JSON.stringify(
+        {
+          timestamp: new Date(),
+          sections: Array.from(sections),
+          data: { projects, blogs, profile: profileData, experiences, skills },
+        },
+        null,
+        2,
+      ),
     );
 
     const assetsFolder = zip.folder("assets");
-    if (!assetsFolder) throw new Error("Failed to create folder in zip");
+    if (!assetsFolder) throw new Error("Failed to create assets folder in zip");
 
     const addFileToZip = async (url: string | null | undefined) => {
-      if (!url) return;
+      const objectName = getObjectName(url);
+      if (!objectName) return;
       try {
-        const buffer = await getFile(url);
-        const filename = url.split("/").pop() || `file-${Date.now()}`;
-
-        let zipPath = filename;
-        if (url.includes(process.env.MINIO_BUCKET_NAME || "autumnnus-assets")) {
-          const parts = url.split(
-            `/${process.env.MINIO_BUCKET_NAME || "autumnnus-assets"}/`,
-          );
-          if (parts[1]) zipPath = parts[1];
-        }
-
-        assetsFolder.file(zipPath, buffer);
-      } catch (error) {
-        console.warn(`Failed to backup file: ${url}`, error);
+        const buffer = await getFile(objectName);
+        assetsFolder.file(objectName, buffer);
+      } catch (err) {
+        console.warn(`Failed to backup file: ${url}`, err);
       }
     };
 
     const downloadPromises: Promise<void>[] = [];
 
-    if (profile?.avatar) downloadPromises.push(addFileToZip(profile.avatar));
+    if (sections.has("profile") && profileData?.avatar) {
+      downloadPromises.push(addFileToZip(profileData.avatar));
+    }
 
-    for (const p of projects) {
-      if (p.coverImage) downloadPromises.push(addFileToZip(p.coverImage));
-      if (p.images) {
-        for (const img of p.images) {
-          downloadPromises.push(addFileToZip(img));
+    if (sections.has("projects")) {
+      for (const p of projects) {
+        if (p.coverImage) downloadPromises.push(addFileToZip(p.coverImage));
+        if (p.images) {
+          for (const img of p.images) downloadPromises.push(addFileToZip(img));
         }
       }
     }
 
-    for (const b of blogs) {
-      if (b.coverImage) downloadPromises.push(addFileToZip(b.coverImage));
+    if (sections.has("blogs")) {
+      for (const b of blogs) {
+        if (b.coverImage) downloadPromises.push(addFileToZip(b.coverImage));
+      }
     }
 
-    for (const s of skills) {
-      if (s.icon) downloadPromises.push(addFileToZip(s.icon));
+    if (sections.has("skills")) {
+      for (const s of skills) {
+        if (s.icon?.startsWith("http"))
+          downloadPromises.push(addFileToZip(s.icon));
+      }
     }
 
-    for (const w of experiences) {
-      if (w.logo) downloadPromises.push(addFileToZip(w.logo));
+    if (sections.has("experiences")) {
+      for (const w of experiences) {
+        if (w.logo) downloadPromises.push(addFileToZip(w.logo));
+      }
     }
 
     await Promise.all(downloadPromises);
@@ -98,7 +125,7 @@ export async function GET() {
     return new Response(new Uint8Array(zipContent), {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename=\"backup-${new Date().toISOString().split("T")[0]}.zip\"`,
+        "Content-Disposition": `attachment; filename="backup-${new Date().toISOString().split("T")[0]}.zip"`,
       },
     });
   } catch (error) {

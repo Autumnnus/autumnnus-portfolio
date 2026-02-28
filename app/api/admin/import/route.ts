@@ -1,10 +1,11 @@
-import { auth } from "@/auth";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
   _projectToSkill,
   blogPost,
   blogPostTranslation,
+  profile as profileTable,
   profileTranslation,
   project,
   projectTranslation,
@@ -18,6 +19,17 @@ import { uploadFile } from "@/lib/minio";
 import JSZip from "jszip";
 import path from "path";
 
+const BUCKET = process.env.MINIO_BUCKET_NAME || "autumnnus-assets";
+
+function getObjectName(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("http")) {
+    const parts = url.split(`/${BUCKET}/`);
+    return parts[1] ?? null;
+  }
+  return url;
+}
+
 export async function POST(request: Request) {
   try {
     const session = await auth();
@@ -30,38 +42,56 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    if (!file) return new Response("No file provided", { status: 400 });
 
-    if (!file) {
-      return new Response("No file provided", { status: 400 });
-    }
+    // Parse sections (default: all)
+    const sectionsRaw = formData.get("sections") as string | null;
+    const sections: Set<string> = sectionsRaw
+      ? new Set(JSON.parse(sectionsRaw))
+      : new Set(["projects", "blogs", "skills", "experiences", "profile"]);
 
     const buffer = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(buffer);
 
     const dataFile = zip.file("data.json");
-    if (!dataFile) {
+    if (!dataFile)
       return new Response("Invalid backup: data.json missing", { status: 400 });
-    }
 
     const jsonContent = await dataFile.async("string");
     const { data } = JSON.parse(jsonContent);
     const { projects, blogs, profile, experiences, skills } = data;
 
     await db.transaction(async (tx) => {
-      await tx.delete(projectTranslation);
-      await tx.delete(_projectToSkill);
-      await tx.delete(project);
-      await tx.delete(blogPostTranslation);
-      await tx.delete(blogPost);
-      await tx.delete(workExperienceTranslation);
-      await tx.delete(workExperience);
-      await tx.delete(questTranslation);
-      await tx.delete(quest);
-      await tx.delete(profileTranslation);
-      await tx.delete(profile);
-      await tx.delete(skill);
+      // ── Delete in FK-safe order ──────────────────────────────────────
+      // _projectToSkill depends on both project and skill, so delete first
+      // if either parent table is being replaced.
+      if (sections.has("projects") || sections.has("skills")) {
+        await tx.delete(_projectToSkill);
+      }
+      if (sections.has("projects")) {
+        await tx.delete(projectTranslation);
+        await tx.delete(project);
+      }
+      if (sections.has("blogs")) {
+        await tx.delete(blogPostTranslation);
+        await tx.delete(blogPost);
+      }
+      if (sections.has("experiences")) {
+        await tx.delete(workExperienceTranslation);
+        await tx.delete(workExperience);
+      }
+      if (sections.has("profile")) {
+        await tx.delete(questTranslation);
+        await tx.delete(quest);
+        await tx.delete(profileTranslation);
+        await tx.delete(profileTable);
+      }
+      if (sections.has("skills")) {
+        await tx.delete(skill);
+      }
 
-      if (skills?.length) {
+      // ── Insert: skills first (needed for project relations) ───────────
+      if (sections.has("skills") && skills?.length) {
         await tx.insert(skill).values(
           (skills as any[]).map((s) => ({
             id: s.id,
@@ -72,10 +102,11 @@ export async function POST(request: Request) {
         );
       }
 
-      if (profile) {
+      // ── Insert: profile ──────────────────────────────────────────────
+      if (sections.has("profile") && profile) {
         const pr = profile as any;
-        const newProfileRes = (await tx
-          .insert(profile)
+        const [newProfile] = await tx
+          .insert(profileTable)
           .values({
             id: pr.id,
             avatar: pr.avatar,
@@ -83,8 +114,7 @@ export async function POST(request: Request) {
             github: pr.github,
             linkedin: pr.linkedin,
           })
-          .returning()) as any;
-        const newProfile = newProfileRes[0];
+          .returning();
 
         if (pr.translations?.length) {
           await tx.insert(profileTranslation).values(
@@ -103,15 +133,15 @@ export async function POST(request: Request) {
 
         if (pr.quests?.length) {
           for (const q of pr.quests as any[]) {
-            const newQuestRes = (await tx
+            const [newQuest] = await tx
               .insert(quest)
               .values({
+                id: q.id,
                 profileId: newProfile.id,
                 order: q.order,
-                id: q.id,
+                completed: q.completed ?? false,
               })
-              .returning()) as any;
-            const newQuest = newQuestRes[0];
+              .returning();
 
             if (q.translations?.length) {
               await tx.insert(questTranslation).values(
@@ -119,7 +149,6 @@ export async function POST(request: Request) {
                   questId: newQuest.id,
                   language: t.language,
                   title: t.title,
-                  description: t.description,
                 })),
               );
             }
@@ -127,9 +156,10 @@ export async function POST(request: Request) {
         }
       }
 
-      if (experiences?.length) {
+      // ── Insert: experiences ──────────────────────────────────────────
+      if (sections.has("experiences") && experiences?.length) {
         for (const exp of experiences as any[]) {
-          const newExperienceRes = (await tx
+          const [newExp] = await tx
             .insert(workExperience)
             .values({
               id: exp.id,
@@ -138,13 +168,12 @@ export async function POST(request: Request) {
               startDate: exp.startDate ? new Date(exp.startDate) : null,
               endDate: exp.endDate ? new Date(exp.endDate) : null,
             })
-            .returning()) as any;
-          const newExperience = newExperienceRes[0];
+            .returning();
 
           if (exp.translations?.length) {
             await tx.insert(workExperienceTranslation).values(
               exp.translations.map((t: any) => ({
-                workExperienceId: newExperience.id,
+                workExperienceId: newExp.id,
                 language: t.language,
                 role: t.role,
                 description: t.description,
@@ -155,9 +184,10 @@ export async function POST(request: Request) {
         }
       }
 
-      if (blogs?.length) {
+      // ── Insert: blogs ────────────────────────────────────────────────
+      if (sections.has("blogs") && blogs?.length) {
         for (const blog of blogs as any[]) {
-          const newBlogRes = (await tx
+          const [newBlog] = await tx
             .insert(blogPost)
             .values({
               id: blog.id,
@@ -165,9 +195,12 @@ export async function POST(request: Request) {
               coverImage: blog.coverImage,
               featured: blog.featured,
               tags: blog.tags,
+              status: blog.status ?? "draft",
+              commentsEnabled: blog.commentsEnabled ?? true,
+              category: blog.category,
+              imageAlt: blog.imageAlt,
             })
-            .returning()) as any;
-          const newBlog = newBlogRes[0];
+            .returning();
 
           if (blog.translations?.length) {
             await tx.insert(blogPostTranslation).values(
@@ -179,15 +212,25 @@ export async function POST(request: Request) {
                 content: t.content,
                 readTime: t.readTime,
                 date: t.date ? String(t.date) : new Date().toISOString(),
+                excerpt: t.excerpt,
+                keywords: t.keywords ?? [],
+                metaDescription: t.metaDescription,
+                metaTitle: t.metaTitle,
               })),
             );
           }
         }
       }
 
-      if (projects?.length) {
+      // ── Insert: projects ─────────────────────────────────────────────
+      if (sections.has("projects") && projects?.length) {
+        // Get skill IDs that actually exist (handles skills-not-selected case)
+        const existingSkillIds = new Set(
+          (await tx.select({ id: skill.id }).from(skill)).map((r) => r.id),
+        );
+
         for (const prj of projects as any[]) {
-          const newProjectRes = (await tx
+          const [newProject] = await tx
             .insert(project)
             .values({
               id: prj.id,
@@ -199,17 +242,22 @@ export async function POST(request: Request) {
               featured: prj.featured,
               coverImage: prj.coverImage,
               images: prj.images,
+              imageAlt: prj.imageAlt,
             })
-            .returning()) as any;
-          const newProject = newProjectRes[0];
+            .returning();
 
           if (prj.technologies?.length) {
-            await tx.insert(_projectToSkill).values(
-              (prj.technologies as any[]).map((tech) => ({
-                A: newProject.id,
-                B: tech.id,
-              })),
+            const validTechs = (prj.technologies as any[]).filter((tech) =>
+              existingSkillIds.has(tech.id),
             );
+            if (validTechs.length) {
+              await tx.insert(_projectToSkill).values(
+                validTechs.map((tech) => ({
+                  A: newProject.id,
+                  B: tech.id,
+                })),
+              );
+            }
           }
 
           if (prj.translations?.length) {
@@ -220,6 +268,9 @@ export async function POST(request: Request) {
                 title: t.title,
                 shortDescription: t.shortDescription,
                 fullDescription: t.fullDescription,
+                keywords: t.keywords ?? [],
+                metaDescription: t.metaDescription,
+                metaTitle: t.metaTitle,
               })),
             );
           }
@@ -227,12 +278,53 @@ export async function POST(request: Request) {
       }
     });
 
+    // ── Upload assets (filtered by sections) ────────────────────────────
     const assetsFolder = zip.folder("assets");
     if (assetsFolder) {
+      // Build allowed object name set from selected sections
+      const allowedAssets = new Set<string>();
+
+      if (sections.has("profile") && profile?.avatar) {
+        const name = getObjectName(profile.avatar);
+        if (name) allowedAssets.add(name);
+      }
+      if (sections.has("projects")) {
+        for (const p of (projects as any[]) ?? []) {
+          const cover = getObjectName(p.coverImage);
+          if (cover) allowedAssets.add(cover);
+          for (const img of p.images ?? []) {
+            const imgName = getObjectName(img);
+            if (imgName) allowedAssets.add(imgName);
+          }
+        }
+      }
+      if (sections.has("blogs")) {
+        for (const b of (blogs as any[]) ?? []) {
+          const cover = getObjectName(b.coverImage);
+          if (cover) allowedAssets.add(cover);
+        }
+      }
+      if (sections.has("skills")) {
+        for (const s of (skills as any[]) ?? []) {
+          if (s.icon?.startsWith("http")) {
+            const name = getObjectName(s.icon);
+            if (name) allowedAssets.add(name);
+          }
+        }
+      }
+      if (sections.has("experiences")) {
+        for (const e of (experiences as any[]) ?? []) {
+          const name = getObjectName(e.logo);
+          if (name) allowedAssets.add(name);
+        }
+      }
+
       const uploadPromises: Promise<void>[] = [];
 
       assetsFolder.forEach((relativePath, fileEntry) => {
         if (fileEntry.dir) return;
+        // Skip assets not belonging to selected sections
+        if (!allowedAssets.has(relativePath)) return;
 
         const p = async () => {
           const content = await fileEntry.async("nodebuffer");
@@ -243,6 +335,7 @@ export async function POST(request: Request) {
             contentType = "image/jpeg";
           else if (ext === ".svg") contentType = "image/svg+xml";
           else if (ext === ".webp") contentType = "image/webp";
+          else if (ext === ".gif") contentType = "image/gif";
 
           try {
             await uploadFile(relativePath, content, contentType);
