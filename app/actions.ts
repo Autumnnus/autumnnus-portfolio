@@ -191,7 +191,11 @@ export async function getProjectById(id: string) {
   }
 }
 
-export async function getProjectBySlug(slugStr: string, lang: Language) {
+export async function getProjectBySlug(
+  slugStr: string,
+  lang: Language,
+  skipAuth = false,
+) {
   try {
     const prj = await db.query.project.findFirst({
       where: eq(project.slug, slugStr),
@@ -204,6 +208,16 @@ export async function getProjectBySlug(slugStr: string, lang: Language) {
     });
 
     if (!prj) return null;
+
+    let isAdmin = false;
+    if (!skipAuth) {
+      const session = await auth();
+      isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    }
+
+    if (prj.status === "archived" && !isAdmin) {
+      return null;
+    }
 
     const translation = prj.translations[0] || {};
     return {
@@ -290,12 +304,8 @@ export async function getBlogPosts({
     let isAdmin = false;
 
     if (!skipAuth) {
-      try {
-        const session = await auth();
-        isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      } catch {
-        isAdmin = false;
-      }
+      const session = await auth();
+      isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
     }
 
     const skip = (page - 1) * limit;
@@ -428,12 +438,8 @@ export async function getBlogPostBySlug(
 
     let isAdmin = false;
     if (!skipAuth) {
-      try {
-        const session = await auth();
-        isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      } catch {
-        isAdmin = false;
-      }
+      const session = await auth();
+      isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
     }
 
     if (post.status === "draft" && !isAdmin) {

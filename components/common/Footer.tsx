@@ -1,12 +1,11 @@
 import VisitorTracker from "@/components/interactive/VisitorTracker";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import Container from "./Container";
 import VisitorBadge from "./VisitorBadge";
 import VisitorBadgeLoading from "./VisitorBadgeLoading";
 
-export default async function Footer() {
-  const locale = await getLocale();
+export default async function Footer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "Footer" });
 
   return (
