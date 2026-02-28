@@ -2,21 +2,17 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
+import { scrollToTop } from "./SmoothScroll";
 
 export default function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-
-  // Scroll to top when pathname changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
 
   return (
     <AnimatePresence
       mode="wait"
       onExitComplete={() => {
-        window.scrollTo(0, 0);
+        scrollToTop();
       }}
     >
       <motion.div
