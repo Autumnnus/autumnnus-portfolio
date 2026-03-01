@@ -56,6 +56,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@umami-db:5432/umami
       DATABASE_TYPE: postgresql
       APP_SECRET: ${AUTH_SECRET}
+      TRACKER_SCRIPT_NAME: x.js
+      COLLECT_API_ENDPOINT: /api/x
     ports:
       - "3030:3000"
     depends_on:

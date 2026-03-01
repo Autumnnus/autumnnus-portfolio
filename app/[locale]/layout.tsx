@@ -64,7 +64,7 @@ export default async function LocaleLayout({
         {process.env.NEXT_PUBLIC_UMAMI_ID && (
           <Script
             defer
-            src="/stats/script.js"
+            src={`${process.env.NEXT_PUBLIC_UMAMI_URL}/x.js`}
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_ID}
           />
         )}
