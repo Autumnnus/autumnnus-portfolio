@@ -30,19 +30,6 @@ const nextConfig: NextConfig = {
       bodySizeLimit: 10 * 1024 * 1024,
     },
   },
-  async rewrites() {
-    // AdBlocker atlatmak için Umami Proxy'si
-    return [
-      {
-        source: "/stats/script.js",
-        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/custom-analytics.js`,
-      },
-      {
-        source: "/stats/api/send",
-        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/api/send-data`,
-      },
-    ];
-  },
 };
 
 export default withNextIntl(nextConfig);
