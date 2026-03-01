@@ -66,7 +66,6 @@ export default async function LocaleLayout({
             defer
             src="/stats/script.js"
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_ID}
-            data-host-url="/api/send"
           />
         )}
       </head>
