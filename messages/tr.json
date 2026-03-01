@@ -220,6 +220,16 @@
         "title": "Yapay Zeka Kayıtları",
         "description": "Yapay zeka (AI) sohbet görüşmelerini yönetin ve görüntüleyin."
       },
+      "embeddings": {
+        "title": "Vektör Veri",
+        "description": "Yapay zeka bilgi tabanını ve içerik senkronizasyonunu yönetin.",
+        "manage": "Yönet"
+      },
+      "umami": {
+        "title": "İstatistikler",
+        "description": "Umami paneli üzerinden site istatistiklerini ve ziyaretçileri analiz edin.",
+        "dashboard": "Umami Panelini Aç"
+      },
       "status": {
         "title": "Sistem Durumu",
         "db": "Veritabanı Bağlantısı",
@@ -237,7 +247,8 @@
         "seedError": "Tohumlama başarısız oldu.",
         "seeding": "Tohumlanıyor...",
         "checking": "Kontrol ediliyor...",
-        "allOperational": "Tüm Sistemler Çalışıyor"
+        "allOperational": "Tüm Sistemler Çalışıyor",
+        "seedDisabledTooltip": "Bu işlem üretim (production) ortamında güvenlik gerekçesiyle devre dışı bırakılmıştır."
       }
     },
     "LiveChat": {

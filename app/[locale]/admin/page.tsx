@@ -3,7 +3,7 @@ import DatabaseManagement from "@/components/admin/DatabaseManagement";
 import SystemStatus from "@/components/admin/SystemStatus";
 import Container from "@/components/common/Container";
 import { Link } from "@/i18n/routing";
-import { FileText, Folder, Plus } from "lucide-react";
+import { BarChart, BrainCircuit, FileText, Folder, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 export default async function AdminDashboard() {
@@ -197,6 +197,62 @@ export default async function AdminDashboard() {
             >
               {t("livechat.manage")}
             </Link>
+          </div>
+        </div>
+
+        {/* Vektör Veri Yönetimi */}
+        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col group hover:border-cyan-500/50 transition-all duration-500 shadow-xl hover:shadow-cyan-500/5 relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none rotate-12">
+            <BrainCircuit size={120} />
+          </div>
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="p-3 bg-cyan-500/10 rounded-2xl shadow-inner group-hover:bg-cyan-500/20 transition-colors">
+              <BrainCircuit className="w-8 h-8 text-cyan-500" />
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {t("embeddings.title")}
+            </h2>
+          </div>
+          <p className="text-muted-foreground font-medium text-sm sm:text-base leading-relaxed relative z-10 flex-1">
+            {t("embeddings.description")}
+          </p>
+          <div className="flex gap-4 mt-auto relative z-10">
+            <Link
+              href="/admin/embeddings"
+              className="w-full text-center px-6 py-3 bg-cyan-500 text-white rounded-xl font-bold hover:scale-[1.02] transition-all text-sm shadow-lg shadow-cyan-500/20 active:scale-[0.98]"
+            >
+              {t("embeddings.manage")}
+            </Link>
+          </div>
+        </div>
+
+        {/* Umami İstatistikleri */}
+        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col group hover:border-pink-500/50 transition-all duration-500 shadow-xl hover:shadow-pink-500/5 relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none rotate-12">
+            <BarChart size={120} />
+          </div>
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="p-3 bg-pink-500/10 rounded-2xl shadow-inner group-hover:bg-pink-500/20 transition-colors">
+              <BarChart className="w-8 h-8 text-pink-500" />
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {t("umami.title")}
+            </h2>
+          </div>
+          <p className="text-muted-foreground font-medium text-sm sm:text-base leading-relaxed relative z-10 flex-1">
+            {t("umami.description")}
+          </p>
+          <div className="flex gap-4 mt-auto relative z-10">
+            <a
+              href={
+                process.env.NEXT_PUBLIC_UMAMI_URL || "http://localhost:3030"
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full text-center px-6 py-3 bg-pink-500 text-white rounded-xl font-bold hover:scale-[1.02] transition-all text-sm shadow-lg shadow-pink-500/20 active:scale-[0.98]"
+            >
+              {t("umami.dashboard")}
+            </a>
           </div>
         </div>
 

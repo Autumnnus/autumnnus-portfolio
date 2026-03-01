@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Press_Start_2P, Space_Grotesk, Space_Mono } from "next/font/google";
+import Script from "next/script";
 import { Toaster } from "sonner";
 import "../globals.css";
 
@@ -59,6 +60,15 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        {process.env.NEXT_PUBLIC_UMAMI_ID && (
+          <Script
+            defer
+            src={`${process.env.NEXT_PUBLIC_UMAMI_URL}/script.js`}
+            data-website-id={process.env.NEXT_PUBLIC_UMAMI_ID}
+          />
+        )}
+      </head>
       <body
         className={`${spaceGrotesk.variable} ${spaceMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col`}
       >
