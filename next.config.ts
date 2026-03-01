@@ -5,6 +5,21 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  async rewrites() {
+    const umamiUrl =
+      process.env.UMAMI_INTERNAL_URL || process.env.NEXT_PUBLIC_UMAMI_URL;
+    if (!umamiUrl) return [];
+    return [
+      {
+        source: "/u/script.js",
+        destination: `${umamiUrl}/script.js`,
+      },
+      {
+        source: "/u/api/send",
+        destination: `${umamiUrl}/api/send`,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
