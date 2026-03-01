@@ -5,6 +5,18 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  async rewrites() {
+    return [
+      {
+        source: "/stats/script.js",
+        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/script.js`,
+      },
+      {
+        source: "/api/send",
+        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/api/send`,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
