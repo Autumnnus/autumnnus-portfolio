@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { Tooltip } from "react-tooltip";
 import { toast } from "sonner";
 
 interface StatusData {
@@ -139,16 +140,29 @@ export default function SystemStatus() {
             {t("refresh")}
           </button>
 
-          <button
-            onClick={handleSeed}
-            disabled={isRefreshing || isSeeding}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-primary/20"
+          <div
+            data-tooltip-id="seed-tooltip"
+            data-tooltip-content={
+              process.env.NODE_ENV !== "development"
+                ? t("seedDisabledTooltip")
+                : ""
+            }
           >
-            <Sprout
-              className={`w-4 h-4 ${isSeeding ? "animate-bounce" : ""}`}
-            />
-            {t("seed")}
-          </button>
+            <button
+              onClick={handleSeed}
+              disabled={process.env.NODE_ENV !== "development"}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-primary/20"
+            >
+              <Sprout
+                className={`w-4 h-4 ${isSeeding ? "animate-bounce" : ""}`}
+              />
+              {t("seed")}
+            </button>
+          </div>
+          <Tooltip
+            id="seed-tooltip"
+            className="z-50 !rounded-xl !px-4 !py-2 !bg-card !text-foreground !border !border-border shadow-2xl font-medium"
+          />
         </div>
       </div>
 

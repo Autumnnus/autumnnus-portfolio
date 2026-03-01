@@ -237,7 +237,8 @@
         "seedError": "Tohumlama başarısız oldu.",
         "seeding": "Tohumlanıyor...",
         "checking": "Kontrol ediliyor...",
-        "allOperational": "Tüm Sistemler Çalışıyor"
+        "allOperational": "Tüm Sistemler Çalışıyor",
+        "seedDisabledTooltip": "Bu işlem üretim (production) ortamında güvenlik gerekçesiyle devre dışı bırakılmıştır."
       }
     },
     "LiveChat": {
