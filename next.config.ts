@@ -14,10 +14,6 @@ const nextConfig: NextConfig = {
         source: "/u/script.js",
         destination: `${umamiUrl}/script.js`,
       },
-      {
-        source: "/u/api/send",
-        destination: `${umamiUrl}/api/send`,
-      },
     ];
   },
   images: {
