@@ -220,6 +220,16 @@
         "title": "Yapay Zeka Kayıtları",
         "description": "Yapay zeka (AI) sohbet görüşmelerini yönetin ve görüntüleyin."
       },
+      "embeddings": {
+        "title": "Vektör Veri",
+        "description": "Yapay zeka bilgi tabanını ve içerik senkronizasyonunu yönetin.",
+        "manage": "Yönet"
+      },
+      "umami": {
+        "title": "İstatistikler",
+        "description": "Umami paneli üzerinden site istatistiklerini ve ziyaretçileri analiz edin.",
+        "dashboard": "Umami Panelini Aç"
+      },
       "status": {
         "title": "Sistem Durumu",
         "db": "Veritabanı Bağlantısı",

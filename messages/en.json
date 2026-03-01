@@ -220,6 +220,16 @@
         "title": "AI Logs",
         "description": "Manage and view AI chat conversations."
       },
+      "embeddings": {
+        "title": "Vector Embeddings",
+        "description": "Manage your AI knowledge base and content synchronization.",
+        "manage": "Manage"
+      },
+      "umami": {
+        "title": "Statistics",
+        "description": "Analyze site statistics and visitors via the Umami dashboard.",
+        "dashboard": "Open Umami Dashboard"
+      },
       "status": {
         "title": "System Status",
         "db": "Database Connection",
