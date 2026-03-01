@@ -5,6 +5,7 @@ import {
   seedDatabaseAction,
 } from "@/app/[locale]/admin/status-actions";
 import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
   Database,
@@ -29,6 +30,9 @@ interface StatusData {
   minio: {
     connected: boolean;
     bucketExists: boolean;
+  };
+  umami: {
+    connected: boolean;
   };
 }
 
@@ -97,7 +101,8 @@ export default function SystemStatus() {
   const allClear =
     status?.db.connected &&
     status?.minio.connected &&
-    status?.minio.bucketExists;
+    status?.minio.bucketExists &&
+    status?.umami.connected;
 
   return (
     <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-8 shadow-xl relative overflow-hidden group">
@@ -166,7 +171,7 @@ export default function SystemStatus() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
         {/* Database Status Card */}
         <div className="p-6 bg-background/50 border border-border/50 rounded-2xl space-y-4 hover:border-primary/30 transition-colors group/card">
           <div className="flex justify-between items-start">
@@ -265,6 +270,37 @@ export default function SystemStatus() {
             <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic opacity-70">
               Check if the assets bucket is correctly initialized in your MinIO
               instance.
+            </p>
+          </div>
+        </div>
+
+        {/* Umami Status Card */}
+        <div className="p-6 bg-background/50 border border-border/50 rounded-2xl space-y-4 hover:border-purple-500/30 transition-colors group/card">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/10 rounded-lg">
+                <Activity className="w-5 h-5 text-purple-500" />
+              </div>
+              <span className="font-bold">{t("umami")}</span>
+            </div>
+            {status?.umami.connected ? (
+              <div className="flex items-center gap-1 text-green-500 bg-green-500/10 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <CheckCircle2 size={12} />
+                {t("connected")}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-red-500 bg-red-500/10 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <XCircle size={12} />
+                {t("disconnected")}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4 pt-2 flex flex-col items-start min-h-[50px] justify-center">
+            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic opacity-70">
+              {status?.umami.connected
+                ? "Umami analytics connection is established and working correctly."
+                : "Umami instance could not be reached. Ensure the instance is up and URL is correct."}
             </p>
           </div>
         </div>

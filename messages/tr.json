@@ -234,6 +234,7 @@
         "title": "Sistem Durumu",
         "db": "Veritabanı Bağlantısı",
         "minio": "MinIO Bağlantısı",
+        "umami": "Umami Bağlantısı",
         "tables": "İlklendirilmiş Tablolar",
         "bucket": "Bucket Durumu",
         "bucketExists": "Bucket Hazır",

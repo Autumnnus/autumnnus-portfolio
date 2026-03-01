@@ -25,6 +25,9 @@ export async function getSystemStatus() {
       connected: false,
       bucketExists: false,
     },
+    umami: {
+      connected: false,
+    },
   };
 
   // Check DB
@@ -54,6 +57,27 @@ export async function getSystemStatus() {
   } catch (error) {
     console.error("Minio Status Check Error:", error);
     status.minio.connected = false;
+  }
+
+  // Check Umami
+  try {
+    const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL;
+    if (umamiUrl) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`${umamiUrl}/api/heartbeat`, {
+        method: "GET",
+        signal: controller.signal,
+      }).catch(() =>
+        fetch(umamiUrl, { method: "HEAD", signal: controller.signal }),
+      );
+      clearTimeout(timeoutId);
+      if (res && res.ok) {
+        status.umami.connected = true;
+      }
+    }
+  } catch (error) {
+    console.error("Umami Status Check Error:", error);
   }
 
   return status;

@@ -234,6 +234,7 @@
         "title": "System Status",
         "db": "Database Connection",
         "minio": "MinIO Connection",
+        "umami": "Umami Connection",
         "tables": "Initialized Tables",
         "bucket": "Bucket Status",
         "bucketExists": "Bucket Ready",
