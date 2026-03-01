@@ -81,8 +81,9 @@ The project is optimized for **Coolify** using **Nixpacks**.
 
 1.  Connect your repository to Coolify.
 2.  Set the **Build Pack** to `Nixpacks`.
-3.  Configure all environment variables in the Coolify dashboard.
+3.  Configure all environment variables in the Coolify dashboard. Be sure to define `SERVICE_FQDN_APP`, `SERVICE_URL_APP`, and explicitly set `NIXPACKS_NODE_VERSION=22.13.0` (or higher) to avoid build errors.
 4.  **Important**: Ensure your production PostgreSQL database has the `pgvector` extension installed. You may need to run `CREATE EXTENSION IF NOT EXISTS vector;` manually once in your production DB.
+5.  **Analytics (Production):** Make sure to configure `NEXT_PUBLIC_UMAMI_URL` and `NEXT_PUBLIC_UMAMI_ID` to receive statistics directly in the admin panel.
 
 ---
 

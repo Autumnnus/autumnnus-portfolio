@@ -10,9 +10,11 @@ Autumnnus Portfolio is a modern, full-featured, multi-lingual (i18n), and AI-pow
 - **Role-based Authentication:** Different roles like Admin and Visitor (e.g., GitHub Auth) using Auth.js.
 - **Object Storage (S3 Compatible):** Storing images, media, and other files locally or on your own server with MinIO.
 - **Artificial Intelligence (AI) Integration:** Smart operations (AI Actions) powered by Google Gemini API.
-- **Rich Text Editor & Comments:** Interactive commenting, liking, and Tiptap rich text editor for blog and project detail pages.
+- **Rich Text Editor & Comments:** Interactive commenting, liking, and Tiptap rich text editor for blog and project detail pages (Includes source code highlighting using Shiki).
 - **Telegram Notifications & Visitor Tier System:** A dynamic notification system that interacts with a Telegram bot to inform the admin about visitor milestones and overall visitor count.
 - **Security & Bot Protection:** Cloudflare Turnstile integration to prevent spam comments and form submissions.
+- **Analytics & Tracking:** Integrated Umami Analytics for privacy-focused usage tracking and admin panel statistics.
+- **Interactive UI Elements:** Beautiful interface additions such as a GitHub-style Activity Calendar, dynamic Carousels, and seasonal visual effects.
 
 ---
 

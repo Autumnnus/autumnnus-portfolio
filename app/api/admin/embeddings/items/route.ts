@@ -5,6 +5,8 @@ import { embedding } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 async function checkAdmin() {
@@ -58,7 +60,7 @@ export async function GET() {
       .select({
         sourceType: embedding.sourceType,
         sourceId: embedding.sourceId,
-        maxUpdatedAt: sql<Date>`max(${embedding.updatedAt})`,
+        maxUpdatedAt: sql<Date>`max(${embedding.updatedAt})`.as("maxUpdatedAt"),
       })
       .from(embedding)
       .groupBy(embedding.sourceType, embedding.sourceId);
