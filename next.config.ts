@@ -35,11 +35,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/stats/script.js",
-        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/script.js`,
+        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/custom-analytics.js`,
       },
       {
         source: "/stats/api/send",
-        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/api/send`,
+        destination: `${process.env.NEXT_PUBLIC_UMAMI_URL}/api/send-data`,
       },
     ];
   },

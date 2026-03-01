@@ -81,6 +81,7 @@
     "published": "Yayınlandı"
   },
   "Blog": {
+    "category": "Kategori",
     "title": "Son Yazılar",
     "description": "Mühendislik ve programlama üzerine düşünceler, rehberler ve içgörüler.",
     "viewAll": "Tümünü Oku",

@@ -81,6 +81,7 @@
     "published": "Published"
   },
   "Blog": {
+    "category": "Category",
     "title": "Latest Posts",
     "description": "Thoughts, tutorials, and insights on engineering, and programming.",
     "viewAll": "Read All",
