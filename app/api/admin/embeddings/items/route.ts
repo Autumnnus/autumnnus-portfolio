@@ -68,15 +68,21 @@ export async function GET() {
     const items: any[] = [];
 
     const getEmbUpdate = (type: string, id: string) =>
-      embeddings.find((e: any) => e.sourceType === type && e.sourceId === id)
-        ?.maxUpdatedAt;
+      embeddings.find(
+        (e: any) =>
+          String(e.sourceType).toLowerCase() === String(type).toLowerCase() &&
+          String(e.sourceId).toLowerCase() === String(id).toLowerCase(),
+      )?.maxUpdatedAt;
 
     const getStatus = (sourceUpdate: any, embUpdate: any) => {
       if (!embUpdate) return "missing";
-      return new Date(sourceUpdate).getTime() - new Date(embUpdate).getTime() >
-        30000
-        ? "outdated"
-        : "synced";
+
+      const sourceTime = new Date(sourceUpdate).getTime();
+      const embTime = new Date(embUpdate).getTime();
+
+      if (isNaN(sourceTime) || isNaN(embTime)) return "missing";
+
+      return sourceTime - embTime > 30000 ? "outdated" : "synced";
     };
 
     projects.forEach((p: any) => {

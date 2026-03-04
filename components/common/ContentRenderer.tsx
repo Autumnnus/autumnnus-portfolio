@@ -1,5 +1,6 @@
 "use client";
 
+import DOMPurify from "isomorphic-dompurify";
 import CodeBlock from "./CodeBlock";
 
 interface ContentRendererProps {
@@ -52,7 +53,7 @@ export default function ContentRenderer({ content }: ContentRendererProps) {
                 prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
                 prose-ul:list-disc prose-ul:pl-5
                 prose-ol:list-decimal prose-ol:pl-5"
-              dangerouslySetInnerHTML={{ __html: part }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(part) }}
             />
           );
         })}

@@ -1,5 +1,6 @@
 "use client";
 
+import DOMPurify from "isomorphic-dompurify";
 import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -78,7 +79,10 @@ export default function CodeBlock({
       <div
         className="relative border border-t-0 border-white/10 rounded-b-lg overflow-hidden bg-[#121212] transition-all duration-300"
         dangerouslySetInnerHTML={{
-          __html: highlightedCode || `<pre><code>${code}</code></pre>`,
+          __html: DOMPurify.sanitize(
+            highlightedCode ||
+              `<pre><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`,
+          ),
         }}
       />
 

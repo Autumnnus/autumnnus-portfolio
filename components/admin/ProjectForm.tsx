@@ -519,6 +519,7 @@ export default function ProjectForm({
       if (result.action === "update") {
         router.refresh();
       } else if (result.action === "create" && result.id) {
+        router.refresh();
         router.push(`/admin/projects/${result.id}/edit`);
       }
     },

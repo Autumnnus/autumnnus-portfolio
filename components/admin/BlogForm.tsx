@@ -321,6 +321,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       if (result.action === "update") {
         router.refresh();
       } else if (result.action === "create" && result.id) {
+        router.refresh();
         router.push(`/admin/blog/${result.id}/edit`);
       }
     },

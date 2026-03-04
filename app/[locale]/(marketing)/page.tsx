@@ -1,4 +1,5 @@
 import Container from "@/components/common/Container";
+import SeasonalEffects from "@/components/decorations/SeasonalEffects";
 import About from "@/components/landing/About";
 import FeaturedBlogs from "@/components/landing/FeaturedBlogs";
 import FeaturedProjects from "@/components/landing/FeaturedProjects";
@@ -58,6 +59,7 @@ export default async function Home({ params }: HomeProps) {
   const featuredBlogs = (blogResult.items as unknown as BlogPost[]) || [];
   return (
     <>
+      <SeasonalEffects />
       <SectionNav />
       <Container className="min-h-screen py-8">
         <Hero data={profileData} skills={skills} socialLinks={socialLinks} />

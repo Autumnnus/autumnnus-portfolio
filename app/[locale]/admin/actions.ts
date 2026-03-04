@@ -175,6 +175,9 @@ export async function createCategoryAction(
     .values({ name, type })
     .returning();
 
+  revalidatePath("/[locale]/admin/projects", "page");
+  revalidatePath("/[locale]/admin/blog", "page");
+
   return newCategory;
 }
 
@@ -187,10 +190,15 @@ export async function deleteCategoryAction(id: string) {
     throw new Error("Unauthorized");
   }
 
-  return await db
+  const deleted = await db
     .delete(categoryTable)
     .where(eq(categoryTable.id, id))
     .returning();
+
+  revalidatePath("/[locale]/admin/projects", "page");
+  revalidatePath("/[locale]/admin/blog", "page");
+
+  return deleted;
 }
 
 export async function createProjectAction(data: ProjectData) {
@@ -239,6 +247,8 @@ export async function createProjectAction(data: ProjectData) {
       })),
     );
   }
+
+  revalidatePath("/[locale]/admin/projects", "page");
 
   return newProject;
 }
@@ -296,6 +306,9 @@ export async function updateProjectAction(id: string, data: ProjectData) {
     );
   }
 
+  revalidatePath("/[locale]/admin/projects/[id]/edit", "page");
+  revalidatePath("/[locale]/admin/projects", "page");
+
   return updatedProject;
 }
 
@@ -319,7 +332,14 @@ export async function deleteProjectAction(id: string) {
 
   await deleteEmbeddingsBySource("project", id);
 
-  return await db.delete(project).where(eq(project.id, id)).returning();
+  const deleted = await db
+    .delete(project)
+    .where(eq(project.id, id))
+    .returning();
+
+  revalidatePath("/[locale]/admin/projects", "page");
+
+  return deleted;
 }
 
 export async function createBlogAction(data: BlogData) {
@@ -353,6 +373,8 @@ export async function createBlogAction(data: BlogData) {
       })),
     );
   }
+
+  revalidatePath("/[locale]/admin/blog", "page");
 
   return newBlog;
 }
@@ -397,6 +419,9 @@ export async function updateBlogAction(id: string, data: BlogData) {
     );
   }
 
+  revalidatePath("/[locale]/admin/blog/[id]/edit", "page");
+  revalidatePath("/[locale]/admin/blog", "page");
+
   return updatedBlog;
 }
 
@@ -420,7 +445,14 @@ export async function deleteBlogAction(id: string) {
 
   await deleteEmbeddingsBySource("blog", id);
 
-  return await db.delete(blogPost).where(eq(blogPost.id, id)).returning();
+  const deleted = await db
+    .delete(blogPost)
+    .where(eq(blogPost.id, id))
+    .returning();
+
+  revalidatePath("/[locale]/admin/blog", "page");
+
+  return deleted;
 }
 
 export async function createSkillAction(data: { name: string; icon: string }) {
@@ -442,6 +474,8 @@ export async function createSkillAction(data: { name: string; icon: string }) {
       key,
     })
     .returning();
+
+  revalidatePath("/[locale]/admin/projects", "layout");
 
   return newSkill;
 }
@@ -582,6 +616,8 @@ export async function createExperienceAction(data: ExperienceData) {
     );
   }
 
+  revalidatePath("/[locale]/admin/experience", "page");
+
   return newExp;
 }
 
@@ -615,6 +651,8 @@ export async function updateExperienceAction(id: string, data: ExperienceData) {
     );
   }
 
+  revalidatePath("/[locale]/admin/experience", "page");
+
   return updatedExp;
 }
 
@@ -627,10 +665,14 @@ export async function deleteExperienceAction(id: string) {
     throw new Error("Unauthorized");
   }
 
-  return await db
+  const deleted = await db
     .delete(workExperience)
     .where(eq(workExperience.id, id))
     .returning();
+
+  revalidatePath("/[locale]/admin/experience", "page");
+
+  return deleted;
 }
 
 export async function createQuestAction(data: QuestData) {
