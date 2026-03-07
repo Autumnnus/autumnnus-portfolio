@@ -43,12 +43,8 @@
           "name": "_ProjectToSkill_A_Project_id_fk",
           "tableFrom": "_ProjectToSkill",
           "tableTo": "Project",
-          "columnsFrom": [
-            "A"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["A"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -56,12 +52,8 @@
           "name": "_ProjectToSkill_B_Skill_id_fk",
           "tableFrom": "_ProjectToSkill",
           "tableTo": "Skill",
-          "columnsFrom": [
-            "B"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["B"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -71,10 +63,7 @@
         "_ProjectToSkill_A_B_unique": {
           "name": "_ProjectToSkill_A_B_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "A",
-            "B"
-          ]
+          "columns": ["A", "B"]
         }
       },
       "policies": {},
@@ -130,12 +119,8 @@
           "name": "AiChatMessage_sessionId_AiChatSession_id_fk",
           "tableFrom": "AiChatMessage",
           "tableTo": "AiChatSession",
-          "columnsFrom": [
-            "sessionId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sessionId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -342,12 +327,8 @@
           "name": "BlogPost_categoryId_Category_id_fk",
           "tableFrom": "BlogPost",
           "tableTo": "Category",
-          "columnsFrom": [
-            "categoryId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["categoryId"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -357,9 +338,7 @@
         "BlogPost_slug_unique": {
           "name": "BlogPost_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -452,12 +431,8 @@
           "name": "BlogPostTranslation_blogPostId_BlogPost_id_fk",
           "tableFrom": "BlogPostTranslation",
           "tableTo": "BlogPost",
-          "columnsFrom": [
-            "blogPostId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["blogPostId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -467,10 +442,7 @@
         "BlogPostTranslation_blogPostId_language_unique": {
           "name": "BlogPostTranslation_blogPostId_language_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "blogPostId",
-            "language"
-          ]
+          "columns": ["blogPostId", "language"]
         }
       },
       "policies": {},
@@ -554,10 +526,7 @@
         "ChatRateLimit_ipAddress_date_unique": {
           "name": "ChatRateLimit_ipAddress_date_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ipAddress",
-            "date"
-          ]
+          "columns": ["ipAddress", "date"]
         }
       },
       "policies": {},
@@ -646,12 +615,8 @@
           "name": "Comment_blogPostId_BlogPost_id_fk",
           "tableFrom": "Comment",
           "tableTo": "BlogPost",
-          "columnsFrom": [
-            "blogPostId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["blogPostId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -659,12 +624,8 @@
           "name": "Comment_projectId_Project_id_fk",
           "tableFrom": "Comment",
           "tableTo": "Project",
-          "columnsFrom": [
-            "projectId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["projectId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -718,7 +679,7 @@
         },
         "embedding": {
           "name": "embedding",
-          "type": "vector(3072)",
+          "type": "vector(768)",
           "primaryKey": false,
           "notNull": false
         },
@@ -750,12 +711,7 @@
         "Embedding_sourceType_sourceId_language_chunkIndex_unique": {
           "name": "Embedding_sourceType_sourceId_language_chunkIndex_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "sourceType",
-            "sourceId",
-            "language",
-            "chunkIndex"
-          ]
+          "columns": ["sourceType", "sourceId", "language", "chunkIndex"]
         }
       },
       "policies": {},
@@ -805,12 +761,8 @@
           "name": "Like_blogPostId_BlogPost_id_fk",
           "tableFrom": "Like",
           "tableTo": "BlogPost",
-          "columnsFrom": [
-            "blogPostId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["blogPostId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -818,12 +770,8 @@
           "name": "Like_projectId_Project_id_fk",
           "tableFrom": "Like",
           "tableTo": "Project",
-          "columnsFrom": [
-            "projectId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["projectId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -833,18 +781,12 @@
         "Like_ipAddress_blogPostId_unique": {
           "name": "Like_ipAddress_blogPostId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ipAddress",
-            "blogPostId"
-          ]
+          "columns": ["ipAddress", "blogPostId"]
         },
         "Like_ipAddress_projectId_unique": {
           "name": "Like_ipAddress_projectId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ipAddress",
-            "projectId"
-          ]
+          "columns": ["ipAddress", "projectId"]
         }
       },
       "policies": {},
@@ -941,12 +883,8 @@
           "name": "LiveChatGreeting_configId_LiveChatConfig_id_fk",
           "tableFrom": "LiveChatGreeting",
           "tableTo": "LiveChatConfig",
-          "columnsFrom": [
-            "configId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["configId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -956,9 +894,7 @@
         "LiveChatGreeting_pathname_unique": {
           "name": "LiveChatGreeting_pathname_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "pathname"
-          ]
+          "columns": ["pathname"]
         }
       },
       "policies": {},
@@ -1009,12 +945,8 @@
           "name": "LiveChatGreetingTranslation_greetingId_LiveChatGreeting_id_fk",
           "tableFrom": "LiveChatGreetingTranslation",
           "tableTo": "LiveChatGreeting",
-          "columnsFrom": [
-            "greetingId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["greetingId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1024,10 +956,7 @@
         "LiveChatGreetingTranslation_greetingId_language_unique": {
           "name": "LiveChatGreetingTranslation_greetingId_language_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "greetingId",
-            "language"
-          ]
+          "columns": ["greetingId", "language"]
         }
       },
       "policies": {},
@@ -1152,12 +1081,8 @@
           "name": "ProfileTranslation_profileId_Profile_id_fk",
           "tableFrom": "ProfileTranslation",
           "tableTo": "Profile",
-          "columnsFrom": [
-            "profileId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profileId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1167,10 +1092,7 @@
         "ProfileTranslation_profileId_language_unique": {
           "name": "ProfileTranslation_profileId_language_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profileId",
-            "language"
-          ]
+          "columns": ["profileId", "language"]
         }
       },
       "policies": {},
@@ -1264,12 +1186,8 @@
           "name": "Project_categoryId_Category_id_fk",
           "tableFrom": "Project",
           "tableTo": "Category",
-          "columnsFrom": [
-            "categoryId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["categoryId"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1279,9 +1197,7 @@
         "Project_slug_unique": {
           "name": "Project_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -1356,12 +1272,8 @@
           "name": "ProjectTranslation_projectId_Project_id_fk",
           "tableFrom": "ProjectTranslation",
           "tableTo": "Project",
-          "columnsFrom": [
-            "projectId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["projectId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1371,10 +1283,7 @@
         "ProjectTranslation_projectId_language_unique": {
           "name": "ProjectTranslation_projectId_language_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "projectId",
-            "language"
-          ]
+          "columns": ["projectId", "language"]
         }
       },
       "policies": {},
@@ -1433,12 +1342,8 @@
           "name": "Quest_profileId_Profile_id_fk",
           "tableFrom": "Quest",
           "tableTo": "Profile",
-          "columnsFrom": [
-            "profileId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profileId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1486,12 +1391,8 @@
           "name": "QuestTranslation_questId_Quest_id_fk",
           "tableFrom": "QuestTranslation",
           "tableTo": "Quest",
-          "columnsFrom": [
-            "questId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["questId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1501,10 +1402,7 @@
         "QuestTranslation_questId_language_unique": {
           "name": "QuestTranslation_questId_language_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "questId",
-            "language"
-          ]
+          "columns": ["questId", "language"]
         }
       },
       "policies": {},
@@ -1548,9 +1446,7 @@
         "Skill_key_unique": {
           "name": "Skill_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -1600,9 +1496,7 @@
         "SocialLink_key_unique": {
           "name": "SocialLink_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -1641,9 +1535,7 @@
         "UniqueVisitor_ipAddress_unique": {
           "name": "UniqueVisitor_ipAddress_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ipAddress"
-          ]
+          "columns": ["ipAddress"]
         }
       },
       "policies": {},
@@ -1693,12 +1585,8 @@
           "name": "View_blogPostId_BlogPost_id_fk",
           "tableFrom": "View",
           "tableTo": "BlogPost",
-          "columnsFrom": [
-            "blogPostId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["blogPostId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1706,12 +1594,8 @@
           "name": "View_projectId_Project_id_fk",
           "tableFrom": "View",
           "tableTo": "Project",
-          "columnsFrom": [
-            "projectId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["projectId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1754,9 +1638,7 @@
         "VisitorMilestone_count_unique": {
           "name": "VisitorMilestone_count_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "count"
-          ]
+          "columns": ["count"]
         }
       },
       "policies": {},
@@ -1870,12 +1752,8 @@
           "name": "WorkExperienceTranslation_workExperienceId_WorkExperience_id_fk",
           "tableFrom": "WorkExperienceTranslation",
           "tableTo": "WorkExperience",
-          "columnsFrom": [
-            "workExperienceId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workExperienceId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1885,10 +1763,7 @@
         "WorkExperienceTranslation_workExperienceId_language_unique": {
           "name": "WorkExperienceTranslation_workExperienceId_language_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "workExperienceId",
-            "language"
-          ]
+          "columns": ["workExperienceId", "language"]
         }
       },
       "policies": {},

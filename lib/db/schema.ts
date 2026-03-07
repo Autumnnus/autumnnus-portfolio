@@ -48,7 +48,7 @@ export type LanguageType = (typeof Language)[keyof typeof Language];
 // Custom type for vector/embeddings
 const vector = customType<{ data: number[]; driverData: string }>({
   dataType() {
-    return "vector(3072)";
+    return "vector(768)";
   },
   toDriver(value: number[] | string): string {
     if (typeof value === "string") return value;

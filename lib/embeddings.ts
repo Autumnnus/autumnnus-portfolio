@@ -10,7 +10,9 @@ const MAX_CHUNK_SIZE = 1000;
 
 export async function generateEmbedding(text: string): Promise<number[]> {
   const model = getEmbeddingModel();
-  const result = await model.embedContent(text);
+  const result = await model.embedContent({
+    content: { parts: [{ text }], role: "user" },
+  });
   return result.embedding.values;
 }
 

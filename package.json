@@ -16,7 +16,8 @@
     "db:seed": "tsx lib/db/seed.ts",
     "i18n:scan": "tsx scripts/find-hardcoded-strings.ts",
     "types:check": "tsc --noEmit",
-    "db:reset": "tsx scripts/reset-db.ts"
+    "db:reset": "tsx scripts/reset-db.ts",
+    "prod:init": "tsx scripts/prod-init.ts --confirm"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

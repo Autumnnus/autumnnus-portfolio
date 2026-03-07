@@ -1,1 +1,1 @@
-ALTER TABLE "Embedding" ALTER COLUMN "embedding" SET DATA TYPE vector(3072);
+ALTER TABLE "Embedding" ALTER COLUMN "embedding" SET DATA TYPE vector(768);
