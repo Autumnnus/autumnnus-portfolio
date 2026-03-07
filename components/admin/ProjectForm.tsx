@@ -1390,7 +1390,7 @@ export default function ProjectForm({
             onClick={() => router.back()}
             className="px-8 py-3.5 bg-secondary/50 text-secondary-foreground rounded-2xl font-bold hover:bg-secondary transition-all active:scale-[0.98] text-sm"
           >
-            {useTranslations("Admin.Common")("cancel")}
+            {commonT("cancel")}
           </button>
           <button
             type="submit"

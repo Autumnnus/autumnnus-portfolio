@@ -11,9 +11,13 @@ import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { Input } from "@/components/ui/Input";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
+import {
+  LanguageType as Language,
+  WorkExperience,
+  WorkExperienceTranslation,
+} from "@/lib/db/schema";
 import { ExperienceFormValues, ExperienceSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LanguageType as Language, WorkExperience, WorkExperienceTranslation } from "@/lib/db/schema";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -58,6 +62,7 @@ const formatDateForInput = (date?: string | Date | null) => {
 
 export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   const t = useTranslations("Admin.Form");
+  const commonT = useTranslations("Admin.Common");
   const router = useRouter();
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
@@ -496,7 +501,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
             onClick={() => router.back()}
             className="w-full sm:w-auto px-8 py-3 bg-muted rounded-xl text-sm font-bold hover:bg-muted/80 transition-all flex items-center justify-center"
           >
-            {useTranslations("Admin.Common")("cancel")}
+            {commonT("cancel")}
           </button>
           <button
             type="submit"

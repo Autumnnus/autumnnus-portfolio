@@ -29,20 +29,24 @@ export async function seedDatabase(
   try {
     // Clear existing data
     console.log("Emptying tables...");
-    await database.delete(projectTranslation);
-    await database.delete(_projectToSkill);
-    await database.delete(project);
-    await database.delete(blogPostTranslation);
-    await database.delete(blogPost);
-    await database.delete(workExperienceTranslation);
-    await database.delete(workExperience);
-    await database.delete(questTranslation);
-    await database.delete(quest);
-    await database.delete(profileTranslation);
-    await database.delete(socialLink);
-    await database.delete(profile);
-    await database.delete(skill);
-    await database.delete(category);
+    try {
+      await database.delete(projectTranslation);
+      await database.delete(_projectToSkill);
+      await database.delete(project);
+      await database.delete(blogPostTranslation);
+      await database.delete(blogPost);
+      await database.delete(workExperienceTranslation);
+      await database.delete(workExperience);
+      await database.delete(questTranslation);
+      await database.delete(quest);
+      await database.delete(profileTranslation);
+      await database.delete(socialLink);
+      await database.delete(profile);
+      await database.delete(skill);
+      await database.delete(category);
+    } catch {
+      console.log("Tables might not exist yet, skipping delete...");
+    }
 
     // 1. Skills
     console.log("Seeding skills...");

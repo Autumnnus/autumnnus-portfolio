@@ -90,6 +90,7 @@ interface ImageData {
 
 export default function BlogForm({ initialData }: BlogFormProps) {
   const t = useTranslations("Admin.Form");
+  const commonT = useTranslations("Admin.Common");
   const router = useRouter();
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
@@ -784,7 +785,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             onClick={() => router.back()}
             className="w-full sm:w-auto px-8 py-3 bg-muted rounded-xl text-sm font-bold hover:bg-muted/80 transition-all flex items-center justify-center"
           >
-            {useTranslations("Admin.Common")("cancel")}
+            {commonT("cancel")}
           </button>
           <button
             type="submit"

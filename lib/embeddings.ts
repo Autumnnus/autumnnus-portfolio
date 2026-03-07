@@ -170,10 +170,10 @@ export async function syncSingleContent(
       for (const t of exp.translations) {
         if (t.language === Language.tr || t.language === Language.en) {
           const startDate = exp.startDate
-            ? exp.startDate.getFullYear().toString()
+            ? new Date(exp.startDate).getFullYear().toString()
             : "";
           const endDate = exp.endDate
-            ? exp.endDate.getFullYear().toString()
+            ? new Date(exp.endDate).getFullYear().toString()
             : "Present";
           const header =
             `[experience] Company: ${exp.company}` +
@@ -290,10 +290,10 @@ export async function syncAllContent() {
     for (const t of exp.translations) {
       if (t.language === Language.tr || t.language === Language.en) {
         const startDate = exp.startDate
-          ? exp.startDate.getFullYear().toString()
+          ? new Date(exp.startDate).getFullYear().toString()
           : "";
         const endDate = exp.endDate
-          ? exp.endDate.getFullYear().toString()
+          ? new Date(exp.endDate).getFullYear().toString()
           : "Present";
         const header =
           `[experience] Company: ${exp.company}` +

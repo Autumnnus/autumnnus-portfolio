@@ -12,7 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "db:validate": "tsc --noEmit",
-    "db:prod:init": "npx drizzle-kit push && npx tsx lib/db/seed.ts",
+    "db:prod:init": "npm run db:reset && npx drizzle-kit push && npx tsx lib/db/seed.ts",
     "db:seed": "tsx lib/db/seed.ts",
     "i18n:scan": "tsx scripts/find-hardcoded-strings.ts",
     "types:check": "tsc --noEmit",
