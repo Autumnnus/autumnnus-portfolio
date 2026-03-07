@@ -679,7 +679,7 @@
         },
         "embedding": {
           "name": "embedding",
-          "type": "vector(768)",
+          "type": "vector(3072)",
           "primaryKey": false,
           "notNull": false
         },
