@@ -15,10 +15,12 @@ export default async function MarketingLayout({
   return (
     <SmoothScroll>
       <TooltipProvider delayDuration={0}>
-        <Navbar />
-        <main className="flex-1 flex flex-col">{children}</main>
-        <LiveChat />
-        <Footer locale={locale} />
+        <div className="marketing-gradient-surface relative flex min-h-screen flex-col">
+          <Navbar />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <LiveChat />
+          <Footer locale={locale} />
+        </div>
       </TooltipProvider>
     </SmoothScroll>
   );
