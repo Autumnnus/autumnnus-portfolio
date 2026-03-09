@@ -5,6 +5,7 @@ import FeaturedBlogs from "@/components/landing/FeaturedBlogs";
 import FeaturedProjects from "@/components/landing/FeaturedProjects";
 import GitHubCalendar from "@/components/landing/GitHubCalendar";
 import Hero from "@/components/landing/Hero";
+import SeasonalCompanion from "@/components/landing/SeasonalCompanion";
 import WorkExperienceComponent from "@/components/landing/WorkExperience";
 
 import {
@@ -59,6 +60,7 @@ export default async function Home({ params }: HomeProps) {
   const featuredBlogs = (blogResult.items as unknown as BlogPost[]) || [];
   return (
     <>
+      <SeasonalCompanion />
       <SeasonalEffects />
       <SectionNav />
       <Container className="min-h-screen py-8">
