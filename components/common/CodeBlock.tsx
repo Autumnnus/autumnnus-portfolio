@@ -1,6 +1,5 @@
 "use client";
 
-import DOMPurify from "isomorphic-dompurify";
 import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -13,6 +12,15 @@ interface CodeBlockProps {
   wrap?: boolean;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export default function CodeBlock({
   code,
   language,
@@ -21,6 +29,9 @@ export default function CodeBlock({
 }: CodeBlockProps) {
   const t = useTranslations("Common");
   const [highlightedCode, setHighlightedCode] = useState<string>("");
+  const [sanitizeHtml, setSanitizeHtml] = useState<(value: string) => string>(
+    () => (value: string): string => escapeHtml(value),
+  );
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -38,6 +49,25 @@ export default function CodeBlock({
     }
     highlight();
   }, [code, language]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    import("isomorphic-dompurify")
+      .then((mod) => {
+        if (!isMounted) return;
+        setSanitizeHtml(
+          () => (value: string): string => mod.default.sanitize(value),
+        );
+      })
+      .catch((error) => {
+        console.error("DOMPurify dynamic import failed:", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);
@@ -79,7 +109,7 @@ export default function CodeBlock({
       <div
         className="relative border border-t-0 border-white/10 rounded-b-lg overflow-hidden bg-[#121212] transition-all duration-300"
         dangerouslySetInnerHTML={{
-          __html: DOMPurify.sanitize(
+          __html: sanitizeHtml(
             highlightedCode ||
               `<pre><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`,
           ),

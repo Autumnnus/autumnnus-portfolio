@@ -5,6 +5,7 @@ import {
   _projectToSkill,
   blogPost,
   blogPostTranslation,
+  category,
   profile as profileTable,
   profileTranslation,
   project,
@@ -28,6 +29,10 @@ function getObjectName(url: string | null | undefined): string | null {
     return parts[1] ?? null;
   }
   return url;
+}
+
+function normalizeCategoryType(value: unknown): "project" | "blog" | null {
+  return value === "project" || value === "blog" ? value : null;
 }
 
 export async function POST(request: Request) {
@@ -59,7 +64,7 @@ export async function POST(request: Request) {
 
     const jsonContent = await dataFile.async("string");
     const { data } = JSON.parse(jsonContent);
-    const { projects, blogs, profile, experiences, skills } = data;
+    const { projects, blogs, profile, experiences, skills, categories } = data;
 
     await db.transaction(async (tx) => {
       // ── Delete in FK-safe order ──────────────────────────────────────
@@ -89,6 +94,102 @@ export async function POST(request: Request) {
       if (sections.has("skills")) {
         await tx.delete(skill);
       }
+
+      let categoryById = new Map<
+        string,
+        { id: string; name: string; type: "project" | "blog" }
+      >();
+      const categoryByKey = new Map<
+        string,
+        { id: string; name: string; type: "project" | "blog" }
+      >();
+      const categoryIdMap = new Map<string, string>();
+
+      const needsCategorySupport =
+        sections.has("projects") || sections.has("blogs");
+
+      if (needsCategorySupport) {
+        const existingCategories = await tx
+          .select({
+            id: category.id,
+            name: category.name,
+            type: category.type,
+          })
+          .from(category);
+
+        categoryById = new Map(
+          existingCategories.map((c) => [
+            c.id,
+            { id: c.id, name: c.name, type: c.type },
+          ]),
+        );
+
+        for (const c of existingCategories) {
+          categoryByKey.set(`${c.type}:${c.name.toLowerCase()}`, {
+            id: c.id,
+            name: c.name,
+            type: c.type,
+          });
+        }
+
+        for (const cat of (categories as any[]) ?? []) {
+          const sourceId = typeof cat.id === "string" ? cat.id : null;
+          const name = typeof cat.name === "string" ? cat.name.trim() : "";
+          const type = normalizeCategoryType(cat.type);
+          if (!name || !type) continue;
+
+          let resolvedId: string | null = null;
+
+          if (sourceId && categoryById.has(sourceId)) {
+            resolvedId = sourceId;
+          } else {
+            const key = `${type}:${name.toLowerCase()}`;
+            const existing = categoryByKey.get(key);
+            if (existing) {
+              resolvedId = existing.id;
+            } else {
+              const [created] = await tx
+                .insert(category)
+                .values({ name, type })
+                .returning({
+                  id: category.id,
+                  name: category.name,
+                  type: category.type,
+                });
+              resolvedId = created.id;
+              categoryById.set(created.id, {
+                id: created.id,
+                name: created.name,
+                type: created.type,
+              });
+              categoryByKey.set(`${created.type}:${created.name.toLowerCase()}`, {
+                id: created.id,
+                name: created.name,
+                type: created.type,
+              });
+            }
+          }
+
+          if (sourceId && resolvedId) {
+            categoryIdMap.set(sourceId, resolvedId);
+          }
+        }
+      }
+
+      const resolveCategoryId = (
+        sourceCategoryId: unknown,
+        expectedType: "project" | "blog",
+      ): string | null => {
+        if (typeof sourceCategoryId !== "string") return null;
+
+        const mapped = categoryIdMap.get(sourceCategoryId);
+        if (mapped) return mapped;
+
+        const direct = categoryById.get(sourceCategoryId);
+        if (direct && direct.type === expectedType) return direct.id;
+
+        return null;
+      };
 
       // ── Insert: skills first (needed for project relations) ───────────
       if (sections.has("skills") && skills?.length) {
@@ -197,7 +298,7 @@ export async function POST(request: Request) {
               tags: blog.tags,
               status: blog.status ?? "draft",
               commentsEnabled: blog.commentsEnabled ?? true,
-              categoryId: blog.categoryId,
+              categoryId: resolveCategoryId(blog.categoryId, "blog"),
               imageAlt: blog.imageAlt,
             })
             .returning();
@@ -236,7 +337,7 @@ export async function POST(request: Request) {
               id: prj.id,
               slug: prj.slug,
               status: prj.status,
-              categoryId: prj.categoryId,
+              categoryId: resolveCategoryId(prj.categoryId, "project"),
               github: prj.github,
               liveDemo: prj.liveDemo,
               featured: prj.featured,

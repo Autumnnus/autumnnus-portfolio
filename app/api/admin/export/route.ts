@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       ? new Set(sectionsParam.split(","))
       : new Set(["projects", "blogs", "skills", "experiences", "profile"]);
 
-    const [projects, blogs, profileData, experiences, skills] =
+    const [projects, blogs, profileData, experiences, skills, categories] =
       await Promise.all([
         sections.has("projects")
           ? db.query.project.findMany({
@@ -54,6 +54,9 @@ export async function GET(request: Request) {
         sections.has("skills")
           ? db.query.skill.findMany()
           : Promise.resolve([]),
+        sections.has("projects") || sections.has("blogs")
+          ? db.query.category.findMany()
+          : Promise.resolve([]),
       ]);
 
     const zip = new JSZip();
@@ -63,7 +66,14 @@ export async function GET(request: Request) {
         {
           timestamp: new Date(),
           sections: Array.from(sections),
-          data: { projects, blogs, profile: profileData, experiences, skills },
+          data: {
+            projects,
+            blogs,
+            profile: profileData,
+            experiences,
+            skills,
+            categories,
+          },
         },
         null,
         2,

@@ -1,13 +1,45 @@
 "use client";
 
-import DOMPurify from "isomorphic-dompurify";
+import { useEffect, useState } from "react";
 import CodeBlock from "./CodeBlock";
 
 interface ContentRendererProps {
   content: string;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export default function ContentRenderer({ content }: ContentRendererProps) {
+  const [sanitizeHtml, setSanitizeHtml] = useState<(value: string) => string>(
+    () => (value: string): string => escapeHtml(value),
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    import("isomorphic-dompurify")
+      .then((mod) => {
+        if (!isMounted) return;
+        setSanitizeHtml(
+          () => (value: string): string => mod.default.sanitize(value),
+        );
+      })
+      .catch((error) => {
+        console.error("DOMPurify dynamic import failed:", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   if (!content) return null;
 
   const isHtml = /<[a-z][\s\S]*>/i.test(content);
@@ -53,7 +85,7 @@ export default function ContentRenderer({ content }: ContentRendererProps) {
                 prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
                 prose-ul:list-disc prose-ul:pl-5
                 prose-ol:list-decimal prose-ol:pl-5"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(part) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(part) }}
             />
           );
         })}

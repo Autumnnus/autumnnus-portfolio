@@ -2,6 +2,7 @@
 import "dotenv/config";
 import { sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { pathToFileURL } from "node:url";
 import { db } from "./index";
 import type * as schema from "./schema";
 import {
@@ -24,6 +25,15 @@ import {
 export async function seedDatabase(
   database: NodePgDatabase<typeof schema> = db,
 ) {
+  const isProduction = process.env.NODE_ENV === "production";
+  const allowProductionSeed = process.env.ALLOW_PROD_SEED === "true";
+
+  if (isProduction && !allowProductionSeed) {
+    throw new Error(
+      "Seeding is blocked in production. Set ALLOW_PROD_SEED=true for explicit destructive runs.",
+    );
+  }
+
   console.log("🌱 Seeding database...");
   await database.execute(sql`CREATE EXTENSION IF NOT EXISTS vector;`);
   try {
@@ -336,7 +346,13 @@ async function main() {
   await seedDatabase();
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const isDirectExecution =
+  !!process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectExecution) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

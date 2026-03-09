@@ -74,7 +74,10 @@ async function main() {
     runCommand("Migration uygulanıyor...", "npx drizzle-kit migrate");
 
     // Seed verisini yükle
-    runCommand("Seed verisi yükleniyor...", "npx tsx lib/db/seed.ts");
+    runCommand(
+      "Seed verisi yükleniyor...",
+      "ALLOW_PROD_SEED=true npx tsx lib/db/seed.ts",
+    );
 
     console.log("\n✅ Production kurulumu başarıyla tamamlandı!");
     console.log(

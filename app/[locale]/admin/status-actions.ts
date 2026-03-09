@@ -92,6 +92,10 @@ export async function seedDatabaseAction() {
     throw new Error("Unauthorized");
   }
 
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Seeding is disabled in production.");
+  }
+
   try {
     await seedDatabase(db);
     revalidatePath("/[locale]", "layout");
