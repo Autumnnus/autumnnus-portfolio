@@ -29,7 +29,7 @@ import {
   Undo,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Select,
@@ -66,6 +66,22 @@ interface TipTapEditorProps {
   uploadPath?: string;
 }
 
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+function normalizeIncomingContent(value: string) {
+  if (!value) return "";
+  const hasEncodedHtmlTags = /&lt;\/?[a-z][\s\S]*?&gt;/i.test(value);
+  if (!hasEncodedHtmlTags) return value;
+  return decodeHtmlEntities(value);
+}
+
 export default function TipTapEditor({
   content,
   onChange,
@@ -75,6 +91,7 @@ export default function TipTapEditor({
   const t = useTranslations("Admin.Editor");
   const tForm = useTranslations("Admin.Form");
   const [uploading, setUploading] = useState(false);
+  const lastEditorHtmlRef = useRef<string>(normalizeIncomingContent(content));
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -105,9 +122,11 @@ export default function TipTapEditor({
         placeholder,
       }),
     ],
-    content,
+    content: normalizeIncomingContent(content),
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      lastEditorHtmlRef.current = html;
+      onChange(html);
     },
     onTransaction: () => {
       setSelectionCounter((s) => s + 1);
@@ -150,9 +169,17 @@ export default function TipTapEditor({
   };
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+    const normalizedContent = normalizeIncomingContent(content);
+    if (!editor) return;
+
+    if (normalizedContent === lastEditorHtmlRef.current) return;
+    if (normalizedContent === editor.getHTML()) {
+      lastEditorHtmlRef.current = normalizedContent;
+      return;
     }
+
+    editor.commands.setContent(normalizedContent, { emitUpdate: false });
+    lastEditorHtmlRef.current = editor.getHTML();
   }, [content, editor]);
 
   const setLink = () => {
@@ -177,9 +204,9 @@ export default function TipTapEditor({
   }
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-background">
+    <div className="border border-border rounded-lg bg-background">
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 border-b border-border bg-muted/30">
+      <div className="sticky top-16 z-40 flex flex-wrap gap-1 p-2 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}

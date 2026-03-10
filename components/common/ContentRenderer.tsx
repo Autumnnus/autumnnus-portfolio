@@ -17,34 +17,16 @@ function decodeHtmlEntities(value: string) {
     .replace(/&amp;/g, "&");
 }
 
-function htmlToText(value: string) {
-  let normalized = value.replace(
-    /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi,
-    (_, preAttrs = "", codeAttrs = "", rawCode = "") => {
-      const language = extractLanguageFromTag(`${preAttrs} ${codeAttrs}`);
-      const code = decodeHtmlEntities(rawCode).replace(/\n+$/, "");
-      return `\n\n\`\`\`${language}\n${code}\n\`\`\`\n\n`;
-    },
-  );
-
-  normalized = normalized
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
-    .replace(/<\/li>\s*<li[^>]*>/gi, "\n")
-    .replace(/<li[^>]*>/gi, "- ")
-    .replace(/<\/?(ul|ol|p|div|span|section|article)[^>]*>/gi, "")
-    .replace(/<[^>]+>/g, "");
-
-  return normalized.trim();
-}
-
 function extractLanguageFromTag(tagHtml: string) {
   const languageMatch = tagHtml.match(/language-([a-z0-9_-]+)/i);
   if (languageMatch?.[1]) return languageMatch[1].toLowerCase();
   return "typescript";
 }
 
-function renderHtmlWithCodeBlocks(html: string, sanitizeHtml: (value: string) => string) {
+function renderHtmlWithCodeBlocks(
+  html: string,
+  sanitizeHtml: (value: string) => string,
+) {
   const parts = html.split(/(<pre[^>]*>[\s\S]*?<\/pre>)/gi);
 
   return (
@@ -66,7 +48,6 @@ function renderHtmlWithCodeBlocks(html: string, sanitizeHtml: (value: string) =>
         return (
           <div
             key={index}
-            className="prose prose-invert max-w-none prose-p:leading-relaxed prose-p:text-muted-foreground prose-headings:text-foreground prose-headings:font-bold prose-strong:text-foreground prose-strong:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-img:shadow-lg prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-ul:list-disc prose-ul:pl-5 prose-ol:list-decimal prose-ol:pl-5"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(part) }}
           />
         );
@@ -77,51 +58,42 @@ function renderHtmlWithCodeBlocks(html: string, sanitizeHtml: (value: string) =>
 
 export default function ContentRenderer({ content }: ContentRendererProps) {
   if (!content) return null;
+  console.log(content);
 
   const decodedContent = decodeHtmlEntities(content);
   const sanitizeHtml = (value: string) => DOMPurify.sanitize(value);
   const isHtml = /<[a-z][\s\S]*>/i.test(decodedContent);
-  const markdownPattern = /(^|\n)\s{0,3}#{1,6}\s|\[[^\]]+\]\[[^\]]+\]|```|(^|\n)\s*[-*]\s+/m;
-  const hasMarkdownSyntax = markdownPattern.test(decodedContent);
-  const htmlWrappedMarkdown =
-    isHtml && hasMarkdownSyntax && /<(p|div|span|br|ul|ol|li|section|article)[^>]*>/i.test(decodedContent);
 
-  if (isHtml && !htmlWrappedMarkdown) {
-    return renderHtmlWithCodeBlocks(decodedContent, sanitizeHtml);
+  if (isHtml) {
+    return (
+      <div className="space-y-4 [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:mt-7 [&_h2]:mb-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_strong]:font-bold [&_strong]:text-foreground [&_em]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/40 [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-primary [&_a]:underline [&_img]:rounded-xl [&_img]:shadow-lg [&_code]:rounded [&_code]:bg-primary/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-primary">
+        {renderHtmlWithCodeBlocks(decodedContent, sanitizeHtml)}
+      </div>
+    );
   }
 
-  const markdownContent = htmlWrappedMarkdown ? htmlToText(decodedContent) : content;
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:mt-7 [&_h2]:mb-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_strong]:font-bold [&_strong]:text-foreground [&_em]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/40 [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-primary [&_a]:underline [&_img]:rounded-xl [&_img]:shadow-lg [&_code]:rounded [&_code]:bg-primary/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-primary">
       <ReactMarkdown
         components={{
+          h1: ({ children }) => <h1>{children}</h1>,
           h2: ({ children }) => (
-            <h2 className="text-2xl font-bold mt-8 mb-4 font-pixel uppercase tracking-widest text-primary">
+            <h2 className="font-pixel uppercase tracking-widest text-primary">
               {children}
             </h2>
           ),
-          p: ({ children }) => (
-            <p className="leading-relaxed text-muted-foreground">{children}</p>
-          ),
-          ul: ({ children }) => (
-            <ul className="list-disc pl-5 space-y-1">{children}</ul>
-          ),
-          ol: ({ children }) => (
-            <ol className="list-decimal pl-5 space-y-1">{children}</ol>
-          ),
+          h3: ({ children }) => <h3>{children}</h3>,
+          p: ({ children }) => <p>{children}</p>,
+          ul: ({ children }) => <ul>{children}</ul>,
+          ol: ({ children }) => <ol>{children}</ol>,
           a: ({ href, children }) => (
-            <a
-              href={href}
-              className="text-primary hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={href} target="_blank" rel="noopener noreferrer">
               {children}
             </a>
           ),
           code: ({ className, children, ...props }) => {
-            const language = className?.replace("language-", "") || "typescript";
+            const language =
+              className?.replace("language-", "") || "typescript";
             const codeValue = String(children).replace(/\n$/, "");
             const isInline = !className && !String(children).includes("\n");
 
@@ -140,7 +112,7 @@ export default function ContentRenderer({ content }: ContentRendererProps) {
           },
         }}
       >
-        {markdownContent}
+        {content}
       </ReactMarkdown>
     </div>
   );
