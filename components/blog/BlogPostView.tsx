@@ -10,6 +10,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import Badge from "@/components/ui/badge";
 import { BlogPost } from "@/types/contents";
 import { ArrowLeft, Calendar, CheckCircle2, FileEdit } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,6 +25,10 @@ export default function BlogPostView({
   relatedPosts?: BlogPost[];
 }) {
   const t = useTranslations("Blog");
+  const { data: session } = useSession();
+  const isAdmin =
+    session?.user?.email &&
+    session.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   if (!post) {
     return null;
@@ -33,13 +38,24 @@ export default function BlogPostView({
     <Container className="py-12 sm:py-20">
       {/* Back Button */}
       <FadeIn delay={0.1}>
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t("back") || "Back"}
-        </Link>
+        <div className="flex items-center justify-between gap-3 mb-8">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t("back") || "Back"}
+          </Link>
+          {isAdmin && (
+            <Link
+              href={`/admin/blog/${post.id}/edit`}
+              className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+            >
+              <FileEdit className="w-4 h-4" />
+              Edit
+            </Link>
+          )}
+        </div>
       </FadeIn>
 
       {/* Cover Image */}

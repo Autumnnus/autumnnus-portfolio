@@ -15,6 +15,7 @@ import {
 } from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
+import ContentRenderer from "@/components/common/ContentRenderer";
 import Icon from "@/components/common/Icon";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
@@ -1330,6 +1331,18 @@ export default function ProjectForm({
                 }
                 uploadPath={`projects/${getValues("slug") || "temp"}`}
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                Preview
+              </label>
+              <div className="rounded-2xl border border-border/50 bg-background/40 p-4">
+                <ContentRenderer
+                  content={
+                    watch(`translations.${lang}.fullDescription` as const) || ""
+                  }
+                />
+              </div>
             </div>
 
             {/* SEO Meta Fields for Projects */}

@@ -8,6 +8,7 @@ import {
 } from "@/app/[locale]/admin/actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
+import ContentRenderer from "@/components/common/ContentRenderer";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { languageNames, useRouter } from "@/i18n/routing";
 import {
@@ -716,6 +717,16 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                       })
                     }
                     uploadPath={`blog/${getValues("slug") || "temp"}`}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2 px-1">
+                  Preview
+                </label>
+                <div className="rounded-xl border border-border bg-background/40 p-4">
+                  <ContentRenderer
+                    content={watch(`translations.${lang}.content` as const) || ""}
                   />
                 </div>
               </div>
