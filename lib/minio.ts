@@ -9,47 +9,52 @@ const minioClient = new Client({
 });
 
 const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || "autumnnus-assets";
+let bucketInitPromise: Promise<void> | null = null;
+
+const publicReadPolicy = {
+  Version: "2012-10-17",
+  Statement: [
+    {
+      Effect: "Allow",
+      Principal: {
+        AWS: ["*"],
+      },
+      Action: ["s3:GetObject"],
+      Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`],
+    },
+  ],
+};
+
+async function ensureBucketInitialized() {
+  if (bucketInitPromise) {
+    return bucketInitPromise;
+  }
+
+  bucketInitPromise = (async () => {
+    const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+    if (!bucketExists) {
+      await minioClient.makeBucket(BUCKET_NAME, "");
+    }
+    await minioClient.setBucketPolicy(
+      BUCKET_NAME,
+      JSON.stringify(publicReadPolicy),
+    );
+  })();
+
+  try {
+    await bucketInitPromise;
+  } catch (error) {
+    bucketInitPromise = null;
+    throw error;
+  }
+}
 
 export async function uploadFile(
   filename: string,
   buffer: Buffer,
   contentType: string,
 ) {
-  const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
-  if (!bucketExists) {
-    await minioClient.makeBucket(BUCKET_NAME, "");
-    const policy = {
-      Version: "2012-10-17",
-      Statement: [
-        {
-          Effect: "Allow",
-          Principal: {
-            AWS: ["*"],
-          },
-          Action: [
-            "s3:GetBucketLocation",
-            "s3:ListBucket",
-            "s3:ListBucketMultipartUploads",
-          ],
-          Resource: [`arn:aws:s3:::${BUCKET_NAME}`],
-        },
-        {
-          Effect: "Allow",
-          Principal: {
-            AWS: ["*"],
-          },
-          Action: [
-            "s3:GetObject",
-            "s3:PutObject",
-            "s3:DeleteObject",
-            "s3:AbortMultipartUpload",
-          ],
-          Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`],
-        },
-      ],
-    };
-    await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy));
-  }
+  await ensureBucketInitialized();
 
   await minioClient.putObject(BUCKET_NAME, filename, buffer, undefined, {
     "Content-Type": contentType,
