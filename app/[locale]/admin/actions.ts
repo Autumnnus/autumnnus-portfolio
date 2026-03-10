@@ -20,7 +20,7 @@ import {
   workExperience,
   workExperienceTranslation,
 } from "@/lib/db/schema";
-import { deleteFolder, uploadFile } from "@/lib/minio";
+import { deleteFile, deleteFolder, uploadFile } from "@/lib/minio";
 import { deleteEmbeddingsBySource } from "@/lib/vectordb";
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -264,6 +264,11 @@ export async function updateProjectAction(id: string, data: ProjectData) {
 
   const { translations, technologies, images, ...projectData } = data;
 
+  const currentProject = await db.query.project.findFirst({
+    where: eq(project.id, id),
+    columns: { coverImage: true, images: true },
+  });
+
   const existingProject = await db.query.project.findFirst({
     where: and(eq(project.slug, projectData.slug), ne(project.id, id)),
   });
@@ -308,6 +313,22 @@ export async function updateProjectAction(id: string, data: ProjectData) {
 
   revalidatePath("/[locale]/admin/projects/[id]/edit", "page");
   revalidatePath("/[locale]/admin/projects", "page");
+
+  if (currentProject) {
+    const removedImages = [
+      ...(currentProject.coverImage ? [currentProject.coverImage] : []),
+      ...(currentProject.images ?? []),
+    ].filter(
+      (url) =>
+        !!url &&
+        url !== updatedProject.coverImage &&
+        !(updatedProject.images ?? []).includes(url),
+    );
+
+    if (removedImages.length > 0) {
+      await Promise.all(removedImages.map((url) => deleteFile(url)));
+    }
+  }
 
   return updatedProject;
 }
@@ -390,6 +411,11 @@ export async function updateBlogAction(id: string, data: BlogData) {
 
   const { translations, ...blogData } = data;
 
+  const currentBlog = await db.query.blogPost.findFirst({
+    where: eq(blogPost.id, id),
+    columns: { coverImage: true },
+  });
+
   const existingBlog = await db.query.blogPost.findFirst({
     where: and(eq(blogPost.slug, blogData.slug), ne(blogPost.id, id)),
   });
@@ -421,6 +447,13 @@ export async function updateBlogAction(id: string, data: BlogData) {
 
   revalidatePath("/[locale]/admin/blog/[id]/edit", "page");
   revalidatePath("/[locale]/admin/blog", "page");
+
+  if (
+    currentBlog?.coverImage &&
+    currentBlog.coverImage !== updatedBlog.coverImage
+  ) {
+    await deleteFile(currentBlog.coverImage);
+  }
 
   return updatedBlog;
 }
@@ -491,6 +524,7 @@ export async function updateProfileAction(data: ProfileData) {
   const { translations, quests, ...profileData } = data;
 
   const existingProfile = await db.query.profile.findFirst();
+  const previousAvatar = existingProfile?.avatar;
 
   if (existingProfile) {
     await db.transaction(async (tx) => {
@@ -546,6 +580,11 @@ export async function updateProfileAction(data: ProfileData) {
     });
 
     revalidatePath("/[locale]", "layout");
+
+    if (previousAvatar && previousAvatar !== profileData.avatar) {
+      await deleteFile(previousAvatar);
+    }
+
     return { success: true };
   } else {
     let newProfileData: any = null;
@@ -632,6 +671,11 @@ export async function updateExperienceAction(id: string, data: ExperienceData) {
 
   const { translations, ...experienceData } = data;
 
+  const currentExperience = await db.query.workExperience.findFirst({
+    where: eq(workExperience.id, id),
+    columns: { logo: true },
+  });
+
   await db
     .delete(workExperienceTranslation)
     .where(eq(workExperienceTranslation.workExperienceId, id));
@@ -652,6 +696,13 @@ export async function updateExperienceAction(id: string, data: ExperienceData) {
   }
 
   revalidatePath("/[locale]/admin/experience", "page");
+
+  if (
+    currentExperience?.logo &&
+    currentExperience.logo !== updatedExp.logo
+  ) {
+    await deleteFile(currentExperience.logo);
+  }
 
   return updatedExp;
 }

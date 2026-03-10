@@ -82,6 +82,29 @@ export async function deleteFolder(prefix: string) {
   }
 }
 
+export async function deleteFile(filenameOrUrl: string) {
+  const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+  if (!bucketExists) return;
+
+  let objectName = filenameOrUrl;
+
+  if (filenameOrUrl.startsWith("http")) {
+    const urlParts = filenameOrUrl.split(`/${BUCKET_NAME}/`);
+    if (urlParts.length > 1) {
+      objectName = urlParts[1];
+    } else {
+      // Ignore external URLs or malformed MinIO paths.
+      return;
+    }
+  }
+
+  try {
+    await minioClient.removeObject(BUCKET_NAME, objectName);
+  } catch (error) {
+    console.error(`Failed to delete object ${objectName} from MinIO:`, error);
+  }
+}
+
 export async function getFile(filename: string): Promise<Buffer> {
   let objectName = filename;
   if (filename.startsWith("http")) {
