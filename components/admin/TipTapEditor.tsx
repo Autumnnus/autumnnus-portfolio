@@ -83,6 +83,58 @@ function normalizeIncomingContent(value: string) {
   return decodeHtmlEntities(value);
 }
 
+function cleanHtmlForManualFormat(value: string) {
+  const normalized = normalizeIncomingContent(value);
+  if (typeof DOMParser === "undefined") return normalized;
+
+  const extractedCodeBlocks: string[] = [];
+  const htmlWithPlaceholders = normalized.replace(
+    /<pre\b[^>]*>[\s\S]*?<\/pre>/gi,
+    (match) => {
+      const placeholder = `__TIPTAP_CODE_BLOCK_${extractedCodeBlocks.length}__`;
+      extractedCodeBlocks.push(match);
+      return placeholder;
+    },
+  );
+
+  const parser = new DOMParser();
+  const parsedDocument = parser.parseFromString(htmlWithPlaceholders, "text/html");
+  const body = parsedDocument.body;
+  let previousNodeWasSpacer = false;
+
+  Array.from(body.children).forEach((node) => {
+    if (node.tagName !== "P") {
+      previousNodeWasSpacer = false;
+      return;
+    }
+
+    if (isParagraphEmpty(node)) {
+      if (previousNodeWasSpacer) {
+        node.remove();
+        return;
+      }
+
+      node.innerHTML = "";
+      previousNodeWasSpacer = true;
+      return;
+    }
+
+    previousNodeWasSpacer = false;
+  });
+
+  return extractedCodeBlocks.reduce((html, codeBlock, index) => {
+    return html.replace(`__TIPTAP_CODE_BLOCK_${index}__`, codeBlock);
+  }, body.innerHTML);
+}
+
+function isParagraphEmpty(paragraph: Element) {
+  const mediaSelectors =
+    "img,video,iframe,object,embed,picture,svg,table,pre,code";
+  if (paragraph.querySelector(mediaSelectors)) return false;
+
+  return !paragraph.textContent?.trim();
+}
+
 export default function TipTapEditor({
   content,
   onChange,
@@ -96,6 +148,9 @@ export default function TipTapEditor({
 
   const editor = useEditor({
     immediatelyRender: false,
+    parseOptions: {
+      preserveWhitespace: "full",
+    },
     extensions: [
       StarterKit.configure({
         codeBlock: false,
@@ -172,16 +227,21 @@ export default function TipTapEditor({
   const handleManualFormat = () => {
     if (!editor) return;
 
-    const normalizedContent = normalizeIncomingContent(content);
-    if (normalizedContent === lastEditorHtmlRef.current) return;
+    const formattedContent = cleanHtmlForManualFormat(content);
+    if (formattedContent === lastEditorHtmlRef.current) return;
 
     const editorHtml = editor.getHTML();
-    if (normalizedContent === editorHtml) {
-      lastEditorHtmlRef.current = normalizedContent;
+    if (formattedContent === editorHtml) {
+      lastEditorHtmlRef.current = formattedContent;
       return;
     }
 
-    editor.commands.setContent(normalizedContent, { emitUpdate: false });
+    editor.commands.setContent(formattedContent, {
+      emitUpdate: false,
+      parseOptions: {
+        preserveWhitespace: "full",
+      },
+    });
     const htmlAfterFormatting = editor.getHTML();
     lastEditorHtmlRef.current = htmlAfterFormatting;
     onChange(htmlAfterFormatting);
@@ -481,6 +541,8 @@ export default function TipTapEditor({
           color: #e1e4e8 !important;
           padding: 1.25rem !important;
           border-radius: 0.5rem !important;
+          white-space: pre-wrap !important;
+          overflow-x: auto !important;
           font-family:
             ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace !important;
@@ -491,6 +553,12 @@ export default function TipTapEditor({
           padding: 0;
           background: none;
           font-size: 0.8rem;
+        }
+
+        .ProseMirror pre code {
+          display: block !important;
+          white-space: inherit !important;
+          font-size: inherit !important;
         }
       `}</style>
     </div>
