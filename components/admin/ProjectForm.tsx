@@ -97,6 +97,10 @@ export default function ProjectForm({
   const t = useTranslations("Admin.Form");
   const commonT = useTranslations("Admin.Common");
   const router = useRouter();
+  const initialTranslations = initialData?.translations
+    ? transformTranslationsToObject(initialData.translations)
+    : {};
+  const initialTranslationLangCodes = Object.keys(initialTranslations);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
@@ -120,7 +124,13 @@ export default function ProjectForm({
   const [showIconDropdown, setShowIconDropdown] = useState(false);
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>([]);
+  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
+    Array.from(
+      new Set(
+        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
+      ),
+    ),
+  );
   const [isTranslating, setIsTranslating] = useState(false);
   interface GithubRepo {
     id: number;
@@ -194,9 +204,7 @@ export default function ProjectForm({
       imageAlt: initialData?.imageAlt || "",
       images: initialData?.images || [],
       technologies: initialData?.technologies?.map((t) => t.id) || [],
-      translations: initialData?.translations
-        ? transformTranslationsToObject(initialData.translations)
-        : {},
+      translations: initialTranslations,
     },
   });
 
@@ -586,6 +594,12 @@ export default function ProjectForm({
 
     return () => clearTimeout(timeoutId);
   }, [iconSearchQuery]);
+
+  useEffect(() => {
+    setTargetLangs((prev) =>
+      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
+    );
+  }, [sourceLang]);
 
   const handleSelectSearchedIcon = (iconItem: {
     name: string;

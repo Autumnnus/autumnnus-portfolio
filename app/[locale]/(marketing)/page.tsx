@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import Container from "@/components/common/Container";
 import SeasonalEffects from "@/components/decorations/SeasonalEffects";
 import About from "@/components/landing/About";
@@ -6,7 +7,6 @@ import FeaturedProjects from "@/components/landing/FeaturedProjects";
 import GitHubCalendar from "@/components/landing/GitHubCalendar";
 import Hero from "@/components/landing/Hero";
 import WorkExperienceComponent from "@/components/landing/WorkExperience";
-
 import {
   getAboutStats,
   getBlogPosts,
@@ -22,6 +22,68 @@ import { BlogPost, Project, WorkExperience } from "@/types/contents";
 
 interface HomeProps {
   params: Promise<{ locale: string }>;
+}
+
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com").replace(
+  /\/$/,
+  "",
+);
+
+const GLOBAL_KEYWORDS = [
+  "full stack developer",
+  "pixel art portfolio",
+  "Next.js developer",
+  "React engineer",
+  "TypeScript freelancer",
+];
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const lang = locale as Language;
+  const profileData = await getProfile(lang);
+  const title = profileData
+    ? `${profileData.title} • ${profileData.name}`
+    : "Kadir | Full Stack Developer Portfolio";
+  const description =
+    profileData?.description ??
+    "Kadir Autumnnus is a full stack developer whose pixel-art inspired portfolio surfaces projects, blogs, and work experiences.";
+  const pageUrl = `${BASE_URL}/${locale}`;
+  const imageUrl = `${BASE_URL}/images/autumn.png`;
+
+  return {
+    metadataBase: new URL(BASE_URL),
+    title,
+    description,
+    keywords: GLOBAL_KEYWORDS,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: "Autumnnus Portfolio",
+      type: "website",
+      locale,
+      images: [
+        {
+          url: imageUrl,
+          alt: "Autumn sunrise pixel art inspired branding for Kadir's portfolio",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+      creator: profileData?.name,
+    },
+  };
 }
 
 export default async function Home({ params }: HomeProps) {

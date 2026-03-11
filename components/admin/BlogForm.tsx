@@ -95,11 +95,21 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   const t = useTranslations("Admin.Form");
   const commonT = useTranslations("Admin.Common");
   const router = useRouter();
+  const initialTranslations = initialData?.translations
+    ? transformTranslationsToObject(initialData.translations)
+    : {};
+  const initialTranslationLangCodes = Object.keys(initialTranslations);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>([]);
+  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
+    Array.from(
+      new Set(
+        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
+      ),
+    ),
+  );
   const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<BlogFormValues>({
@@ -114,9 +124,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       categoryId: initialData?.categoryId || "",
       status: initialData?.status || "draft",
       commentsEnabled: initialData?.commentsEnabled ?? true,
-      translations: initialData?.translations
-        ? transformTranslationsToObject(initialData.translations)
-        : {},
+      translations: initialTranslations,
     },
   });
 
@@ -145,6 +153,12 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       }
     }
   }, [sourceTitle, isEditing, setValue, getValues, sourceLang]);
+
+  useEffect(() => {
+    setTargetLangs((prev) =>
+      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
+    );
+  }, [sourceLang]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

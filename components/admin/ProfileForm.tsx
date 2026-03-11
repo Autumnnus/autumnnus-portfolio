@@ -129,12 +129,22 @@ const getQuestErrorMessage = (qErr: QuestError, idx: number): string => {
 export default function ProfileForm({ initialData }: ProfileFormProps) {
   const t = useTranslations("Admin.Form");
   const router = useRouter();
+  const initialTranslations = initialData?.translations
+    ? transformTranslationsToObject(initialData.translations)
+    : {};
+  const initialTranslationLangCodes = Object.keys(initialTranslations);
   const [avatar, setAvatar] = useState<ImageData | null>(
     initialData?.avatar ? { url: initialData.avatar } : null,
   );
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>([]);
+  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
+    Array.from(
+      new Set(
+        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
+      ),
+    ),
+  );
   const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<ProfileFormValues>({
@@ -144,9 +154,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       github: initialData?.github || "",
       linkedin: initialData?.linkedin || "",
       avatar: initialData?.avatar || "",
-      translations: initialData?.translations
-        ? transformTranslationsToObject(initialData.translations)
-        : {},
+      translations: initialTranslations,
       quests: initialData?.quests
         ? transformQuestsToForm(initialData.quests)
         : [],
@@ -167,6 +175,12 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       form.setValue("avatar", "");
     }
   }, [initialData, form]);
+
+  useEffect(() => {
+    setTargetLangs((prev) =>
+      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
+    );
+  }, [sourceLang]);
 
   const {
     register,

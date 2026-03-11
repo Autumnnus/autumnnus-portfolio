@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -65,9 +65,19 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   const t = useTranslations("Admin.Form");
   const commonT = useTranslations("Admin.Common");
   const router = useRouter();
+  const initialTranslations = initialData?.translations
+    ? transformTranslationsToObject(initialData.translations)
+    : {};
+  const initialTranslationLangCodes = Object.keys(initialTranslations);
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>([]);
+  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
+    Array.from(
+      new Set(
+        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
+      ),
+    ),
+  );
   const [isTranslating, setIsTranslating] = useState(false);
 
   const [logo, setLogo] = useState<ImageData | null>(
@@ -82,9 +92,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
       logo: initialData?.logo || "",
       startDate: formatDateForInput(initialData?.startDate),
       endDate: formatDateForInput(initialData?.endDate),
-      translations: initialData?.translations
-        ? transformTranslationsToObject(initialData.translations)
-        : {},
+      translations: initialTranslations,
     },
   });
 
@@ -94,6 +102,12 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     getValues,
     formState: { errors, isDirty },
   } = form;
+
+  useEffect(() => {
+    setTargetLangs((prev) =>
+      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
+    );
+  }, [sourceLang]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

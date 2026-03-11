@@ -30,7 +30,7 @@ import {
   Undo,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Select,
@@ -144,7 +144,11 @@ export default function TipTapEditor({
   const t = useTranslations("Admin.Editor");
   const tForm = useTranslations("Admin.Form");
   const [uploading, setUploading] = useState(false);
-  const lastEditorHtmlRef = useRef<string>(normalizeIncomingContent(content));
+  const normalizedContent = useMemo(
+    () => normalizeIncomingContent(content),
+    [content],
+  );
+  const lastEditorHtmlRef = useRef<string>(normalizedContent);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -178,7 +182,7 @@ export default function TipTapEditor({
         placeholder,
       }),
     ],
-    content: normalizeIncomingContent(content),
+    content: normalizedContent,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       lastEditorHtmlRef.current = html;
@@ -194,6 +198,21 @@ export default function TipTapEditor({
       },
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    if (normalizedContent === lastEditorHtmlRef.current) return;
+
+    editor.commands.setContent(normalizedContent, {
+      emitUpdate: false,
+      parseOptions: {
+        preserveWhitespace: "full",
+      },
+    });
+    const htmlAfterSet = editor.getHTML();
+    lastEditorHtmlRef.current = htmlAfterSet;
+    onChange(htmlAfterSet);
+  }, [editor, normalizedContent, onChange]);
 
   const setSelectionCounter = useState(0)[1];
 

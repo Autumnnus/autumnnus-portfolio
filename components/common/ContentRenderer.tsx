@@ -58,7 +58,6 @@ function renderHtmlWithCodeBlocks(
 
 export default function ContentRenderer({ content }: ContentRendererProps) {
   if (!content) return null;
-  console.log(content);
 
   const decodedContent = decodeHtmlEntities(content);
   const sanitizeHtml = (value: string) => DOMPurify.sanitize(value);
