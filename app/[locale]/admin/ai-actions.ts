@@ -2,6 +2,10 @@
 
 import { auth } from "@/auth";
 import { languageNames } from "@/i18n/routing";
+import {
+  type PublicActionError,
+  toPublicActionError,
+} from "@/lib/server-action-error";
 
 export interface BlogContent {
   title: string;
@@ -205,15 +209,35 @@ interface SeoRequest {
   language: string;
 }
 
+interface SeoGeneratedContent {
+  title: string;
+  description?: string;
+  shortDescription?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
+  excerpt?: string;
+}
+
+export type SeoGenerationResult =
+  | { ok: true; data: SeoGeneratedContent }
+  | { ok: false; error: PublicActionError };
+
 export async function generateSeoAction({
   type,
   content,
   language,
-}: SeoRequest) {
+}: SeoRequest): Promise<SeoGenerationResult> {
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not set in environment variables.");
+    return {
+      ok: false,
+      error: toPublicActionError(
+        new Error("GEMINI_API_KEY is not set in environment variables."),
+        language,
+      ),
+    };
   }
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
@@ -223,7 +247,10 @@ export async function generateSeoAction({
     !session?.user?.email ||
     session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
   ) {
-    throw new Error("Unauthorized");
+    return {
+      ok: false,
+      error: toPublicActionError(new Error("Unauthorized"), language),
+    };
   }
 
   try {
@@ -282,11 +309,13 @@ export async function generateSeoAction({
     const text = response.text();
     const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
 
-    return JSON.parse(cleanedText);
+    return { ok: true, data: JSON.parse(cleanedText) as SeoGeneratedContent };
   } catch (error) {
-    console.error("SEO Generation error:", error);
-    throw new Error(
-      error instanceof Error ? error.message : "SEO Generation failed",
-    );
+    const publicError = toPublicActionError(error, language);
+    console.error("SEO Generation error:", {
+      publicError,
+      originalError: error instanceof Error ? error.message : String(error),
+    });
+    return { ok: false, error: publicError };
   }
 }

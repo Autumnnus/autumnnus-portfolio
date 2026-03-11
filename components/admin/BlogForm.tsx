@@ -10,6 +10,7 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import ContentRenderer from "@/components/common/ContentRenderer";
 import { useAdminForm } from "@/hooks/useAdminForm";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { languageNames, useRouter } from "@/i18n/routing";
 import {
   BlogPost,
@@ -124,7 +125,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     setValue,
     getValues,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = form;
 
   const isEditing = !!initialData;
@@ -333,6 +334,10 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       }
     },
     onInvalid,
+  });
+
+  const { confirmNavigation } = useUnsavedChangesGuard({
+    enabled: isDirty && !loading,
   });
 
   return (
@@ -804,14 +809,17 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         <div className="max-w-4xl w-full flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-background/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-2xl border border-border/50 pointer-events-auto">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => {
+              if (!confirmNavigation()) return;
+              router.back();
+            }}
             className="w-full sm:w-auto px-8 py-3 bg-muted rounded-xl text-sm font-bold hover:bg-muted/80 transition-all flex items-center justify-center"
           >
             {commonT("cancel")}
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isDirty}
             className="w-full sm:w-auto px-12 py-3 bg-orange-500 text-white rounded-xl text-sm font-bold hover:opacity-90 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-xl shadow-orange-500/20"
           >
             {loading ? (

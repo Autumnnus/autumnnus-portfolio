@@ -9,6 +9,7 @@ import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { useAdminForm } from "@/hooks/useAdminForm";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { languageNames, useRouter } from "@/i18n/routing";
 import { ProfileFormValues, ProfileSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -171,7 +172,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     register,
     setValue,
     getValues,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = form;
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,6 +326,10 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         });
       }
     },
+  });
+
+  useUnsavedChangesGuard({
+    enabled: isDirty && !loading,
   });
 
   const hasQuestErrors =
@@ -755,7 +760,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       <div className="sticky bottom-4 sm:bottom-8 z-20 bg-background/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-2xl border border-border/50">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !isDirty}
           className="w-full sm:w-auto sm:ml-auto px-12 py-3 sm:py-4 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-xl shadow-primary/20 group"
         >
           {loading ? (

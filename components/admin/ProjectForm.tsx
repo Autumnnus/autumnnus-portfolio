@@ -18,6 +18,7 @@ import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import ContentRenderer from "@/components/common/ContentRenderer";
 import Icon from "@/components/common/Icon";
 import { useAdminForm } from "@/hooks/useAdminForm";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { languageNames, useRouter } from "@/i18n/routing";
 import {
   LanguageType as Language,
@@ -204,7 +205,7 @@ export default function ProjectForm({
     setValue,
     watch,
     getValues,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = form;
 
   const selectedSkills = watch("technologies");
@@ -524,6 +525,10 @@ export default function ProjectForm({
         router.push(`/admin/projects/${result.id}/edit`);
       }
     },
+  });
+
+  const { confirmNavigation } = useUnsavedChangesGuard({
+    enabled: isDirty && !loading,
   });
 
   const toggleSkill = (skillId: string) => {
@@ -1406,14 +1411,17 @@ export default function ProjectForm({
         <div className="max-w-5xl w-full flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-background/80 backdrop-blur-xl p-4 sm:p-6 rounded-3xl shadow-2xl border border-border/50 pointer-events-auto">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => {
+              if (!confirmNavigation()) return;
+              router.back();
+            }}
             className="px-8 py-3.5 bg-secondary/50 text-secondary-foreground rounded-2xl font-bold hover:bg-secondary transition-all active:scale-[0.98] text-sm"
           >
             {commonT("cancel")}
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isDirty}
             className="px-12 py-3.5 bg-primary text-primary-foreground rounded-2xl font-bold hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/20 active:scale-[0.98] text-sm"
           >
             {loading ? (

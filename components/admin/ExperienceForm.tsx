@@ -10,6 +10,7 @@ import LanguageTabs from "@/components/admin/LanguageTabs";
 import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { Input } from "@/components/ui/Input";
 import { useAdminForm } from "@/hooks/useAdminForm";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { languageNames, useRouter } from "@/i18n/routing";
 import {
   LanguageType as Language,
@@ -91,7 +92,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     register,
     setValue,
     getValues,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = form;
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,6 +244,10 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         });
       }
     },
+  });
+
+  const { confirmNavigation } = useUnsavedChangesGuard({
+    enabled: isDirty && !loading,
   });
 
   const translationRootMessage =
@@ -498,14 +503,17 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
         <div className="max-w-4xl w-full flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-background/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-2xl border border-border/50 pointer-events-auto">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => {
+              if (!confirmNavigation()) return;
+              router.back();
+            }}
             className="w-full sm:w-auto px-8 py-3 bg-muted rounded-xl text-sm font-bold hover:bg-muted/80 transition-all flex items-center justify-center"
           >
             {commonT("cancel")}
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isDirty}
             className="w-full sm:w-auto px-12 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/20 group"
           >
             {loading ? (

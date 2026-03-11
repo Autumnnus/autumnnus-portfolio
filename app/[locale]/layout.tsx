@@ -1,3 +1,4 @@
+import "@/lib/server-error-logger";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Metadata } from "next";

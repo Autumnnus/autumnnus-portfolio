@@ -50,15 +50,18 @@ export default function SeoPopover({
         language,
       });
 
-      onSeoGenerated(result);
+      if (!result.ok) {
+        toast.error(`${t("seoError")}: ${result.error.message}`);
+        return;
+      }
+
+      onSeoGenerated(result.data);
       setOpen(false);
       setContext("");
       toast.success(t("seoSuccess"));
     } catch (error) {
       toast.error(
-        t("seoError") +
-          ": " +
-          (error instanceof Error ? error.message : "Bilinmeyen hata"),
+        `${t("seoError")}: ${error instanceof Error ? error.message : "Bilinmeyen hata"}`,
       );
     } finally {
       setLoading(false);
