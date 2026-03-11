@@ -21,6 +21,7 @@ import {
   workExperience,
   workExperienceTranslation,
 } from "./schema";
+import { formatDate } from "../utils";
 
 export async function seedDatabase(
   database: NodePgDatabase<typeof schema> = db,
@@ -322,7 +323,7 @@ export async function seedDatabase(
           "Drizzle ORM'in avantajları ve Prisma ile karşılaştırması.",
         content: "Drizzle ORM, hafif ve tip güvenli bir ORM çözümüdür...",
         readTime: "5 dk",
-        date: new Date().toLocaleDateString("tr-TR"),
+        date: formatDate(new Date(), undefined, "tr-TR"),
       },
       {
         blogPostId: blogsRes[0].id,
@@ -331,7 +332,7 @@ export async function seedDatabase(
         description: "Advantages of Drizzle ORM and comparison with Prisma.",
         content: "Drizzle ORM is a lightweight and type-safe ORM solution...",
         readTime: "5 min",
-        date: new Date().toLocaleDateString("en-US"),
+        date: formatDate(new Date(), undefined, "en-US"),
       },
     ]);
 

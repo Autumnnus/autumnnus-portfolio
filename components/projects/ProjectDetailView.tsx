@@ -5,6 +5,7 @@ import ContentRenderer from "@/components/common/ContentRenderer";
 import FadeIn from "@/components/common/FadeIn";
 import Icon from "@/components/common/Icon";
 import RelatedProjectCard from "@/components/projects/RelatedProjectCard";
+import { formatDate } from "@/lib/utils";
 import { GithubRepoStats, Project } from "@/types/contents";
 import {
   Archive,
@@ -12,13 +13,13 @@ import {
   ArrowRight,
   CheckCircle2,
   Construction,
-  FileEdit,
   ExternalLink,
+  FileEdit,
   Github,
   Hammer,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,6 +30,31 @@ import ViewCounter from "@/components/interactive/ViewCounter";
 import ProjectImageCarousel from "@/components/projects/ProjectImageCarousel";
 import JsonLd from "@/components/seo/JsonLd";
 import Badge from "@/components/ui/badge";
+import { Tooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const DEFAULT_TECH_ICON = "/images/default-tech.png";
+
+const buildTechTooltipContent = (technologies: Project["technologies"]) =>
+  technologies
+    .map((tech) => {
+      const name = escapeHtml(tech.name);
+      const iconSrc = escapeHtml(tech.icon || DEFAULT_TECH_ICON);
+      const icon = `<div class="w-6 h-6 shrink-0 rounded-full bg-muted/60 overflow-hidden border border-border/40 shadow" style="background-color:var(--muted);">
+                      <img src="${iconSrc}" alt="${name}" class="w-full h-full object-cover" />
+                    </div>`;
+
+      return `<div class="flex items-center gap-2 mb-1 last:mb-0">${icon}<span class="text-sm font-medium text-foreground">${name}</span></div>`;
+    })
+    .join("");
 
 export default function ProjectDetailView({
   project,
@@ -42,6 +68,7 @@ export default function ProjectDetailView({
   const t = useTranslations("Projects");
   const tCommon = useTranslations("Common");
   const { resolvedTheme } = useTheme();
+  const locale = useLocale();
   const { data: session } = useSession();
   const isAdmin =
     session?.user?.email &&
@@ -92,7 +119,11 @@ export default function ProjectDetailView({
   };
 
   const visibleTechs = project.technologies.slice(0, 4);
-  const remainingCount = project.technologies.length - 4;
+  const remainingTechnologies = project.technologies.slice(4);
+  const remainingCount = remainingTechnologies.length;
+  const techTooltipId = `project-tech-tooltip-${project.slug}`;
+  const techTooltipContent =
+    remainingCount > 0 ? buildTechTooltipContent(remainingTechnologies) : "";
 
   return (
     <Container className="py-12 sm:py-20">
@@ -213,9 +244,26 @@ export default function ProjectDetailView({
             </Badge>
           ))}
           {remainingCount > 0 && (
-            <Badge variant="outline">
-              +{tCommon("more", { count: remainingCount })}
-            </Badge>
+            <>
+              <Badge
+                variant="outline"
+                data-tooltip-id={techTooltipId}
+                data-tooltip-html={techTooltipContent}
+                data-tooltip-place="top"
+                className="cursor-help"
+              >
+                +{tCommon("more", { count: remainingCount })}
+              </Badge>
+              <Tooltip
+                id={techTooltipId}
+                className="z-50 rounded-2xl shadow-xl border border-border/60 bg-card text-sm font-medium leading-snug [&_img]:rounded-full"
+                style={{
+                  padding: "0.65rem 0.85rem",
+                  minWidth: "200px",
+                }}
+                place="top"
+              />
+            </>
           )}
           <div className="ml-auto flex items-center gap-4">
             <ViewCounter itemId={project.id} itemType="project" />
@@ -290,7 +338,7 @@ export default function ProjectDetailView({
                   {tCommon("created")}
                 </p>
                 <p className="text-sm font-medium">
-                  {new Date(githubStats.createdAt).toLocaleDateString()}
+                  {formatDate(githubStats.createdAt, undefined, locale)}
                 </p>
               </div>
 
@@ -299,7 +347,7 @@ export default function ProjectDetailView({
                   {tCommon("lastUpdated")}
                 </p>
                 <p className="text-sm font-medium">
-                  {new Date(githubStats.pushedAt).toLocaleDateString()}
+                  {formatDate(githubStats.pushedAt, undefined, locale)}
                 </p>
               </div>
             </>

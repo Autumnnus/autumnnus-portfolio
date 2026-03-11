@@ -34,6 +34,7 @@ import { FieldError, FieldErrors, useForm } from "react-hook-form";
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
+import { formatDate } from "@/lib/utils";
 import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -274,7 +275,11 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         description: t.description,
         content: t.content,
         readTime: t.readTime,
-        date: new Date().toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US"),
+        date: formatDate(
+          new Date(),
+          undefined,
+          lang === "tr" ? "tr-TR" : "en-US",
+        ),
         excerpt: t.excerpt || "",
         metaTitle: t.metaTitle || "",
         metaDescription: t.metaDescription || "",

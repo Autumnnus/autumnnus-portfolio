@@ -1,34 +1,84 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+type DateValue = Date | string | number | null | undefined;
+
+const FALLBACK_LOCALE = "tr-TR";
+
+const DEFAULT_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+};
+
+const DEFAULT_DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  ...DEFAULT_DATE_OPTIONS,
+  hour: "2-digit",
+  minute: "2-digit",
+};
+
+const parseDateValue = (value: DateValue): Date | null => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getBrowserLocale = () => {
+  if (typeof navigator === "undefined") {
+    return FALLBACK_LOCALE;
+  }
+
+  if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
+    return navigator.languages[0];
+  }
+
+  return navigator.language || FALLBACK_LOCALE;
+};
+
+const formatWithOptions = (
+  value: DateValue,
+  options: Intl.DateTimeFormatOptions,
+  locale?: string,
+) => {
+  const date = parseDateValue(value);
+  if (!date) return "";
+
+  const resolvedLocale = locale || getBrowserLocale();
+
+  try {
+    return new Intl.DateTimeFormat(resolvedLocale, options).format(date);
+  } catch {
+    return new Intl.DateTimeFormat(FALLBACK_LOCALE, options).format(date);
+  }
+};
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export function formatDate(
-  dateString: string,
-  locale: string = "en-US",
+  value: DateValue,
+  options?: Intl.DateTimeFormatOptions,
+  locale?: string,
 ): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat(locale, {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
+  return formatWithOptions(value, options ?? DEFAULT_DATE_OPTIONS, locale);
 }
 
 export function formatDateTime(
-  dateString: string,
-  locale: string = "en-US",
+  value: DateValue,
+  locale?: string,
+  options?: Intl.DateTimeFormatOptions,
 ): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return formatWithOptions(
+    value,
+    options ?? DEFAULT_DATE_TIME_OPTIONS,
+    locale,
+  );
 }
 
 export function getRelativeTime(dateString: string): string {

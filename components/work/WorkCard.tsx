@@ -3,6 +3,7 @@
 import { WorkExperience } from "@/types/contents";
 import Image from "next/image";
 
+import { formatDate } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 
 interface WorkCardProps {
@@ -15,19 +16,18 @@ export default function WorkCard({ experience }: WorkCardProps) {
   const locale = useLocale();
   const t = useTranslations("Work");
 
-  const formatDate = (date: string | Date | null | undefined) => {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString(
-      locale === "tr" ? "tr-TR" : "en-US",
+  const formatExperienceDate = (date: string | Date | null | undefined) =>
+    formatDate(
+      date,
       {
         month: "short",
         year: "numeric",
       },
+      locale,
     );
-  };
 
-  const startStr = formatDate(startDate);
-  const endStr = endDate ? formatDate(endDate) : t("present");
+  const startStr = formatExperienceDate(startDate);
+  const endStr = endDate ? formatExperienceDate(endDate) : t("present");
   const period = `${startStr} - ${endStr}`;
 
   return (

@@ -3,6 +3,7 @@
 import Icon from "@/components/common/Icon";
 import SectionHeading from "@/components/common/SectionHeading";
 import { WorkExperience as WorkExperienceType } from "@/types/contents";
+import { formatDate } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -15,16 +16,15 @@ export default function WorkExperience({
   const locale = useLocale();
   const workItems = data || [];
 
-  const formatDate = (date: string | Date | null | undefined) => {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString(
-      locale === "tr" ? "tr-TR" : "en-US",
+  const formatExperienceDate = (date: string | Date | null | undefined) =>
+    formatDate(
+      date,
       {
         month: "short",
         year: "numeric",
       },
+      locale,
     );
-  };
 
   return (
     <section className="py-12" id="work">
@@ -36,9 +36,9 @@ export default function WorkExperience({
 
         <div className="space-y-12">
           {workItems.map((item, index) => {
-            const startStr = formatDate(item.startDate);
+            const startStr = formatExperienceDate(item.startDate);
             const endStr = item.endDate
-              ? formatDate(item.endDate)
+              ? formatExperienceDate(item.endDate)
               : t("present");
             const period = `${startStr} - ${endStr}`;
 

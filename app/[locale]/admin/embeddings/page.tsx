@@ -1,5 +1,5 @@
 "use client";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 import Badge from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -75,6 +75,7 @@ export default function EmbeddingsPage() {
   const t = useTranslations("Admin.Embeddings");
   const tNav = useTranslations("Admin.Navigation");
   const tCommon = useTranslations("Admin.Common");
+  const locale = useLocale();
   const { data: stats, mutate: mutateStats } = useSWR<EmbeddingStats>(
     "/api/admin/embeddings",
     fetcher,
@@ -446,17 +447,18 @@ export default function EmbeddingsPage() {
                         className="text-muted-foreground font-medium text-xs hidden md:table-cell py-5"
                         suppressHydrationWarning
                       >
-                        {mounted &&
-                          new Date(item.lastUpdated).toLocaleDateString(
-                            undefined,
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
+                          {mounted &&
+                            formatDate(
+                              item.lastUpdated,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                              locale,
+                            )}
                       </TableCell>
                       <TableCell className="py-5">
                         {item.status === "synced" && (
