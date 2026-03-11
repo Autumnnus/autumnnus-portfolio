@@ -37,42 +37,52 @@ export default function AdminBlogList({ posts }: BlogListProps) {
   };
 
   return (
-    <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-xl">
+    <div className="bg-card/95 border border-border/60 rounded-3xl overflow-hidden shadow-xl shadow-black/5 backdrop-blur-sm">
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse table-fixed">
+          <colgroup>
+            <col className="w-[44%]" />
+            <col className="w-[22%]" />
+            <col className="w-[18%]" />
+            <col className="w-[16%]" />
+          </colgroup>
           <thead>
-            <tr className="bg-muted/30 border-b border-border/50">
-              <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+            <tr className="bg-muted/40 border-b border-border/60">
+              <th className="px-6 py-4 font-bold text-[11px] uppercase tracking-[0.18em] text-muted-foreground/90 whitespace-nowrap">
                 {t("title")}
               </th>
-              <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+              <th className="px-6 py-4 font-bold text-[11px] uppercase tracking-[0.18em] text-muted-foreground/90 whitespace-nowrap">
                 {t("status")}
               </th>
-              <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+              <th className="px-6 py-4 font-bold text-[11px] uppercase tracking-[0.18em] text-muted-foreground/90 whitespace-nowrap">
                 {t("category")}
               </th>
-              <th className="px-6 py-5 font-bold text-xs uppercase tracking-widest text-muted-foreground text-right whitespace-nowrap">
+              <th className="px-6 py-4 font-bold text-[11px] uppercase tracking-[0.18em] text-muted-foreground/90 text-right whitespace-nowrap">
                 {t("actions")}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/50">
+          <tbody className="divide-y divide-border/40">
             {posts.map((post) => (
               <tr
                 key={post.id}
-                className="hover:bg-primary/5 transition-colors group"
+                className="group hover:bg-primary/[0.06] transition-colors"
               >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="font-bold text-sm tracking-tight group-hover:text-primary transition-colors">
+                <td className="px-6 py-4">
+                  <Link
+                    href={`/admin/blog/${post.id}/edit`}
+                    className="block max-w-full font-bold text-sm tracking-tight truncate group-hover:text-primary transition-colors"
+                    title={post.title}
+                  >
                     {post.title}
-                  </div>
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-tighter opacity-60">
-                    /{post.slug}
+                  </Link>
+                  <div className="mt-1 inline-flex max-w-full items-center rounded-full border border-border/70 bg-muted/45 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
+                    <span className="truncate">/{post.slug}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4">
                   <span
-                    className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm ${
+                    className={`inline-flex max-w-full items-center px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm ${
                       post.status === "published"
                         ? "bg-green-500/10 text-green-500"
                         : "bg-amber-500/10 text-amber-500"
@@ -82,14 +92,19 @@ export default function AdminBlogList({ posts }: BlogListProps) {
                     {tBlog(post.status) || post.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-xs font-bold uppercase tracking-tight text-muted-foreground/80 whitespace-nowrap">
-                  {post.category?.name || "-"}
+                <td className="px-6 py-4">
+                  <span
+                    className="inline-flex max-w-full items-center rounded-full border border-border/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/90"
+                    title={post.category?.name || "-"}
+                  >
+                    <span className="truncate">{post.category?.name || "-"}</span>
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1.5 sm:gap-3">
                     <Link
                       href={`/admin/blog/${post.id}/edit`}
-                      className="p-2.5 hover:bg-primary/10 rounded-xl text-muted-foreground hover:text-primary transition-all duration-300 shadow-sm hover:shadow-primary/10 border border-transparent hover:border-primary/20"
+                      className="p-2.5 hover:bg-primary/10 rounded-xl text-muted-foreground hover:text-primary transition-all duration-300 shadow-sm hover:shadow-primary/10 border border-border/40 hover:border-primary/20"
                       title={t("edit")}
                     >
                       <Edit size={18} />
@@ -97,7 +112,7 @@ export default function AdminBlogList({ posts }: BlogListProps) {
                     <button
                       onClick={() => handleDelete(post.id)}
                       disabled={isPending}
-                      className="p-2.5 hover:bg-red-500/10 rounded-xl text-muted-foreground hover:text-red-500 transition-all duration-300 shadow-sm hover:shadow-red-500/10 border border-transparent hover:border-red-500/20"
+                      className="p-2.5 hover:bg-red-500/10 rounded-xl text-muted-foreground hover:text-red-500 transition-all duration-300 shadow-sm hover:shadow-red-500/10 border border-border/40 hover:border-red-500/20"
                       title={t("delete")}
                     >
                       <Trash2 size={18} />

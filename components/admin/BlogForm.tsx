@@ -796,7 +796,8 @@ export default function BlogForm({ initialData }: BlogFormProps) {
               />
             </div>
           </div>
-        )}
+        );
+      }}
       </LanguageTabs>
 
       <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 z-40 px-4 sm:px-0 flex justify-center pointer-events-none">
