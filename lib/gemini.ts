@@ -1,117 +1,139 @@
-import fs from "fs";
-import path from "path";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import "server-only";
+import {
+  GoogleGenerativeAI,
+  type EmbedContentRequest,
+  type EmbedContentResponse,
+  type GenerateContentRequest,
+  type GenerateContentResult,
+  type GenerativeModel,
+} from "@google/generative-ai";
+import {
+  blockGeminiQuotaGroup,
+  getActiveGeminiRuntimeCandidates,
+  getQuotaGroupBlockMap,
+  markGeminiCredentialError,
+  markGeminiCredentialSelected,
+  markGeminiCredentialSuccess,
+  selectGeminiRuntimeCandidate,
+  type GeminiRuntimeCandidate,
+} from "@/lib/ai/api-key-pool";
+import { resolveGeminiRateLimit } from "@/lib/ai/gemini-rate-limit";
 
-let cachedGeminiApiKey: string | null = null;
-let cachedGenAI: GoogleGenerativeAI | null = null;
-let lastKeyUsed: string | null = null;
+const clientCache = new Map<string, GoogleGenerativeAI>();
 
-const GEMINI_KEY_FILE = path.join(
-  process.cwd(),
-  "data",
-  "gemini-api-key.txt",
-);
+export class GeminiApiKeyPoolExhaustedError extends Error {
+  status = 429;
+  retryAfterSeconds: number | null;
+  retryAt: string | null;
 
-const readPersistedGeminiApiKey = (): string | null => {
-  try {
-    const stored = fs.readFileSync(GEMINI_KEY_FILE, "utf-8").trim();
-    return stored || null;
-  } catch (error) {
-    if ((error as { code?: string }).code === "ENOENT") {
-      return null;
-    }
-    console.warn("Failed to read persisted Gemini key override", error);
-    return null;
-  }
-};
-
-const persistGeminiApiKey = (value: string | null) => {
-  try {
-    if (!value) {
-      fs.rmSync(GEMINI_KEY_FILE, { force: true });
-      return;
-    }
-    fs.mkdirSync(path.dirname(GEMINI_KEY_FILE), { recursive: true });
-    fs.writeFileSync(GEMINI_KEY_FILE, value, {
-      encoding: "utf-8",
-      mode: 0o600,
-    });
-  } catch (error) {
-    console.warn("Failed to persist custom Gemini key", error);
-  }
-};
-
-const getActiveGeminiApiKey = () => {
-  if (cachedGeminiApiKey) {
-    return cachedGeminiApiKey;
-  }
-  const persisted = readPersistedGeminiApiKey();
-  if (persisted) {
-    cachedGeminiApiKey = persisted;
-    return persisted;
-  }
-  return process.env.GEMINI_API_KEY ?? null;
-};
-
-const logGeminiKeyUsage = (modelName: string, key: string) => {
-  try {
-    const logDir = path.join(process.cwd(), "logs");
-    fs.mkdirSync(logDir, { recursive: true });
-    const logPath = path.join(logDir, "gemini-requests.txt");
-    const timestamp = new Date().toISOString();
-    fs.appendFileSync(
-      logPath,
-      `${timestamp} ${modelName} Gemini API key used: ${key}\n`,
+  constructor(nextAvailableAt: Date | null) {
+    super(
+      nextAvailableAt
+        ? `All configured Gemini API keys are currently rate limited. Retry after ${nextAvailableAt.toISOString()}.`
+        : "All configured Gemini API keys are currently rate limited.",
     );
-  } catch (error) {
-    console.warn("Failed to log Gemini API key usage", { error });
+    this.name = "GeminiApiKeyPoolExhaustedError";
+    this.retryAt = nextAvailableAt ? nextAvailableAt.toISOString() : null;
+    this.retryAfterSeconds = nextAvailableAt
+      ? Math.max(
+          1,
+          Math.ceil((nextAvailableAt.getTime() - Date.now()) / 1000),
+        )
+      : null;
   }
-};
+}
 
-const ensureGenAI = (): { genAI: GoogleGenerativeAI; key: string } => {
-  const key = getActiveGeminiApiKey();
-  if (!key) {
+function getGenerativeAiClient(apiKey: string) {
+  const cached = clientCache.get(apiKey);
+  if (cached) {
+    return cached;
+  }
+
+  const client = new GoogleGenerativeAI(apiKey);
+  clientCache.set(apiKey, client);
+  return client;
+}
+
+function logGeminiKeyUsage(modelName: string, candidate: GeminiRuntimeCandidate) {
+  console.info("Gemini API key selected", {
+    modelName,
+    keyId: candidate.id,
+    label: candidate.label,
+    fingerprint: candidate.keyFingerprint,
+    category: candidate.category,
+    quotaGroup: candidate.quotaGroup,
+  });
+}
+
+function createModel(candidate: GeminiRuntimeCandidate, modelName: string) {
+  logGeminiKeyUsage(modelName, candidate);
+  return getGenerativeAiClient(candidate.apiKey).getGenerativeModel({
+    model: modelName,
+  });
+}
+
+export async function withGeminiModel<T>(
+  modelName: string,
+  task: (model: GenerativeModel, candidate: GeminiRuntimeCandidate) => Promise<T>,
+) {
+  const candidates = await getActiveGeminiRuntimeCandidates();
+  if (candidates.length === 0) {
     throw new Error(
-      "GEMINI_API_KEY is not set. Configure it in the environment or via the admin settings.",
+      "No active Gemini API keys are configured. Add at least one key in the admin panel.",
     );
   }
 
-  if (!cachedGenAI || lastKeyUsed !== key) {
-    cachedGenAI = new GoogleGenerativeAI(key);
-    lastKeyUsed = key;
+  const blockedUntilByQuotaGroup = await getQuotaGroupBlockMap(candidates);
+  const excludedQuotaGroups = new Set<string>();
+
+  while (true) {
+    const selection = selectGeminiRuntimeCandidate(
+      candidates,
+      blockedUntilByQuotaGroup,
+      excludedQuotaGroups,
+    );
+
+    if (!selection.key) {
+      throw new GeminiApiKeyPoolExhaustedError(selection.nextAvailableAt);
+    }
+
+    const candidate = selection.key;
+    await markGeminiCredentialSelected(candidate.id);
+
+    try {
+      const result = await task(createModel(candidate, modelName), candidate);
+      await markGeminiCredentialSuccess(candidate.id, candidate.quotaGroup);
+      return result;
+    } catch (error) {
+      await markGeminiCredentialError(candidate.id);
+      const rateLimit = resolveGeminiRateLimit(error);
+      if (!rateLimit?.isRateLimited) {
+        throw error;
+      }
+
+      blockedUntilByQuotaGroup.set(candidate.quotaGroup, rateLimit.blockedUntil);
+      excludedQuotaGroups.add(candidate.quotaGroup);
+      await blockGeminiQuotaGroup({
+        quotaGroup: candidate.quotaGroup,
+        blockReason: rateLimit.blockReason,
+        blockedUntil: rateLimit.blockedUntil,
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+    }
   }
+}
 
-  const genAI = cachedGenAI!;
-  return { genAI, key };
-};
+export async function generateGeminiContent(
+  modelName: string,
+  input: string | GenerateContentRequest,
+): Promise<GenerateContentResult> {
+  return withGeminiModel(modelName, (model) => model.generateContent(input));
+}
 
-const getGenerativeModel = (modelName: string) => {
-  const { genAI, key } = ensureGenAI();
-  logGeminiKeyUsage(modelName, key);
-  return genAI.getGenerativeModel({ model: modelName });
-};
-
-export const getGeminiModel = () => getGenerativeModel("gemini-2.5-flash");
-
-export const getGeminiFlashLiteModel = () =>
-  getGenerativeModel("gemini-2.5-flash-lite");
-
-export const getEmbeddingModel = () =>
-  getGenerativeModel("gemini-embedding-001");
-
-export const setCachedGeminiApiKey = (value: string | null) => {
-  const normalizedValue = value?.trim() || null;
-  if (normalizedValue === cachedGeminiApiKey) return;
-  cachedGeminiApiKey = normalizedValue;
-  cachedGenAI = null;
-  lastKeyUsed = null;
-  persistGeminiApiKey(normalizedValue);
-};
-
-export const getCachedGeminiApiKey = () => {
-  if (cachedGeminiApiKey) {
-    return cachedGeminiApiKey;
-  }
-  cachedGeminiApiKey = readPersistedGeminiApiKey();
-  return cachedGeminiApiKey;
-};
+export async function embedGeminiContent(
+  input: string | EmbedContentRequest,
+): Promise<EmbedContentResponse> {
+  return withGeminiModel("gemini-embedding-001", (model) =>
+    model.embedContent(input),
+  );
+}

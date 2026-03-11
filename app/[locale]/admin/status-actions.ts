@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { seedDatabase } from "@/lib/db/seed";
 import { getBucketName, minioClient } from "@/lib/minio";
+import { getRedisClient } from "@/lib/redis";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -26,6 +27,9 @@ export async function getSystemStatus() {
       bucketExists: false,
     },
     umami: {
+      connected: false,
+    },
+    redis: {
       connected: false,
     },
   };
@@ -57,6 +61,15 @@ export async function getSystemStatus() {
   } catch (error) {
     console.error("Minio Status Check Error:", error);
     status.minio.connected = false;
+  }
+
+  // Check Redis
+  try {
+    const redis = await getRedisClient();
+    const pong = await redis.ping();
+    status.redis.connected = pong === "PONG";
+  } catch (error) {
+    console.error("Redis Status Check Error:", error);
   }
 
   // Check Umami

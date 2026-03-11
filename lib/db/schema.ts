@@ -28,6 +28,10 @@ export const languageEnum = pgEnum("Language", [
   "zh",
 ]);
 
+export const aiProviderEnum = pgEnum("AiProvider", ["gemini"]);
+
+export const apiKeyCategoryEnum = pgEnum("ApiKeyCategory", ["free", "paid"]);
+
 export const Language = {
   tr: "tr",
   en: "en",
@@ -380,6 +384,31 @@ export const chatRateLimit = pgTable(
   },
   (t) => ({
     unq: unique().on(t.ipAddress, t.date),
+  }),
+);
+
+export const aiApiKey = pgTable(
+  "AiApiKey",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: aiProviderEnum("provider").notNull(),
+    label: text("label").notNull(),
+    encryptedKey: text("encryptedKey").notNull(),
+    keyFingerprint: text("keyFingerprint").notNull(),
+    category: apiKeyCategoryEnum("category").notNull(),
+    priority: integer("priority").default(0).notNull(),
+    quotaGroup: text("quotaGroup").notNull(),
+    isActive: boolean("isActive").default(true).notNull(),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => ({
+    providerFingerprintUnq: unique().on(t.provider, t.keyFingerprint),
+    providerCategoryPriorityIdx: index().on(t.provider, t.category, t.priority),
+    providerActiveIdx: index().on(t.provider, t.isActive),
   }),
 );
 

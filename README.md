@@ -9,7 +9,7 @@ Autumnnus Portfolio is a modern, full-featured, multi-lingual (i18n), and AI-pow
 - **Database & ORM:** Type-safe database interactions with PostgreSQL and Drizzle ORM.
 - **Role-based Authentication:** Different roles like Admin and Visitor (e.g., GitHub Auth) using Auth.js.
 - **Object Storage (S3 Compatible):** Storing images, media, and other files locally or on your own server with MinIO.
-- **Artificial Intelligence (AI) Integration:** Smart operations (AI Actions) powered by Google Gemini API.
+- **Artificial Intelligence (AI) Integration:** Smart operations (AI Actions) powered by a Redis-backed Google Gemini API key pool with free/paid priority failover.
 - **Rich Text Editor & Comments:** Interactive commenting, liking, and Tiptap rich text editor for blog and project detail pages (Includes source code highlighting using Shiki).
 - **Telegram Notifications & Visitor Tier System:** A dynamic notification system that interacts with a Telegram bot to inform the admin about visitor milestones and overall visitor count.
 - **Security & Bot Protection:** Cloudflare Turnstile integration to prevent spam comments and form submissions.
@@ -30,7 +30,7 @@ To install the project on your local machine, configure environment variables in
 
 - **Framework:** Next.js (App Router), React 19
 - **Styling & Animation:** Tailwind CSS v4, Framer Motion, Radix UI Primitives, Lucide Icons
-- **Backend & Database:** Node.js, PostgreSQL, Drizzle ORM, MinIO
+- **Backend & Database:** Node.js, PostgreSQL, Drizzle ORM, MinIO, Redis
 - **Security & Auth:** Auth.js (NextAuth), Cloudflare Turnstile
 - **Language & Forms:** `next-intl`, React Hook Form, Zod
 - **AI Integration:** `@google/generative-ai`

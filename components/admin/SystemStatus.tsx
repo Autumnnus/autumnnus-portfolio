@@ -12,6 +12,7 @@ import {
   HardDrive,
   Info,
   Layers,
+  Radio,
   RefreshCcw,
   ShieldCheck,
   Sprout,
@@ -32,6 +33,9 @@ interface StatusData {
     bucketExists: boolean;
   };
   umami: {
+    connected: boolean;
+  };
+  redis: {
     connected: boolean;
   };
 }
@@ -102,6 +106,7 @@ export default function SystemStatus() {
     status?.db.connected &&
     status?.minio.connected &&
     status?.minio.bucketExists &&
+    status?.redis.connected &&
     status?.umami.connected;
 
   return (
@@ -171,7 +176,7 @@ export default function SystemStatus() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
         {/* Database Status Card */}
         <div className="p-6 bg-background/50 border border-border/50 rounded-2xl space-y-4 hover:border-primary/30 transition-colors group/card">
           <div className="flex justify-between items-start">
@@ -270,6 +275,57 @@ export default function SystemStatus() {
             <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic opacity-70">
               Check if the assets bucket is correctly initialized in your MinIO
               instance.
+            </p>
+          </div>
+        </div>
+
+        {/* Redis Status Card */}
+        <div className="p-6 bg-background/50 border border-border/50 rounded-2xl space-y-4 hover:border-emerald-500/30 transition-colors group/card">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <Radio className="w-5 h-5 text-emerald-500" />
+              </div>
+              <span className="font-bold">{t("redis")}</span>
+            </div>
+            {status?.redis.connected ? (
+              <div className="flex items-center gap-1 text-green-500 bg-green-500/10 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <CheckCircle2 size={12} />
+                {t("connected")}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-red-500 bg-red-500/10 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <XCircle size={12} />
+                {t("disconnected")}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/30">
+              <div className="flex items-center gap-2">
+                <Activity size={14} className="text-primary/70" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("redisPing")}
+                </span>
+              </div>
+              {status?.redis.connected ? (
+                <span className="text-[10px] font-bold text-green-500 flex items-center gap-1">
+                  <CheckCircle2 size={10} />
+                  PONG
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-red-500 flex items-center gap-1">
+                  <XCircle size={10} />
+                  {t("disconnected")}
+                </span>
+              )}
+            </div>
+
+            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic opacity-70">
+              {status?.redis.connected
+                ? t("redisHealthy")
+                : t("redisUnavailable")}
             </p>
           </div>
         </div>

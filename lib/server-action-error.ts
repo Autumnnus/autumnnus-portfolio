@@ -48,6 +48,14 @@ function detectErrorCode(
   }
 
   if (
+    message.includes("gemini api key") ||
+    message.includes("ai_key_encryption_secret") ||
+    message.includes("redis_url")
+  ) {
+    return "MISCONFIGURED";
+  }
+
+  if (
     status === 429 ||
     message.includes("rate limit") ||
     message.includes("quota")

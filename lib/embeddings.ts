@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { blogPost, profile, project, workExperience } from "@/lib/db/schema";
-import { getEmbeddingModel } from "@/lib/gemini";
+import { embedGeminiContent } from "@/lib/gemini";
 import { deleteEmbeddingsBySource, upsertEmbedding } from "@/lib/vectordb";
 import { eq } from "drizzle-orm";
 
@@ -9,8 +9,7 @@ const Language = { tr: "tr", en: "en" } as const;
 const MAX_CHUNK_SIZE = 1000;
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const model = getEmbeddingModel();
-  const result = await model.embedContent({
+  const result = await embedGeminiContent({
     content: { parts: [{ text }], role: "user" },
   });
   return result.embedding.values;

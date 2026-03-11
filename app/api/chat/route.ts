@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { aiChatMessage, aiChatSession, chatRateLimit } from "@/lib/db/schema";
 import { generateEmbedding } from "@/lib/embeddings";
-import { getGeminiFlashLiteModel } from "@/lib/gemini";
+import { generateGeminiContent } from "@/lib/gemini";
 import { type EmbeddingResult, searchSimilar } from "@/lib/vectordb";
 import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -57,6 +57,24 @@ interface GroupedChunkContext {
   sourceId: string;
   maxSimilarity: number;
   snippets: string[];
+}
+
+function getErrorStatus(error: unknown) {
+  if (typeof error !== "object" || !error) {
+    return undefined;
+  }
+
+  const status = (error as { status?: unknown }).status;
+  return typeof status === "number" ? status : undefined;
+}
+
+function getRetryAfterSeconds(error: unknown) {
+  if (typeof error !== "object" || !error) {
+    return undefined;
+  }
+
+  const retryAfterSeconds = (error as { retryAfterSeconds?: unknown }).retryAfterSeconds;
+  return typeof retryAfterSeconds === "number" ? retryAfterSeconds : undefined;
 }
 
 function getSourceKey(sourceType: string, sourceId: string): string {
@@ -738,7 +756,6 @@ export async function POST(req: NextRequest) {
       content: trimmedMessage,
     });
 
-    const model = getGeminiFlashLiteModel();
     const answerLanguage = locale === "tr" ? "Turkish (Turkce)" : "English";
 
     const intentPrompt = `Analyze the user's latest message for a portfolio assistant.
@@ -771,7 +788,7 @@ Return JSON only in this format:
   "useHistory": true | false
 }`;
 
-    const intentResult = await model.generateContent({
+    const intentResult = await generateGeminiContent("gemini-2.5-flash-lite", {
       contents: [{ role: "user", parts: [{ text: intentPrompt }] }],
       generationConfig: { responseMimeType: "application/json" },
     });
@@ -898,7 +915,10 @@ ${intentInstructions ? `CURRENT INTENT INSTRUCTIONS:\n${intentInstructions}\n` :
 USER QUESTION:
 ${trimmedMessage}`;
 
-    const result = await model.generateContent(systemPrompt);
+    const result = await generateGeminiContent(
+      "gemini-2.5-flash-lite",
+      systemPrompt,
+    );
     const response = result.response.text();
     const usageMetadata = result.response.usageMetadata ?? null;
 
@@ -931,11 +951,18 @@ ${trimmedMessage}`;
     return NextResponse.json({ response, sources: relevantSources });
   } catch (error) {
     console.error("Chat API Error:", error);
+    const status = getErrorStatus(error) ?? 500;
+    const retryAfterSeconds = getRetryAfterSeconds(error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Internal Server Error",
       },
-      { status: 500 },
+      {
+        status,
+        headers: retryAfterSeconds
+          ? { "Retry-After": String(retryAfterSeconds) }
+          : undefined,
+      },
     );
   }
 }
