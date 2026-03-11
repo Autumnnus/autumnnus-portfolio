@@ -1247,13 +1247,20 @@ export default function ProjectForm({
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
-        {(lang) => (
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <div className="flex justify-end mb-4">
-              <SeoPopover
-                type="project"
-                language={lang}
-                onSeoGenerated={(result) => {
+        {(lang) => {
+          const keywordsValue =
+            watch(`translations.${lang}.keywords` as const) ?? [];
+          const keywordsString = Array.isArray(keywordsValue)
+            ? keywordsValue.join(", ")
+            : "";
+
+          return (
+            <div className="space-y-4 max-w-3xl mx-auto">
+              <div className="flex justify-end mb-4">
+                <SeoPopover
+                  type="project"
+                  language={lang}
+                  onSeoGenerated={(result) => {
                   setValue(
                     `translations.${lang}.title` as const,
                     result.title,
@@ -1373,9 +1380,7 @@ export default function ProjectForm({
                         shouldDirty: true,
                       });
                     }}
-                    defaultValue={getValues(
-                      `translations.${lang}.keywords` as const,
-                    )?.join(", ")}
+                    value={keywordsString}
                     className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
                     placeholder="react, tailwind..."
                   />
@@ -1393,7 +1398,8 @@ export default function ProjectForm({
               </div>
             </div>
           </div>
-        )}
+        );
+      }}
       </LanguageTabs>
 
       <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 z-40 px-4 sm:px-0 flex justify-center pointer-events-none">

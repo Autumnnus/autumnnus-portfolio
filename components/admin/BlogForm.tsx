@@ -619,10 +619,17 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
-        {(lang) => (
-          <div className="space-y-6 max-w-3xl mx-auto">
-            <div className="flex justify-end sticky top-0 z-30 py-2 sm:py-0">
-              <SeoPopover
+        {(lang) => {
+          const keywordsValue =
+            watch(`translations.${lang}.keywords` as const) ?? [];
+          const keywordsString = Array.isArray(keywordsValue)
+            ? keywordsValue.join(", ")
+            : "";
+
+          return (
+            <div className="space-y-6 max-w-3xl mx-auto">
+              <div className="flex justify-end sticky top-0 z-30 py-2 sm:py-0">
+                <SeoPopover
                 type="blog"
                 language={lang}
                 onSeoGenerated={(result) => {
@@ -765,9 +772,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                         shouldDirty: true,
                       });
                     }}
-                    defaultValue={getValues(
-                      `translations.${lang}.keywords` as const,
-                    )?.join(", ")}
+                    value={keywordsString}
                     className="w-full p-3 bg-background rounded-xl border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm"
                     placeholder={t("keywordsPlaceholder")}
                   />
