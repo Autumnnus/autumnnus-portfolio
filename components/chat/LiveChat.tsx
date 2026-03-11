@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { getLiveChatConfigAction } from "@/app/[locale]/admin/livechat/livechat-actions";
 import { getProfile } from "@/app/actions";
+import {
+  getPublicLiveChatConfigAction,
+  type GreetingTranslationInput,
+} from "@/app/[locale]/admin/livechat/livechat-actions";
 import { type SourceItem } from "@/app/api/chat/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
@@ -17,6 +20,7 @@ import { ChatLoading, ChatMessage, Message } from "./ChatMessage";
 
 const STORAGE_KEY = "autumnnus_chat_history";
 const MAX_MESSAGES = 50;
+const SUPPORTED_LOCALES = ["tr", "en"] as const;
 
 export default function LiveChat() {
   const t = useTranslations("Chat");
@@ -39,9 +43,8 @@ export default function LiveChat() {
   const pathname = usePathname();
 
   const segments = pathname.split("/").filter(Boolean);
-  const supportedLocales = ["tr", "en"];
   const isLocaleFirst =
-    segments.length > 0 && supportedLocales.includes(segments[0]);
+    segments.length > 0 && SUPPORTED_LOCALES.includes(segments[0] as "tr" | "en");
   const logicalPath = isLocaleFirst
     ? "/" + segments.slice(1).join("/")
     : "/" + segments.join("/");
@@ -66,13 +69,14 @@ export default function LiveChat() {
   useEffect(() => {
     async function loadConfig() {
       try {
-        const data = await getLiveChatConfigAction().catch(() => null);
+        const data = await getPublicLiveChatConfigAction().catch(() => null);
         if (data) {
           setConfig(data);
 
           const segs = pathname.split("/").filter(Boolean);
           const isLocFirst =
-            segs.length > 0 && supportedLocales.includes(segs[0]);
+            segs.length > 0 &&
+            SUPPORTED_LOCALES.includes(segs[0] as "tr" | "en");
           const lPath = isLocFirst
             ? "/" + segs.slice(1).join("/")
             : "/" + segs.join("/");
@@ -87,7 +91,7 @@ export default function LiveChat() {
 
           if (currentPathGreeting) {
             const trans = currentPathGreeting.translations.find(
-              (t: { language: string }) => t.language === currentLocale,
+              (t: GreetingTranslationInput) => t.language === currentLocale,
             );
             if (trans) {
               setTeaserText(trans.text);
@@ -143,11 +147,12 @@ export default function LiveChat() {
 
   useEffect(() => {
     if (isPathExcluded || !isPathAllowed) return;
-    if (isOpen && messages.length === 1 && !pingPlayedRef.current) {
+    const firstMessageIsAi = messages.length === 1 && messages[0]?.role === "ai";
+    if (isOpen && firstMessageIsAi && !pingPlayedRef.current) {
       playSound("ping");
       pingPlayedRef.current = true;
     }
-  }, [isPathExcluded, isPathAllowed, isOpen, messages.length, playSound]);
+  }, [isPathExcluded, isPathAllowed, isOpen, messages, playSound]);
 
   useEffect(() => {
     async function fetchAdminData() {
@@ -246,7 +251,7 @@ export default function LiveChat() {
       playedMessageIdsRef.current.add("welcome");
       return [welcomeMsg];
     });
-  }, [teaserText, t]);
+  }, [teaserText]);
 
   useEffect(() => {
     if (messages.length === 0) return;
@@ -286,10 +291,12 @@ export default function LiveChat() {
       playedMessageIdsRef.current = new Set();
       setMessages([]);
     }
-  }, [t, teaserText]);
+  }, [teaserText]);
 
   const processMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
+
+    setHasInteracted(true);
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -303,24 +310,51 @@ export default function LiveChat() {
     setIsLoading(true);
 
     try {
+      const requestHistory = messages
+        .filter((message) => message.id !== "welcome")
+        .slice(-12)
+        .map((message) => ({
+          role: message.role,
+          content: message.content,
+          sources: message.sources?.map((source) => ({
+            sourceType: source.sourceType,
+            title: source.title,
+            url: source.url,
+          })),
+        }));
+
       const data = await apiFetch<any>("/api/chat", {
         method: "POST",
         body: JSON.stringify({
           message: userMessage.content,
           locale: currentLocale,
-          history: messages.slice(-10).map((m: Message) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          history: requestHistory,
         }),
       });
 
-      const shownSourceUrls = new Set(
-        messages.flatMap((m: Message) => m.sources ?? []).map((s) => s.url),
+      const uniqueSources = Array.from(
+        new Map<string, SourceItem>(
+          (data.sources ?? []).map((source: SourceItem) => [
+            `${source.sourceType}:${source.url}`,
+            source,
+          ]),
+        ).values(),
       );
 
-      const uniqueSources = (data.sources ?? []).filter(
-        (s: SourceItem) => !shownSourceUrls.has(s.url),
+      const lastAiSources =
+        [...messages]
+          .reverse()
+          .find(
+            (message) => message.role === "ai" && (message.sources?.length ?? 0) > 0,
+          )
+          ?.sources ?? [];
+
+      const lastAiSourceKeys = new Set(
+        lastAiSources.map((source) => `${source.sourceType}:${source.url}`),
+      );
+
+      const nextSources = uniqueSources.filter(
+        (source) => !lastAiSourceKeys.has(`${source.sourceType}:${source.url}`),
       );
 
       const aiMessage: Message = {
@@ -328,7 +362,7 @@ export default function LiveChat() {
         role: "ai",
         content: data.response,
         timestamp: new Date(),
-        sources: uniqueSources,
+        sources: nextSources,
       };
 
       setMessages((prev) => [...prev, aiMessage]);

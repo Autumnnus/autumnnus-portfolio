@@ -32,6 +32,29 @@ export interface LiveChatConfigData {
   greetings: LiveChatGreetingInput[];
 }
 
+function getDefaultLiveChatConfig(): LiveChatConfigData {
+  return {
+    isEnabled: true,
+    allowedPaths: [],
+    excludedPaths: [],
+    pingSoundUrl: null,
+    notificationSoundUrl: null,
+    greetings: [],
+  };
+}
+
+async function loadLiveChatConfig() {
+  return db.query.liveChatConfig.findFirst({
+    with: {
+      greetings: {
+        with: {
+          translations: true,
+        },
+      },
+    },
+  });
+}
+
 async function checkAdmin() {
   const session = await auth();
   if (
@@ -45,15 +68,7 @@ async function checkAdmin() {
 export async function getLiveChatConfigAction() {
   await checkAdmin();
 
-  let config = await db.query.liveChatConfig.findFirst({
-    with: {
-      greetings: {
-        with: {
-          translations: true,
-        },
-      },
-    },
-  });
+  const config = await loadLiveChatConfig();
 
   if (!config) {
     const [newConfig] = await db
@@ -68,6 +83,30 @@ export async function getLiveChatConfigAction() {
   }
 
   return config;
+}
+
+export async function getPublicLiveChatConfigAction(): Promise<LiveChatConfigData> {
+  const config = await loadLiveChatConfig();
+
+  if (!config) {
+    return getDefaultLiveChatConfig();
+  }
+
+  return {
+    isEnabled: config.isEnabled,
+    allowedPaths: config.allowedPaths ?? [],
+    excludedPaths: config.excludedPaths ?? [],
+    pingSoundUrl: config.pingSoundUrl ?? null,
+    notificationSoundUrl: config.notificationSoundUrl ?? null,
+    greetings: config.greetings.map((greeting) => ({
+      pathname: greeting.pathname,
+      translations: greeting.translations.map((translation) => ({
+        language: translation.language,
+        text: translation.text,
+        quickAnswers: translation.quickAnswers ?? [],
+      })),
+    })),
+  };
 }
 
 export async function updateLiveChatConfigAction(data: {
