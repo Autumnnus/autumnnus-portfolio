@@ -153,14 +153,18 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
       Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
-        setValue(`translations.${lang}.role` as const, content.role);
+        setValue(`translations.${lang}.role` as const, content.role, {
+          shouldDirty: true,
+        });
         setValue(
           `translations.${lang}.description` as const,
           content.description,
+          { shouldDirty: true },
         );
         setValue(
           `translations.${lang}.locationType` as const,
           content.locationType,
+          { shouldDirty: true },
         );
       });
 
@@ -317,10 +321,10 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    setLogo(null);
-                    setValue("logo", "");
-                  }}
+                    onClick={() => {
+                      setLogo(null);
+                      setValue("logo", "", { shouldDirty: true });
+                    }}
                   className="absolute top-3 right-3 p-2 bg-destructive/80 text-destructive-foreground rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110 hover:bg-destructive backdrop-blur-sm"
                 >
                   <X size={18} />

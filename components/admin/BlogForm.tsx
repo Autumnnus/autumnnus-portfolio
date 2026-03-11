@@ -138,7 +138,10 @@ export default function BlogForm({ initialData }: BlogFormProps) {
         currentSlug ===
           slugify(sourceTitle.substring(0, sourceTitle.length - 1))
       ) {
-        setValue("slug", slugify(sourceTitle), { shouldValidate: true });
+        setValue("slug", slugify(sourceTitle), {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
       }
     }
   }, [sourceTitle, isEditing, setValue, getValues, sourceLang]);
@@ -218,30 +221,42 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
       Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
-        setValue(`translations.${lang}.title` as const, content.title);
+        setValue(`translations.${lang}.title` as const, content.title, {
+          shouldDirty: true,
+        });
         setValue(
           `translations.${lang}.description` as const,
           content.description || "",
+          { shouldDirty: true },
         );
-        setValue(`translations.${lang}.content` as const, content.content);
+        setValue(`translations.${lang}.content` as const, content.content, {
+          shouldDirty: true,
+        });
         setValue(
           `translations.${lang}.readTime` as const,
           content.readTime || "5 min read",
+          { shouldDirty: true },
         );
         if (content.excerpt)
-          setValue(`translations.${lang}.excerpt` as const, content.excerpt);
+          setValue(`translations.${lang}.excerpt` as const, content.excerpt, {
+            shouldDirty: true,
+          });
         if (content.metaTitle)
           setValue(
             `translations.${lang}.metaTitle` as const,
             content.metaTitle,
+            { shouldDirty: true },
           );
         if (content.metaDescription)
           setValue(
             `translations.${lang}.metaDescription` as const,
             content.metaDescription,
+            { shouldDirty: true },
           );
         if (content.keywords)
-          setValue(`translations.${lang}.keywords` as const, content.keywords);
+          setValue(`translations.${lang}.keywords` as const, content.keywords, {
+            shouldDirty: true,
+          });
       });
 
       toast.success(t("translateSuccess"));
@@ -529,7 +544,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                       type="button"
                       onClick={() => {
                         setCoverImage(null);
-                        setValue("coverImage", "");
+                        setValue("coverImage", "", { shouldDirty: true });
                       }}
                       className="p-2.5 bg-red-500/40 backdrop-blur-md rounded-full hover:bg-red-500/60 transition-colors"
                     >

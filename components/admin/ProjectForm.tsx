@@ -315,7 +315,9 @@ export default function ProjectForm({
     if (existing) {
       const currentSkills = getValues("technologies");
       if (!currentSkills.includes(existing.id)) {
-        setValue("technologies", [...currentSkills, existing.id]);
+        setValue("technologies", [...currentSkills, existing.id], {
+          shouldDirty: true,
+        });
         toast.success(`"${existing.name}" zaten mevcut, listeye eklendi.`);
       } else {
         toast.info(`"${existing.name}" zaten seçili.`);
@@ -335,7 +337,9 @@ export default function ProjectForm({
       setAvailableSkills((prev) => [...prev, newSkill]);
 
       const currentSkills = getValues("technologies");
-      setValue("technologies", [...currentSkills, newSkill.id]);
+      setValue("technologies", [...currentSkills, newSkill.id], {
+        shouldDirty: true,
+      });
 
       setShowAddSkill(false);
       setNewSkillName("");
@@ -361,6 +365,7 @@ export default function ProjectForm({
         setValue(
           "technologies",
           current.filter((tid) => tid !== id),
+          { shouldDirty: true },
         );
       }
       toast.success("Teknoloji kalıcı olarak silindi.");
@@ -425,25 +430,33 @@ export default function ProjectForm({
 
       Object.entries(translations).forEach(([lang, content]) => {
         if (!content) return;
-        setValue(`translations.${lang}.title` as const, content.title);
+        setValue(`translations.${lang}.title` as const, content.title, {
+          shouldDirty: true,
+        });
         setValue(
           `translations.${lang}.shortDescription` as const,
           content.shortDescription,
+          { shouldDirty: true },
         );
         setValue(
           `translations.${lang}.fullDescription` as const,
           content.fullDescription,
+          { shouldDirty: true },
         );
         setValue(
           `translations.${lang}.metaTitle` as const,
           content.metaTitle || "",
+          { shouldDirty: true },
         );
         setValue(
           `translations.${lang}.metaDescription` as const,
           content.metaDescription || "",
+          { shouldDirty: true },
         );
         if (content.keywords)
-          setValue(`translations.${lang}.keywords` as const, content.keywords);
+          setValue(`translations.${lang}.keywords` as const, content.keywords, {
+            shouldDirty: true,
+          });
       });
 
       toast.success(t("translateSuccess"));
@@ -536,7 +549,9 @@ export default function ProjectForm({
     const updated = current.includes(skillId)
       ? current.filter((id) => id !== skillId)
       : [...current, skillId];
-    setValue("technologies", updated);
+    setValue("technologies", updated, {
+      shouldDirty: true,
+    });
   };
 
   useEffect(() => {
@@ -796,10 +811,10 @@ export default function ProjectForm({
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
                       type="button"
-                      onClick={() => {
-                        setCoverImage(null);
-                        setValue("coverImage", "");
-                      }}
+                  onClick={() => {
+                    setCoverImage(null);
+                    setValue("coverImage", "", { shouldDirty: true });
+                  }}
                       className="p-2 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
                     >
                       <X size={20} />
@@ -1164,7 +1179,9 @@ export default function ProjectForm({
                   type="button"
                   onClick={() => {
                     setCoverImage(img);
-                    setValue("coverImage", img.url);
+                    setValue("coverImage", img.url, {
+                      shouldDirty: true,
+                    });
                   }}
                   className={`w-[80%] py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${
                     coverImage?.url === img.url

@@ -233,12 +233,24 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       Object.entries(translations).forEach(([lang, content]) => {
         const c = content as TranslationFields;
         if (!c) return;
-        setValue(`translations.${lang}.name`, c.name);
-        setValue(`translations.${lang}.title`, c.title);
-        setValue(`translations.${lang}.greetingText`, c.greetingText);
-        setValue(`translations.${lang}.description`, c.description);
-        setValue(`translations.${lang}.aboutTitle`, c.aboutTitle);
-        setValue(`translations.${lang}.aboutDescription`, c.aboutDescription);
+        setValue(`translations.${lang}.name`, c.name, {
+          shouldDirty: true,
+        });
+        setValue(`translations.${lang}.title`, c.title, {
+          shouldDirty: true,
+        });
+        setValue(`translations.${lang}.greetingText`, c.greetingText, {
+          shouldDirty: true,
+        });
+        setValue(`translations.${lang}.description`, c.description, {
+          shouldDirty: true,
+        });
+        setValue(`translations.${lang}.aboutTitle`, c.aboutTitle, {
+          shouldDirty: true,
+        });
+        setValue(`translations.${lang}.aboutDescription`, c.aboutDescription, {
+          shouldDirty: true,
+        });
       });
 
       toast.success(t("translateSuccess"));
