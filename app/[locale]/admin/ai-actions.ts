@@ -6,6 +6,7 @@ import {
   type PublicActionError,
   toPublicActionError,
 } from "@/lib/server-action-error";
+import { getGeminiFlashLiteModel } from "@/lib/gemini";
 
 export interface BlogContent {
   title: string;
@@ -76,13 +77,7 @@ type TranslationRequest =
 
 export async function generateTranslationAction(params: TranslationRequest) {
   const { type, sourceLang, targetLangs, content } = params;
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not set in environment variables.");
-  }
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  const model = getGeminiFlashLiteModel();
   const session = await auth();
   if (
     !session?.user?.email ||
@@ -228,19 +223,20 @@ export async function generateSeoAction({
   content,
   language,
 }: SeoRequest): Promise<SeoGenerationResult> {
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  let model;
+  try {
+    model = getGeminiFlashLiteModel();
+  } catch (error) {
     return {
       ok: false,
       error: toPublicActionError(
-        new Error("GEMINI_API_KEY is not set in environment variables."),
+        error instanceof Error
+          ? error
+          : new Error("GEMINI_API_KEY is not set in environment variables."),
         language,
       ),
     };
   }
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
   const session = await auth();
   if (

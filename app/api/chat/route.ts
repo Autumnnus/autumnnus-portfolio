@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { aiChatMessage, aiChatSession, chatRateLimit } from "@/lib/db/schema";
 import { generateEmbedding } from "@/lib/embeddings";
 import { searchSimilar } from "@/lib/vectordb";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getGeminiFlashLiteModel } from "@/lib/gemini";
 import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -375,8 +375,7 @@ export async function POST(req: NextRequest) {
             .join("\n")
         : "";
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const model = getGeminiFlashLiteModel();
 
     const intentPrompt = `Analyze the user's message and the conversation history to determine the intent and a refined search query.
 User Message: "${message}"

@@ -1,14 +1,19 @@
 import { auth } from "@/auth";
 import DatabaseManagement from "@/components/admin/DatabaseManagement";
+import GeminiApiKeyForm from "@/components/admin/GeminiApiKeyForm";
 import SystemStatus from "@/components/admin/SystemStatus";
 import Container from "@/components/common/Container";
 import { Link } from "@/i18n/routing";
 import { BarChart, BrainCircuit, FileText, Folder, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { getCachedGeminiApiKey } from "@/lib/gemini";
 
 export default async function AdminDashboard() {
   const session = await auth();
   const t = await getTranslations("Admin.Dashboard");
+  const cachedGeminiKey = getCachedGeminiApiKey();
+  const hasCustomGeminiKey = Boolean(cachedGeminiKey);
+  const hasEnvGeminiKey = Boolean(process.env.GEMINI_API_KEY);
 
   return (
     <Container className="py-8 sm:py-16">
@@ -264,6 +269,27 @@ export default async function AdminDashboard() {
         {/* Veritabanı Yönetimi */}
         <div className="lg:col-span-3">
           <DatabaseManagement />
+        </div>
+
+        {/* AI Configuration */}
+        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/10 relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] transition-opacity pointer-events-none rotate-12">
+            <BrainCircuit size={120} />
+          </div>
+          <div className="space-y-6 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-primary/10">
+                <BrainCircuit className="w-7 h-7 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight">
+                AI Configuration
+              </h2>
+            </div>
+            <GeminiApiKeyForm
+              initialHasCustomKey={hasCustomGeminiKey}
+              envKeyAvailable={hasEnvGeminiKey}
+            />
+          </div>
         </div>
       </div>
     </Container>

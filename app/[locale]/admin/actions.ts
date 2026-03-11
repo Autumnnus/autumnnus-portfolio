@@ -24,6 +24,7 @@ import { deleteFile, deleteFolder, uploadFile } from "@/lib/minio";
 import { deleteEmbeddingsBySource } from "@/lib/vectordb";
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { setCachedGeminiApiKey } from "@/lib/gemini";
 
 export interface ProjectTranslationInput {
   language: Language;
@@ -1241,4 +1242,18 @@ export async function deleteSkillAction(id: string) {
     throw new Error("Unauthorized");
   await db.delete(skill).where(eq(skill.id, id));
   revalidatePath("/[locale]", "layout");
+}
+
+export async function setGeminiApiKeyAction(key?: string | null) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  )
+    throw new Error("Unauthorized");
+
+  const normalizedKey = key?.trim() || null;
+  setCachedGeminiApiKey(normalizedKey);
+  revalidatePath("/[locale]/admin", "page");
+  return { hasCustomKey: Boolean(normalizedKey) };
 }
