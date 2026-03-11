@@ -36,6 +36,7 @@ export function useAdminForm<
       setLoading(true);
       try {
         const response = await onSubmitAction(data);
+        form.reset(data);
         const resolvedSuccessMessage = successMessage || t("saveSuccess");
         toast.success(resolvedSuccessMessage);
 
