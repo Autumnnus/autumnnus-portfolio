@@ -22,24 +22,24 @@
   --winter-night: #1a1a2e;
 
   /* Default to Autumn (Light) */
-  --background: oklch(0.985 0.01 60); /* Creamy Background */
-  --foreground: oklch(0.25 0.05 45); /* Dark Brown */
-  --card: oklch(0.99 0.01 60); /* Antique White */
-  --card-foreground: oklch(0.25 0.05 45);
-  --popover: oklch(0.99 0.01 60);
-  --popover-foreground: oklch(0.25 0.05 45);
-  --primary: oklch(0.65 0.18 45); /* Pumpkin Orange */
-  --primary-foreground: oklch(0.985 0.01 60);
-  --secondary: oklch(0.9 0.05 70); /* Sandy Brown */
-  --secondary-foreground: oklch(0.3 0.1 45);
-  --muted: oklch(0.85 0.08 75); /* Burlywood */
-  --muted-foreground: oklch(0.45 0.05 45);
-  --accent: oklch(0.8 0.15 85); /* Goldenrod */
-  --accent-foreground: oklch(0.3 0.1 45);
+  --background: oklch(0.992 0.004 75); /* Soft White */
+  --foreground: oklch(0.22 0.04 45); /* Deeper Warm Brown */
+  --card: oklch(0.998 0.003 75); /* Clean White */
+  --card-foreground: oklch(0.22 0.04 45);
+  --popover: oklch(0.998 0.003 75);
+  --popover-foreground: oklch(0.22 0.04 45);
+  --primary: oklch(0.68 0.18 50); /* Autumn Orange */
+  --primary-foreground: oklch(0.99 0.004 75);
+  --secondary: oklch(0.96 0.02 72); /* Warm White */
+  --secondary-foreground: oklch(0.27 0.06 48);
+  --muted: oklch(0.975 0.012 72); /* Pale Apricot White */
+  --muted-foreground: oklch(0.38 0.035 45);
+  --accent: oklch(0.9 0.06 75); /* Soft Amber */
+  --accent-foreground: oklch(0.27 0.06 48);
   --destructive: oklch(0.5 0.2 30);
-  --border: oklch(0.7 0.1 55); /* Peru */
-  --input: oklch(0.7 0.1 55);
-  --ring: oklch(0.65 0.18 45);
+  --border: oklch(0.82 0.035 58); /* Visible Warm Border */
+  --input: oklch(0.82 0.035 58);
+  --ring: oklch(0.68 0.18 50);
 
   --shadow-color: #8b4513;
 
@@ -353,43 +353,43 @@ html.lenis body {
   background-image:
     radial-gradient(
       56% 42% at 8% 10%,
-      rgba(251, 191, 36, 0.2) 0%,
+      rgba(251, 146, 60, 0.12) 0%,
       transparent 62%
     ),
     radial-gradient(
       42% 34% at 80% 14%,
-      rgba(186, 230, 253, 0.2) 0%,
+      rgba(255, 237, 213, 0.22) 0%,
       transparent 58%
     ),
     radial-gradient(
       34% 28% at 48% 20%,
-      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0.96) 0%,
       transparent 64%
     ),
     radial-gradient(
       28% 24% at 56% 74%,
-      rgba(253, 186, 116, 0.12) 0%,
+      rgba(251, 146, 60, 0.08) 0%,
       transparent 72%
     ),
     radial-gradient(
       24% 20% at 18% 54%,
-      rgba(254, 215, 170, 0.12) 0%,
+      rgba(255, 247, 237, 0.7) 0%,
       transparent 72%
     ),
     linear-gradient(
       110deg,
-      rgba(255, 255, 255, 0.22) 0%,
-      rgba(255, 255, 255, 0.06) 18%,
+      rgba(255, 255, 255, 0.34) 0%,
+      rgba(255, 255, 255, 0.12) 18%,
       rgba(255, 255, 255, 0) 38%,
-      rgba(255, 255, 255, 0.07) 58%,
+      rgba(255, 248, 240, 0.12) 58%,
       rgba(255, 255, 255, 0) 100%
     ),
     linear-gradient(
       180deg,
-      #fffdf7 0%,
-      #fdf6ea 32%,
-      #f8ead8 64%,
-      #f2debf 100%
+      #ffffff 0%,
+      #fffaf5 34%,
+      #fff3e8 70%,
+      #fce8d2 100%
     );
   background-repeat: no-repeat;
   background-size: cover;

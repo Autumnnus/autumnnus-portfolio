@@ -64,7 +64,7 @@ export default function Hero({
         {skills.map((skill) => (
           <span
             key={skill.name}
-            className="pixel-border-sm px-2 py-1 sm:px-3 sm:py-1 bg-secondary/30 text-[10px] sm:text-xs flex items-center gap-2"
+            className="pixel-border-sm flex items-center gap-2 bg-card px-2 py-1 text-[10px] sm:px-3 sm:py-1 sm:text-xs"
           >
             <Icon src={skill.icon} alt={skill.name} size={14} />
             <span>{skill.name}</span>
@@ -93,7 +93,7 @@ export default function Hero({
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xl sm:text-2xl hover:scale-110 transition-transform pixel-border-sm p-2 bg-card hover:bg-secondary/20 block ring-accent/20 hover:ring-2"
+            className="block bg-card p-2 text-xl transition-transform hover:scale-110 hover:bg-secondary/40 pixel-border-sm ring-accent/20 hover:ring-2 sm:text-2xl"
             title={link.name}
           >
             <Icon src={link.icon} alt={link.name} size={24} />

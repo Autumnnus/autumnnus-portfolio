@@ -112,7 +112,7 @@ export default function GitHubCalendar({
         heading={t("GitHub.title")}
       />
       <FadeIn delay={0.2}>
-        <div className="border border-border/50 p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">
               {resolvedTheme === "dark" ? (

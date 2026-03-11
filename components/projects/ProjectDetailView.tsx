@@ -285,7 +285,7 @@ export default function ProjectDetailView({
       {/* Project Info Grid */}
       <FadeIn delay={0.5}>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
               {t("category")}
             </p>
@@ -294,7 +294,7 @@ export default function ProjectDetailView({
             </p>
           </div>
 
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
               {t("status")}
             </p>
@@ -312,7 +312,7 @@ export default function ProjectDetailView({
 
           {githubStats && (
             <>
-              <div className="p-4 bg-muted/30 rounded-lg">
+              <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
                   {tCommon("githubStats")}
                 </p>
@@ -333,7 +333,7 @@ export default function ProjectDetailView({
                   </span>
                 </div>
               </div>
-              <div className="p-4 bg-muted/30 rounded-lg">
+              <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
                   {tCommon("created")}
                 </p>
@@ -342,7 +342,7 @@ export default function ProjectDetailView({
                 </p>
               </div>
 
-              <div className="p-4 bg-muted/30 rounded-lg col-span-2 sm:col-span-1">
+              <div className="col-span-2 rounded-lg border border-border bg-card p-4 shadow-sm sm:col-span-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
                   {tCommon("lastUpdated")}
                 </p>

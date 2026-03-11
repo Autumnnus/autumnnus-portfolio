@@ -99,7 +99,7 @@ export default function About({
 
             {/* Right Column: Quest Box */}
             <div className="lg:col-span-4 space-y-6">
-              <div className="bg-muted/30 border-2 border-border p-6 space-y-6 shadow-inner rounded-sm">
+              <div className="rounded-sm border-2 border-border bg-card p-6 space-y-6 shadow-sm">
                 <h4 className="text-primary font-pixel text-[10px] md:text-xs uppercase tracking-[0.15em] font-bold">
                   {t("currentQuest")}
                 </h4>
@@ -139,7 +139,7 @@ export default function About({
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-2 md:gap-3 w-full">
                 <div
-                  className="bg-muted/30 py-4 px-1 border-2 border-border/40 flex flex-col items-center justify-center min-h-[70px] md:min-h-[80px] rounded-sm overflow-hidden text-center cursor-help transition-colors hover:bg-muted/50"
+                  className="flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-sm border-2 border-border bg-card px-1 py-4 text-center transition-colors hover:bg-secondary/40 cursor-help md:min-h-[80px]"
                   data-tooltip-id="about-stats-tooltip"
                   data-tooltip-content={t("statYearsTooltip")}
                 >
@@ -151,7 +151,7 @@ export default function About({
                   </div>
                 </div>
                 <div
-                  className="bg-muted/30 py-4 px-1 border-2 border-border/40 flex flex-col items-center justify-center min-h-[70px] md:min-h-[80px] rounded-sm overflow-hidden text-center cursor-help transition-colors hover:bg-muted/50"
+                  className="flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-sm border-2 border-border bg-card px-1 py-4 text-center transition-colors hover:bg-secondary/40 cursor-help md:min-h-[80px]"
                   data-tooltip-id="about-stats-tooltip"
                   data-tooltip-content={t("statProjsTooltip")}
                 >
@@ -163,7 +163,7 @@ export default function About({
                   </div>
                 </div>
                 <div
-                  className="bg-muted/30 py-4 px-1 border-2 border-border/40 flex flex-col items-center justify-center min-h-[70px] md:min-h-[80px] rounded-sm overflow-hidden text-center cursor-help transition-colors hover:bg-muted/50"
+                  className="flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-sm border-2 border-border bg-card px-1 py-4 text-center transition-colors hover:bg-secondary/40 cursor-help md:min-h-[80px]"
                   data-tooltip-id="about-stats-tooltip"
                   data-tooltip-content={t("statBlogsTooltip")}
                 >

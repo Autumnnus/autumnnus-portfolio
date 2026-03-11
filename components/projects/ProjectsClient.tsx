@@ -296,7 +296,7 @@ export default function ProjectsClient({
         )}
 
         {initialData.items.length === 0 && (
-          <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-border flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-border bg-card py-20 text-center shadow-sm">
             <Search className="w-12 h-12 text-muted-foreground opacity-20" />
             <p className="text-xl font-medium text-muted-foreground">
               {t("noResults")}

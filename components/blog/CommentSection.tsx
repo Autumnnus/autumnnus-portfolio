@@ -64,7 +64,7 @@ export default function CommentSection({ postSlug }: CommentsectionProps) {
 
       {/* Sign in to comment box */}
       {!user ? (
-        <div className="mb-8 p-8 border border-border rounded-lg bg-muted/30 text-center space-y-4">
+        <div className="mb-8 space-y-4 rounded-lg border border-border bg-card p-8 text-center shadow-sm">
           <UserIcon className="w-12 h-12 mx-auto text-muted-foreground" />
           <div>
             <h3 className="text-lg font-semibold mb-2">
