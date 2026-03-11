@@ -24,12 +24,13 @@ import {
   Loader2,
   Quote,
   Redo,
+  Sparkles,
   Strikethrough,
   Underline as UnderlineIcon,
   Undo,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   Select,
@@ -168,19 +169,23 @@ export default function TipTapEditor({
     input.click();
   };
 
-  useEffect(() => {
-    const normalizedContent = normalizeIncomingContent(content);
+  const handleManualFormat = () => {
     if (!editor) return;
 
+    const normalizedContent = normalizeIncomingContent(content);
     if (normalizedContent === lastEditorHtmlRef.current) return;
-    if (normalizedContent === editor.getHTML()) {
+
+    const editorHtml = editor.getHTML();
+    if (normalizedContent === editorHtml) {
       lastEditorHtmlRef.current = normalizedContent;
       return;
     }
 
     editor.commands.setContent(normalizedContent, { emitUpdate: false });
-    lastEditorHtmlRef.current = editor.getHTML();
-  }, [content, editor]);
+    const htmlAfterFormatting = editor.getHTML();
+    lastEditorHtmlRef.current = htmlAfterFormatting;
+    onChange(htmlAfterFormatting);
+  };
 
   const setLink = () => {
     if (!editor) return;
@@ -395,6 +400,14 @@ export default function TipTapEditor({
           title={t("redo")}
         >
           <Redo size={18} />
+        </button>
+        <button
+          type="button"
+          onClick={handleManualFormat}
+          className="p-2 rounded hover:bg-muted"
+          title={t("format")}
+        >
+          <Sparkles size={18} />
         </button>
       </div>
 

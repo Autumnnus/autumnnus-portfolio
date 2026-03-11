@@ -327,7 +327,8 @@
       "addImage": "Resim Ekle",
       "codeBlock": "Kod Bloğu",
       "undo": "Geri Al (Ctrl+Z)",
-      "redo": "İleri Al (Ctrl+Y)"
+      "redo": "İleri Al (Ctrl+Y)",
+      "format": "Biçimlendir"
     },
     "Header": {
       "backToHome": "Ana Sayfaya Dön",

@@ -327,7 +327,8 @@
       "addImage": "Add Image",
       "codeBlock": "Code Block",
       "undo": "Undo (Ctrl+Z)",
-      "redo": "Redo (Ctrl+Y)"
+      "redo": "Redo (Ctrl+Y)",
+      "format": "Format"
     },
     "Header": {
       "backToHome": "Back to Home",
