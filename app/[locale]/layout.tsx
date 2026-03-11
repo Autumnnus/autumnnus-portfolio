@@ -8,6 +8,7 @@ import { Press_Start_2P, Space_Grotesk, Space_Mono } from "next/font/google";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import "../globals.css";
+import { ThemeFavicon } from "@/components/common/ThemeFavicon";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -69,6 +70,7 @@ export default async function LocaleLayout({
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_ID}
           />
         )}
+        <link rel="icon" href="/images/autumn.png" />
       </head>
       <body
         className={`${spaceGrotesk.variable} ${spaceMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col`}
@@ -81,6 +83,7 @@ export default async function LocaleLayout({
               enableSystem
               disableTransitionOnChange
             >
+              <ThemeFavicon />
               <div className="flex-1 flex flex-col">{children}</div>
               <Toaster position="bottom-right" richColors />
             </ThemeProvider>
