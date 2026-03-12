@@ -22,9 +22,15 @@ import {
 } from "@/lib/db/schema";
 import { deleteFile, deleteFolder, uploadFile } from "@/lib/minio";
 import { deleteEmbeddingsBySource } from "@/lib/vectordb";
+import {
+  createGeminiApiKey,
+  deleteGeminiApiKey,
+  getGeminiApiKeysAdminSnapshot,
+  updateGeminiApiKey,
+  type ApiKeyCategory,
+} from "@/lib/ai/api-key-pool";
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { setCachedGeminiApiKey } from "@/lib/gemini";
 
 export interface ProjectTranslationInput {
   language: Language;
@@ -588,7 +594,7 @@ export async function updateProfileAction(data: ProfileData) {
 
     return { success: true };
   } else {
-    let newProfileData: any = null;
+    let newProfileData: typeof profile.$inferSelect | null = null;
     await db.transaction(async (tx) => {
       const [newProfile] = await tx
         .insert(profile)
@@ -1244,16 +1250,72 @@ export async function deleteSkillAction(id: string) {
   revalidatePath("/[locale]", "layout");
 }
 
-export async function setGeminiApiKeyAction(key?: string | null) {
-  const session = await auth();
+function assertAdminEmail(
+  session: { user?: { email?: string | null } } | null,
+) {
   if (
     !session?.user?.email ||
     session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
-  )
+  ) {
     throw new Error("Unauthorized");
+  }
+}
 
-  const normalizedKey = key?.trim() || null;
-  setCachedGeminiApiKey(normalizedKey);
+interface GeminiApiKeyActionInput {
+  id?: string;
+  label: string;
+  apiKey?: string | null;
+  category: ApiKeyCategory;
+  priority: number;
+  quotaGroup: string;
+  isActive: boolean;
+}
+
+export async function createGeminiApiKeyAction(
+  input: GeminiApiKeyActionInput,
+) {
+  const session = await auth();
+  assertAdminEmail(session);
+
+  await createGeminiApiKey({
+    label: input.label,
+    apiKey: input.apiKey?.trim() || "",
+    category: input.category,
+    priority: input.priority,
+    quotaGroup: input.quotaGroup,
+    isActive: input.isActive,
+  });
   revalidatePath("/[locale]/admin", "page");
-  return { hasCustomKey: Boolean(normalizedKey) };
+  return getGeminiApiKeysAdminSnapshot();
+}
+
+export async function updateGeminiApiKeyAction(
+  input: GeminiApiKeyActionInput,
+) {
+  const session = await auth();
+  assertAdminEmail(session);
+
+  if (!input.id) {
+    throw new Error("Gemini API key id is required.");
+  }
+
+  await updateGeminiApiKey(input.id, {
+    label: input.label,
+    apiKey: input.apiKey,
+    category: input.category,
+    priority: input.priority,
+    quotaGroup: input.quotaGroup,
+    isActive: input.isActive,
+  });
+  revalidatePath("/[locale]/admin", "page");
+  return getGeminiApiKeysAdminSnapshot();
+}
+
+export async function deleteGeminiApiKeyAction(id: string) {
+  const session = await auth();
+  assertAdminEmail(session);
+
+  await deleteGeminiApiKey(id);
+  revalidatePath("/[locale]/admin", "page");
+  return getGeminiApiKeysAdminSnapshot();
 }

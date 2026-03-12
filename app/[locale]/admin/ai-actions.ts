@@ -2,11 +2,11 @@
 
 import { auth } from "@/auth";
 import { languageNames } from "@/i18n/routing";
+import { generateGeminiContent } from "@/lib/gemini";
 import {
   type PublicActionError,
   toPublicActionError,
 } from "@/lib/server-action-error";
-import { getGeminiFlashLiteModel } from "@/lib/gemini";
 
 export interface BlogContent {
   title: string;
@@ -77,7 +77,6 @@ type TranslationRequest =
 
 export async function generateTranslationAction(params: TranslationRequest) {
   const { type, sourceLang, targetLangs, content } = params;
-  const model = getGeminiFlashLiteModel();
   const session = await auth();
   if (
     !session?.user?.email ||
@@ -177,7 +176,10 @@ export async function generateTranslationAction(params: TranslationRequest) {
         }
 
         try {
-          const result = await model.generateContent(prompt);
+          const result = await generateGeminiContent(
+            "gemini-2.5-flash-lite",
+            prompt,
+          );
           const response = await result.response;
           const text = response.text();
           const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
@@ -223,21 +225,6 @@ export async function generateSeoAction({
   content,
   language,
 }: SeoRequest): Promise<SeoGenerationResult> {
-  let model;
-  try {
-    model = getGeminiFlashLiteModel();
-  } catch (error) {
-    return {
-      ok: false,
-      error: toPublicActionError(
-        error instanceof Error
-          ? error
-          : new Error("GEMINI_API_KEY is not set in environment variables."),
-        language,
-      ),
-    };
-  }
-
   const session = await auth();
   if (
     !session?.user?.email ||
@@ -300,7 +287,7 @@ export async function generateSeoAction({
       8. Do not include markdown code blocks or any other text, just raw JSON.`;
     }
 
-    const result = await model.generateContent(prompt);
+    const result = await generateGeminiContent("gemini-2.5-flash-lite", prompt);
     const response = await result.response;
     const text = response.text();
     const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();

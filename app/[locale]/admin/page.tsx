@@ -4,16 +4,14 @@ import GeminiApiKeyForm from "@/components/admin/GeminiApiKeyForm";
 import SystemStatus from "@/components/admin/SystemStatus";
 import Container from "@/components/common/Container";
 import { Link } from "@/i18n/routing";
+import { getGeminiApiKeysAdminSnapshot } from "@/lib/ai/api-key-pool";
 import { BarChart, BrainCircuit, FileText, Folder, Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { getCachedGeminiApiKey } from "@/lib/gemini";
 
 export default async function AdminDashboard() {
   const session = await auth();
   const t = await getTranslations("Admin.Dashboard");
-  const cachedGeminiKey = getCachedGeminiApiKey();
-  const hasCustomGeminiKey = Boolean(cachedGeminiKey);
-  const hasEnvGeminiKey = Boolean(process.env.GEMINI_API_KEY);
+  const geminiKeys = await getGeminiApiKeysAdminSnapshot();
 
   return (
     <Container className="py-8 sm:py-16">
@@ -272,7 +270,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* AI Configuration */}
-        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/10 relative overflow-hidden">
+        <div className="md:col-span-2 lg:col-span-3 p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/10 relative overflow-hidden">
           <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] transition-opacity pointer-events-none rotate-12">
             <BrainCircuit size={120} />
           </div>
@@ -286,8 +284,7 @@ export default async function AdminDashboard() {
               </h2>
             </div>
             <GeminiApiKeyForm
-              initialHasCustomKey={hasCustomGeminiKey}
-              envKeyAvailable={hasEnvGeminiKey}
+              initialKeys={geminiKeys}
             />
           </div>
         </div>
