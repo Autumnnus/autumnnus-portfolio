@@ -72,6 +72,22 @@ function createModel(candidate: GeminiRuntimeCandidate, modelName: string) {
   });
 }
 
+async function runRuntimeTracking(
+  action: () => Promise<unknown>,
+  context: { step: string; keyId: string; quotaGroup?: string },
+) {
+  try {
+    await action();
+  } catch (error) {
+    console.warn("Gemini runtime tracking failed", {
+      step: context.step,
+      keyId: context.keyId,
+      quotaGroup: context.quotaGroup,
+      error,
+    });
+  }
+}
+
 export async function withGeminiModel<T>(
   modelName: string,
   task: (model: GenerativeModel, candidate: GeminiRuntimeCandidate) => Promise<T>,
@@ -98,14 +114,35 @@ export async function withGeminiModel<T>(
     }
 
     const candidate = selection.key;
-    await markGeminiCredentialSelected(candidate.id);
+    await runRuntimeTracking(
+      () => markGeminiCredentialSelected(candidate.id),
+      {
+        step: "selected",
+        keyId: candidate.id,
+        quotaGroup: candidate.quotaGroup,
+      },
+    );
 
     try {
       const result = await task(createModel(candidate, modelName), candidate);
-      await markGeminiCredentialSuccess(candidate.id, candidate.quotaGroup);
+      await runRuntimeTracking(
+        () => markGeminiCredentialSuccess(candidate.id, candidate.quotaGroup),
+        {
+          step: "success",
+          keyId: candidate.id,
+          quotaGroup: candidate.quotaGroup,
+        },
+      );
       return result;
     } catch (error) {
-      await markGeminiCredentialError(candidate.id);
+      await runRuntimeTracking(
+        () => markGeminiCredentialError(candidate.id),
+        {
+          step: "error",
+          keyId: candidate.id,
+          quotaGroup: candidate.quotaGroup,
+        },
+      );
       const rateLimit = resolveGeminiRateLimit(error);
       if (!rateLimit?.isRateLimited) {
         throw error;
@@ -113,12 +150,20 @@ export async function withGeminiModel<T>(
 
       blockedUntilByQuotaGroup.set(candidate.quotaGroup, rateLimit.blockedUntil);
       excludedQuotaGroups.add(candidate.quotaGroup);
-      await blockGeminiQuotaGroup({
-        quotaGroup: candidate.quotaGroup,
-        blockReason: rateLimit.blockReason,
-        blockedUntil: rateLimit.blockedUntil,
-        retryAfterSeconds: rateLimit.retryAfterSeconds,
-      });
+      await runRuntimeTracking(
+        () =>
+          blockGeminiQuotaGroup({
+            quotaGroup: candidate.quotaGroup,
+            blockReason: rateLimit.blockReason,
+            blockedUntil: rateLimit.blockedUntil,
+            retryAfterSeconds: rateLimit.retryAfterSeconds,
+          }),
+        {
+          step: "quota-block",
+          keyId: candidate.id,
+          quotaGroup: candidate.quotaGroup,
+        },
+      );
     }
   }
 }
