@@ -31,6 +31,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   FileText,
   Github,
   ImagePlus,
@@ -219,6 +220,18 @@ export default function ProjectForm({
   } = form;
 
   const selectedSkills = watch("technologies");
+  const githubValue = watch("github");
+  const liveDemoValue = watch("liveDemo");
+
+  const openLinkInNewTab = (value?: string) => {
+    if (!value) return;
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const normalized = trimmed.match(/^https?:\/\//i)
+      ? trimmed
+      : `https://${trimmed}`;
+    window.open(normalized, "_blank");
+  };
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -915,9 +928,21 @@ export default function ProjectForm({
 
         <div className="xl:col-span-5 space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
-              {t("githubUrl")}
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("githubUrl")}
+              </label>
+              {githubValue?.trim() && (
+                <button
+                  type="button"
+                  onClick={() => openLinkInNewTab(githubValue)}
+                  className="text-muted-foreground hover:text-primary transition"
+                  aria-label="Yeni sekmede aç"
+                >
+                  <ExternalLink size={16} />
+                </button>
+              )}
+            </div>
             <input
               {...register("github")}
               className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
@@ -925,9 +950,21 @@ export default function ProjectForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
-              {t("liveDemoUrl")}
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("liveDemoUrl")}
+              </label>
+              {liveDemoValue?.trim() && (
+                <button
+                  type="button"
+                  onClick={() => openLinkInNewTab(liveDemoValue)}
+                  className="text-muted-foreground hover:text-primary transition"
+                  aria-label="Yeni sekmede aç"
+                >
+                  <ExternalLink size={16} />
+                </button>
+              )}
+            </div>
             <input
               {...register("liveDemo")}
               className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
