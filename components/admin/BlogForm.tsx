@@ -102,6 +102,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
+  const [isCoverDragActive, setIsCoverDragActive] = useState(false);
   const [sourceLang, setSourceLang] = useState<string>("tr");
   const [targetLangs, setTargetLangs] = useState<string[]>(() =>
     Array.from(
@@ -160,10 +161,16 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     );
   }, [sourceLang]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const previewUrl = URL.createObjectURL(file);
+    setCoverImage({ url: previewUrl, file });
+    setValue("coverImage", previewUrl, { shouldDirty: true });
+  };
+
+  const applyCoverFile = (file: File) => {
     const previewUrl = URL.createObjectURL(file);
     setCoverImage({ url: previewUrl, file });
     setValue("coverImage", previewUrl, { shouldDirty: true });
@@ -534,7 +541,24 @@ export default function BlogForm({ initialData }: BlogFormProps) {
             <label className="text-sm font-bold text-muted-foreground uppercase tracking-tight">
               {t("coverImage")}
             </label>
-            <div className="relative aspect-video bg-muted/20 rounded-2xl border-2 border-dashed border-border/50 flex items-center justify-center overflow-hidden hover:bg-muted/30 hover:border-primary/50 transition-all duration-300 group">
+            <div
+              className={`relative aspect-video bg-muted/20 rounded-2xl border-2 border-dashed border-border/50 flex items-center justify-center overflow-hidden hover:bg-muted/30 hover:border-primary/50 transition-all duration-300 group ${
+                isCoverDragActive ? "border-primary/60 bg-primary/5" : ""
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsCoverDragActive(true);
+              }}
+              onDragLeave={() => setIsCoverDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsCoverDragActive(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file && file.type.startsWith("image/")) {
+                  applyCoverFile(file);
+                }
+              }}
+            >
               {coverImage ? (
                 <>
                   <Image

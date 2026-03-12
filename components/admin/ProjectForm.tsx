@@ -104,6 +104,8 @@ export default function ProjectForm({
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
+  const [isCoverDragActive, setIsCoverDragActive] = useState(false);
+  const [isGalleryDragActive, setIsGalleryDragActive] = useState(false);
   const [galleryImages, setGalleryImages] = useState<ImageData[]>(
     initialData?.images?.map((url: string) => ({ url })) || [],
   );
@@ -243,19 +245,28 @@ export default function ProjectForm({
 
     const previewUrl = URL.createObjectURL(file);
     setter({ url: previewUrl, file });
-    // Note: We don't verify 'coverImage' field in Zod immediately with blob url if we want,
-    // but here we primarily use state 'coverImage' for preview and upload on submit.
-    // However, we should sync with form if we want validation "required" to pass.
+    // Sync cover image with form so required validation can pass.
     setValue("coverImage", previewUrl, { shouldDirty: true });
   };
 
-  const handleGalleryUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+  const applyCoverFile = (file: File) => {
+    const previewUrl = URL.createObjectURL(file);
+    setCoverImage({ url: previewUrl, file });
+    setValue("coverImage", previewUrl, { shouldDirty: true });
+  };
 
-    const newImages: ImageData[] = files.map((file) => ({
+  const handleCoverInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    applyCoverFile(file);
+  };
+
+  const handleGalleryFiles = (files: File[]) => {
+    if (files.length === 0) return;
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
+
+    const newImages: ImageData[] = imageFiles.map((file) => ({
       url: URL.createObjectURL(file),
       file,
     }));
@@ -269,6 +280,11 @@ export default function ProjectForm({
       );
       return updated;
     });
+  };
+
+  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    handleGalleryFiles(files);
   };
 
   const removeGalleryImage = (index: number) => {
@@ -812,7 +828,24 @@ export default function ProjectForm({
             <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
               {t("coverImage")}
             </label>
-            <div className="relative aspect-video bg-background/50 rounded-2xl border-2 border-dashed border-border/50 flex items-center justify-center overflow-hidden group hover:border-primary/50 transition-all">
+            <div
+              className={`relative aspect-video bg-background/50 rounded-2xl border-2 border-dashed border-border/50 flex items-center justify-center overflow-hidden group hover:border-primary/50 transition-all ${
+                isCoverDragActive ? "border-primary/60 bg-primary/5" : ""
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsCoverDragActive(true);
+              }}
+              onDragLeave={() => setIsCoverDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsCoverDragActive(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file && file.type.startsWith("image/")) {
+                  applyCoverFile(file);
+                }
+              }}
+            >
               {coverImage ? (
                 <>
                   <Image
@@ -844,7 +877,7 @@ export default function ProjectForm({
                   <input
                     type="file"
                     className="hidden"
-                    onChange={(e) => handleImageUpload(e, setCoverImage)}
+                    onChange={handleCoverInput}
                     accept="image/*"
                   />
                 </label>
@@ -1092,6 +1125,14 @@ export default function ProjectForm({
                 .filter((s) =>
                   s.name.toLowerCase().includes(skillListFilter.toLowerCase()),
                 )
+                .sort((a, b) => {
+                  const aSelected = selectedSkills.includes(a.id);
+                  const bSelected = selectedSkills.includes(b.id);
+                  if (aSelected === bSelected) {
+                    return a.name.localeCompare(b.name);
+                  }
+                  return aSelected ? -1 : 1;
+                })
                 .map((skill) => (
                   <div key={skill.id} className="relative group/skill">
                     <button
@@ -1126,7 +1167,22 @@ export default function ProjectForm({
       </div>
 
       {/* Galeri Bölümü */}
-      <div className="p-4 sm:p-8 bg-muted/20 border border-border/50 rounded-3xl space-y-6 shadow-sm">
+      <div
+        className={`p-4 sm:p-8 bg-muted/20 border border-border/50 rounded-3xl space-y-6 shadow-sm ${
+          isGalleryDragActive ? "border-primary/60 bg-primary/5" : ""
+        }`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsGalleryDragActive(true);
+        }}
+        onDragLeave={() => setIsGalleryDragActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsGalleryDragActive(false);
+          const files = Array.from(e.dataTransfer.files || []);
+          handleGalleryFiles(files);
+        }}
+      >
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1">
           <div>
             <h3 className="text-xl font-bold tracking-tight">{t("gallery")}</h3>

@@ -4,7 +4,7 @@ import { deleteBlogAction } from "@/app/[locale]/admin/actions";
 import { Link, useRouter } from "@/i18n/routing";
 import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 interface BlogListProps {
@@ -14,14 +14,67 @@ interface BlogListProps {
     slug: string;
     status: string;
     category?: { id: string; name: string } | null;
+    createdAt?: string | Date | null;
   }[];
 }
+
+const BLOG_SORT_OPTIONS = [
+  { value: "titleAsc", label: "Alfabetik (A → Z)" },
+  { value: "titleDesc", label: "Alfabetik (Z → A)" },
+  { value: "dateDesc", label: "Yeni → Eski" },
+  { value: "dateAsc", label: "Eski → Yeni" },
+  { value: "category", label: "Kategori" },
+  { value: "status", label: "Status" },
+] as const;
+type BlogSort = (typeof BLOG_SORT_OPTIONS)[number]["value"];
 
 export default function AdminBlogList({ posts }: BlogListProps) {
   const t = useTranslations("Admin.Common");
   const tBlog = useTranslations("Blog");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const [sortBy, setSortBy] = useState<BlogSort>("dateDesc");
+
+  const sortedPosts = useMemo(() => {
+    const list = [...posts];
+    const getDateValue = (item: BlogListProps["posts"][number]) => {
+      const createdAt = item.createdAt || "";
+      const date =
+        createdAt instanceof Date ? createdAt : new Date(String(createdAt));
+      return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+    };
+
+    const compareStrings = (a: string, b: string, direction: "asc" | "desc") => {
+      if (direction === "asc") return a.localeCompare(b);
+      return b.localeCompare(a);
+    };
+
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case "titleAsc":
+          return compareStrings(a.title, b.title, "asc");
+        case "titleDesc":
+          return compareStrings(a.title, b.title, "desc");
+        case "dateAsc":
+          return getDateValue(a) - getDateValue(b);
+        case "dateDesc":
+          return getDateValue(b) - getDateValue(a);
+        case "category": {
+          const aName = (a.category?.name || "").toLowerCase();
+          const bName = (b.category?.name || "").toLowerCase();
+          return compareStrings(aName, bName, "asc");
+        }
+        case "status": {
+          const aStatus = (a.status || "").toLowerCase();
+          const bStatus = (b.status || "").toLowerCase();
+          return compareStrings(aStatus, bStatus, "asc");
+        }
+        default:
+          return 0;
+      }
+    });
+    return list;
+  }, [posts, sortBy]);
 
   const handleDelete = async (id: string) => {
     if (!confirm(t("deleteConfirm"))) return;
@@ -39,6 +92,22 @@ export default function AdminBlogList({ posts }: BlogListProps) {
   return (
     <div className="bg-card/95 border border-border/60 rounded-3xl overflow-hidden shadow-xl shadow-black/5 backdrop-blur-sm">
       <div className="overflow-x-auto">
+        <div className="flex justify-end px-6 py-4 border-b border-border/60 bg-muted/40">
+          <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80 flex items-center gap-2 font-semibold">
+            Sırala:
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as BlogSort)}
+              className="text-[10px] font-bold uppercase tracking-[0.2em] rounded-xl border border-border/60 bg-background/80 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+            >
+              {BLOG_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <table className="w-full text-left border-collapse table-fixed">
           <colgroup>
             <col className="w-[44%]" />
@@ -63,7 +132,7 @@ export default function AdminBlogList({ posts }: BlogListProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
-            {posts.map((post) => (
+            {sortedPosts.map((post) => (
               <tr
                 key={post.id}
                 className="group hover:bg-primary/[0.06] transition-colors"
