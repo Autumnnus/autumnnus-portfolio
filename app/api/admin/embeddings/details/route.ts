@@ -39,6 +39,8 @@ export async function GET(req: NextRequest) {
         chunkText: true,
         chunkIndex: true,
         language: true,
+        metadata: true,
+        createdAt: true,
         updatedAt: true,
       },
     });

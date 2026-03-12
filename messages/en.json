@@ -66,6 +66,13 @@
     "next": "Next Project",
     "related": "Related Projects",
     "filters": "Filters",
+    "sortLabel": "Sort by",
+    "sortOptions": {
+      "recent": "Newest",
+      "oldest": "Oldest",
+      "featured": "Featured first",
+      "status": "Status"
+    },
     "previous": "Previous",
     "prevSlide": "Previous slide",
     "nextSlide": "Next slide",
@@ -97,6 +104,12 @@
     "postComment": "Post Comment",
     "noCommentsYet": "No comments yet. Be the first to comment!",
     "filters": "Filters",
+    "sortLabel": "Sort by",
+    "sortOptions": {
+      "recent": "Newest",
+      "oldest": "Oldest",
+      "featured": "Featured first"
+    },
     "allTags": "All Tags",
     "searchPlaceholder": "Search posts...",
     "previous": "Previous",
@@ -594,7 +607,11 @@
       "deleteSingle": "Delete Vectors",
       "chunks": "Vector Chunks",
       "itemDetails": "Item Details",
-      "noChunks": "No vector records found for this item."
+      "noChunks": "No vector records found for this item.",
+      "sourceIdLabel": "Source ID",
+      "lastSourceUpdate": "Last source update",
+      "latestChunk": "Latest chunk",
+      "languageBreakdown": "Languages"
     },
     "Common": {
       "actions": "Actions",

@@ -66,6 +66,13 @@
     "next": "Sonraki Proje",
     "related": "İlgili Projeler",
     "filters": "Filtreler",
+    "sortLabel": "Sırala",
+    "sortOptions": {
+      "recent": "En yeni",
+      "oldest": "En eski",
+      "featured": "Öne çıkan",
+      "status": "Duruma göre"
+    },
     "previous": "Önceki",
     "prevSlide": "Önceki slayt",
     "nextSlide": "Sonraki slayt",
@@ -97,6 +104,12 @@
     "postComment": "Yorum Paylaş",
     "noCommentsYet": "Henüz yorum yok. İlk yorumu siz yapın!",
     "filters": "Filtreler",
+    "sortLabel": "Sırala",
+    "sortOptions": {
+      "recent": "En yeni",
+      "oldest": "En eski",
+      "featured": "Öne çıkan"
+    },
     "allTags": "Tüm Etiketler",
     "searchPlaceholder": "Yazılarda ara...",
     "previous": "Önceki",
@@ -596,7 +609,11 @@
       "deleteSingle": "Vektörleri Sil",
       "chunks": "Vektör Parçaları",
       "itemDetails": "İçerik Detayları",
-      "noChunks": "Bu içerik için henüz vektör kaydı bulunmuyor."
+      "noChunks": "Bu içerik için henüz vektör kaydı bulunmuyor.",
+      "sourceIdLabel": "Source ID",
+      "lastSourceUpdate": "Last source update",
+      "latestChunk": "Latest chunk",
+      "languageBreakdown": "Languages"
     },
     "Common": {
       "actions": "Aksiyonlar",

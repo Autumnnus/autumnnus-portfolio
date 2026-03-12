@@ -26,6 +26,12 @@ import {
 } from "@/lib/db/schema";
 import { shouldNotify } from "@/lib/utils";
 import {
+  BlogSort,
+  DEFAULT_BLOG_SORT,
+  DEFAULT_PROJECT_SORT,
+  ProjectSort,
+} from "@/types/sorting";
+import {
   and,
   asc,
   count,
@@ -49,6 +55,7 @@ export interface GetProjectsOptions {
   status?: string;
   category?: string;
   featured?: boolean;
+  sort?: ProjectSort;
 }
 
 export async function getProjects({
@@ -59,6 +66,7 @@ export async function getProjects({
   status = "All",
   category = "All",
   featured,
+  sort = DEFAULT_PROJECT_SORT,
 }: GetProjectsOptions) {
   try {
     const skip = (page - 1) * limit;
@@ -133,6 +141,19 @@ export async function getProjects({
 
     const total = totalResult.count;
 
+    const orderBy = (() => {
+      switch (sort) {
+        case "oldest":
+          return [asc(project.createdAt)];
+        case "featured":
+          return [desc(project.featured), desc(project.createdAt)];
+        case "status":
+          return [asc(project.status), desc(project.createdAt)];
+        default:
+          return [desc(project.createdAt)];
+      }
+    })();
+
     const projectsRes = await db.query.project.findMany({
       where: whereClause,
       with: {
@@ -144,7 +165,7 @@ export async function getProjects({
         },
         category: true,
       },
-      orderBy: [desc(project.createdAt)],
+      orderBy,
       offset: skip,
       limit,
     });
@@ -305,6 +326,7 @@ export async function getBlogPosts({
   search = "",
   tag = "All",
   featured,
+  sort = DEFAULT_BLOG_SORT,
   skipAuth = false,
 }: {
   lang: Language;
@@ -313,6 +335,7 @@ export async function getBlogPosts({
   search?: string;
   tag?: string;
   featured?: boolean;
+  sort?: BlogSort;
   skipAuth?: boolean;
 }) {
   try {
@@ -374,6 +397,17 @@ export async function getBlogPosts({
 
     const total = totalResult.count;
 
+    const orderBy = (() => {
+      switch (sort) {
+        case "oldest":
+          return [asc(blogPost.createdAt)];
+        case "featured":
+          return [desc(blogPost.featured), desc(blogPost.createdAt)];
+        default:
+          return [desc(blogPost.createdAt)];
+      }
+    })();
+
     const posts = await db.query.blogPost.findMany({
       where: whereClause,
       with: {
@@ -382,7 +416,7 @@ export async function getBlogPosts({
         },
         category: true,
       },
-      orderBy: [desc(blogPost.createdAt)],
+      orderBy,
       offset: skip,
       limit,
     });

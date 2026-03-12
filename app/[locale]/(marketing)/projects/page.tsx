@@ -2,6 +2,7 @@ import { getProjectFilters, getProjects } from "@/app/actions";
 import ProjectsClient from "@/components/projects/ProjectsClient";
 import { LanguageType as Language } from "@/lib/db/schema";
 import { Project } from "@/types/contents";
+import { ensureProjectSort } from "@/types/sorting";
 
 interface ProjectsPageProps {
   params: Promise<{ locale: string }>;
@@ -10,6 +11,7 @@ interface ProjectsPageProps {
     status?: string;
     category?: string;
     page?: string;
+    sort?: string;
   }>;
 }
 
@@ -24,6 +26,7 @@ export default async function ProjectsPage({
   const status = searchParamsValue.status || "All";
   const category = searchParamsValue.category || "All";
   const page = Number(searchParamsValue.page) || 1;
+  const sort = ensureProjectSort(searchParamsValue.sort);
 
   const [paginatedResult, filters] = await Promise.all([
     getProjects({
@@ -33,6 +36,7 @@ export default async function ProjectsPage({
       category,
       page,
       limit: 6,
+      sort,
     }),
     getProjectFilters(),
   ]);
@@ -49,7 +53,7 @@ export default async function ProjectsPage({
         }
       }
       filters={filters}
-      searchParams={{ query, status, category, page }}
+      searchParams={{ query, status, category, page, sort }}
     />
   );
 }

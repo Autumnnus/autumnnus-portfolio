@@ -9,7 +9,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Project } from "@/types/contents";
+import { DEFAULT_PROJECT_SORT, ProjectSort } from "@/types/sorting";
 import { Filter, Loader2, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
@@ -32,6 +40,7 @@ interface ProjectsClientProps {
     status: string;
     category: string;
     page: number;
+    sort: ProjectSort;
   };
 }
 
@@ -47,6 +56,12 @@ export default function ProjectsClient({
 
   const [searchQuery, setSearchQuery] = useState(searchParams.query || "");
   const [pushedQuery, setPushedQuery] = useState(searchParams.query || "");
+  const [sortValue, setSortValue] = useState<ProjectSort>(
+    searchParams.sort || DEFAULT_PROJECT_SORT,
+  );
+  const [pushedSort, setPushedSort] = useState<ProjectSort>(
+    searchParams.sort || DEFAULT_PROJECT_SORT,
+  );
 
   const updateFilters = useCallback(
     (updates: Partial<typeof searchParams>) => {
@@ -56,6 +71,8 @@ export default function ProjectsClient({
         ...updates,
         page: updates.page || 1,
       };
+      const normalizedSort = newParams.sort || DEFAULT_PROJECT_SORT;
+      newParams.sort = normalizedSort;
 
       if (newParams.query) params.set("query", newParams.query);
       if (newParams.status && newParams.status !== "All")
@@ -63,6 +80,7 @@ export default function ProjectsClient({
       if (newParams.category && newParams.category !== "All")
         params.set("category", newParams.category);
       if (newParams.page > 1) params.set("page", newParams.page.toString());
+      params.set("sort", normalizedSort);
 
       startTransition(() => {
         router.push(`${pathname}?${params.toString()}`);
@@ -75,6 +93,11 @@ export default function ProjectsClient({
   if (!isPending && currentUrlQuery !== pushedQuery) {
     setSearchQuery(currentUrlQuery);
     setPushedQuery(currentUrlQuery);
+  }
+  const currentUrlSort = searchParams.sort || DEFAULT_PROJECT_SORT;
+  if (!isPending && currentUrlSort !== pushedSort) {
+    setSortValue(currentUrlSort);
+    setPushedSort(currentUrlSort);
   }
 
   useEffect(() => {
@@ -90,6 +113,26 @@ export default function ProjectsClient({
     return () => clearTimeout(timer);
   }, [searchQuery, pushedQuery, updateFilters]);
 
+  const sortOptions: { value: ProjectSort; label: string }[] = [
+    { value: "recent", label: t("sortOptions.recent") },
+    { value: "oldest", label: t("sortOptions.oldest") },
+    { value: "featured", label: t("sortOptions.featured") },
+    { value: "status", label: t("sortOptions.status") },
+  ];
+
+  const handleSortChange = (value: ProjectSort) => {
+    if (value === sortValue) return;
+    setSortValue(value);
+    setPushedSort(value);
+    updateFilters({ sort: value, page: 1 });
+  };
+
+  const getStatusLabel = (status: string) => {
+    const key = `statusLabels.${status}`;
+    const translated = t(key);
+    return translated === key ? status : translated;
+  };
+
   return (
     <Container className="py-12 sm:py-20 transition-all duration-500 ease-in-out">
       {/* Header */}
@@ -104,11 +147,11 @@ export default function ProjectsClient({
 
       {/* Search and Filters */}
       <div className="space-y-6 mb-12">
-        <div className="flex flex-col sm:flex-row gap-4 items-center max-w-3xl mx-auto">
+        <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
           {/* Search Input */}
           <form
             onSubmit={(e) => e.preventDefault()}
-            className="relative flex-1 w-full"
+            className="relative w-full"
           >
             <div
               className={`absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-opacity duration-300 ${isPending ? "opacity-100" : "opacity-100"}`}
@@ -123,121 +166,150 @@ export default function ProjectsClient({
               placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 text-base sm:text-lg rounded-2xl border-primary/20 bg-background/50 backdrop-blur-xl focus-visible:ring-primary shadow-sm transition-all hover:shadow-md"
+              className="pl-12 h-14 text-base sm:text-lg rounded-[100px] border border-primary/30 bg-background/70 backdrop-blur-2xl focus-visible:ring-2 focus-visible:ring-primary/50 shadow-lg transition-all hover:shadow-2xl"
             />
           </form>
 
-          {/* Filters Popover */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="h-14 px-6 rounded-2xl border border-primary/20 bg-background/50 backdrop-blur-xl shadow-sm transition-all hover:shadow-md hover:bg-primary/5 flex items-center gap-2 font-medium shrink-0 w-full sm:w-auto justify-center">
-                <Filter className="w-5 h-5 text-primary" />
-                <span className="text-foreground">{t("filters")}</span>
-                {(searchParams.status !== "All" ||
-                  searchParams.category !== "All") && (
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs ml-1.5 font-bold">
-                    {
-                      [
-                        searchParams.status !== "All",
-                        searchParams.category !== "All",
-                      ].filter(Boolean).length
-                    }
-                  </span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-[calc(100vw-2rem)] sm:w-[380px] p-6 rounded-2xl shadow-xl border-primary/20"
-              align="end"
-              sideOffset={8}
-            >
-              <div className="flex flex-col gap-8">
-                {/* Filter by Status */}
-                <div>
-                  <h3 className="text-base font-semibold mb-4 text-foreground/90 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    {t("filterByStatus")}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge
-                      variant={
-                        searchParams.status === "All" ? "default" : "outline"
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="w-full sm:w-auto">
+              <Select
+                value={sortValue}
+                onValueChange={(value) =>
+                  handleSortChange(value as ProjectSort)
+                }
+              >
+                <SelectTrigger className="h-14 min-w-[170px] rounded-full border border-primary/40 bg-gradient-to-br from-slate-900/60 to-slate-800/80 px-6 flex items-center justify-between text-left text-sm font-semibold text-foreground shadow-lg transition-all hover:border-primary hover:shadow-2xl">
+                  <SelectValue placeholder={t("sortLabel")} />
+                </SelectTrigger>
+                <SelectContent
+                  align="end"
+                  className="w-[min(220px,calc(100vw-2rem))]"
+                >
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filters Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="h-14 px-6 rounded-full border border-primary/30 bg-background/70 backdrop-blur-2xl shadow-lg transition-all hover:border-primary hover:shadow-2xl flex items-center gap-2 font-medium shrink-0 justify-center">
+                  <Filter className="w-5 h-5 text-primary" />
+                  <span className="text-foreground">{t("filters")}</span>
+                  {(searchParams.status !== "All" ||
+                    searchParams.category !== "All") && (
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs ml-1.5 font-bold">
+                      {
+                        [
+                          searchParams.status !== "All",
+                          searchParams.category !== "All",
+                        ].filter(Boolean).length
                       }
-                      className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
-                        searchParams.status === "All"
-                          ? "shadow-sm"
-                          : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
-                      }`}
-                      onClick={() => updateFilters({ status: "All" })}
-                    >
-                      {t("allProjects")}
-                    </Badge>
-                    {filters.statuses.map(({ status, count }) => (
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[calc(100vw-2rem)] sm:w-[380px] p-6 rounded-2xl shadow-xl border-primary/20"
+                align="end"
+                sideOffset={8}
+              >
+                <div className="flex flex-col gap-8">
+                  {/* Filter by Status */}
+                  <div>
+                    <h3 className="text-base font-semibold mb-4 text-foreground/90 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                      {t("filterByStatus")}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
                       <Badge
-                        key={status}
                         variant={
-                          searchParams.status === status ? "default" : "outline"
+                          searchParams.status === "All" ? "default" : "outline"
                         }
                         className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
-                          searchParams.status === status
+                          searchParams.status === "All"
                             ? "shadow-sm"
                             : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
                         }`}
-                        onClick={() => updateFilters({ status })}
+                        onClick={() => updateFilters({ status: "All" })}
                       >
-                        {status}{" "}
-                        <span className="opacity-70 ml-1">({count})</span>
+                        {t("allProjects")}
                       </Badge>
-                    ))}
+                      {filters.statuses.map(({ status, count }) => (
+                        <Badge
+                          key={status}
+                          variant={
+                            searchParams.status === status
+                              ? "default"
+                              : "outline"
+                          }
+                          className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
+                            searchParams.status === status
+                              ? "shadow-sm"
+                              : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
+                          }`}
+                          onClick={() => updateFilters({ status })}
+                        >
+                          {getStatusLabel(status)}{" "}
+                          <span className="opacity-70 ml-1">({count})</span>
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="h-px bg-border/50 w-full" />
+                  <div className="h-px bg-border/50 w-full" />
 
-                {/* Filter by Category */}
-                <div>
-                  <h3 className="text-base font-semibold mb-4 text-foreground/90 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    {t("filterByCategory")}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge
-                      variant={
-                        searchParams.category === "All" ? "default" : "outline"
-                      }
-                      className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
-                        searchParams.category === "All"
-                          ? "shadow-sm"
-                          : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
-                      }`}
-                      onClick={() => updateFilters({ category: "All" })}
-                    >
-                      {t("allCategories")}
-                    </Badge>
-                    {filters.categories.map(({ category, count }) => (
+                  {/* Filter by Category */}
+                  <div>
+                    <h3 className="text-base font-semibold mb-4 text-foreground/90 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                      {t("filterByCategory")}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
                       <Badge
-                        key={category}
                         variant={
-                          searchParams.category === category
+                          searchParams.category === "All"
                             ? "default"
                             : "outline"
                         }
                         className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
-                          searchParams.category === category
+                          searchParams.category === "All"
                             ? "shadow-sm"
                             : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
                         }`}
-                        onClick={() => updateFilters({ category })}
+                        onClick={() => updateFilters({ category: "All" })}
                       >
-                        {category}{" "}
-                        <span className="opacity-70 ml-1">({count})</span>
+                        {t("allCategories")}
                       </Badge>
-                    ))}
+                      {filters.categories.map(({ category, count }) => (
+                        <Badge
+                          key={category}
+                          variant={
+                            searchParams.category === category
+                              ? "default"
+                              : "outline"
+                          }
+                          className={`px-3 py-1.5 text-sm cursor-pointer transition-all ${
+                            searchParams.category === category
+                              ? "shadow-sm"
+                              : "hover:bg-primary/10 hover:border-primary/50 text-muted-foreground"
+                          }`}
+                          onClick={() => updateFilters({ category })}
+                        >
+                          {category}{" "}
+                          <span className="opacity-70 ml-1">({count})</span>
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { getBlogFilters, getBlogPosts } from "@/app/actions";
 import BlogClient from "@/components/blog/BlogClient";
 import { LanguageType as Language } from "@/lib/db/schema";
 import { BlogPost } from "@/types/contents";
+import { ensureBlogSort } from "@/types/sorting";
 
 interface BlogPageProps {
   params: Promise<{ locale: string }>;
@@ -9,6 +10,7 @@ interface BlogPageProps {
     query?: string;
     tag?: string;
     page?: string;
+    sort?: string;
   }>;
 }
 
@@ -22,6 +24,7 @@ export default async function BlogPage({
   const query = searchParamsValue.query || "";
   const tag = searchParamsValue.tag || "All";
   const page = Number(searchParamsValue.page) || 1;
+  const sort = ensureBlogSort(searchParamsValue.sort);
 
   const [paginatedResult, filters] = await Promise.all([
     getBlogPosts({
@@ -30,6 +33,7 @@ export default async function BlogPage({
       tag,
       page,
       limit: 6,
+      sort,
     }),
     getBlogFilters(),
   ]);
@@ -46,7 +50,7 @@ export default async function BlogPage({
         }
       }
       filters={filters}
-      searchParams={{ query, tag, page }}
+      searchParams={{ query, tag, page, sort }}
     />
   );
 }

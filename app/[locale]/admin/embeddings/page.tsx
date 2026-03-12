@@ -39,7 +39,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -67,6 +67,8 @@ interface EmbeddingDetail {
   chunkIndex: number;
   language: string;
   updatedAt: string;
+  createdAt: string;
+  metadata: Record<string, unknown> | null;
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -101,6 +103,7 @@ export default function EmbeddingsPage() {
   const [selectedItem, setSelectedItem] = useState<EmbeddingItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const tableSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -114,6 +117,57 @@ export default function EmbeddingsPage() {
       : null,
     fetcher,
   );
+
+  const chunkInsights = useMemo(() => {
+    const embeddings = detailsData?.embeddings ?? [];
+    const languageCounts: Record<string, number> = {};
+    let latestUpdate = "";
+
+    for (const emb of embeddings) {
+      languageCounts[emb.language] = (languageCounts[emb.language] || 0) + 1;
+      if (!latestUpdate || new Date(emb.updatedAt) > new Date(latestUpdate)) {
+        latestUpdate = emb.updatedAt;
+      }
+    }
+
+    return {
+      total: embeddings.length,
+      languageCounts,
+      latestUpdate,
+    };
+  }, [detailsData?.embeddings]);
+
+  const languageSummary = Object.entries(chunkInsights.languageCounts)
+    .map(([language, count]) => `${language.toUpperCase()} (${count})`)
+    .join(", ");
+
+  const latestChunkUpdatedAt = chunkInsights.latestUpdate
+    ? formatDate(
+        chunkInsights.latestUpdate,
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        },
+        locale,
+      )
+    : null;
+
+  const selectedItemLastUpdated = selectedItem?.lastUpdated
+    ? formatDate(
+        selectedItem.lastUpdated,
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        },
+        locale,
+      )
+    : null;
 
   const handleSyncAll = async () => {
     setIsSyncingAll(true);
@@ -206,6 +260,12 @@ export default function EmbeddingsPage() {
     }
   };
 
+  const handleSourceCardClick = (sourceType: string) => {
+    setTypeFilter((prev) => (prev === sourceType ? "all" : sourceType));
+    setSearchQuery("");
+    tableSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const currentItems = itemsData?.items || [];
 
   const filteredItems = currentItems.filter((item) => {
@@ -278,33 +338,54 @@ export default function EmbeddingsPage() {
           </CardContent>
         </Card>
 
-        {stats?.bySource.map((s) => (
-          <Card
-            key={s.sourceType}
-            className="rounded-3xl shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 hover:border-primary/20 border border-border/50"
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                {s.sourceType}
-              </CardTitle>
-              <Badge
-                variant="secondary"
-                className="px-2 py-0 h-5 text-[10px] font-bold rounded-full"
-              >
-                {s.sourceType}s
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{s._count._all}</div>
-              <p className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-tighter opacity-70">
-                {t("activeChunks")}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {stats?.bySource.map((s) => {
+          const isActive = typeFilter === s.sourceType;
+          return (
+            <Card
+              key={s.sourceType}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isActive}
+              onClick={() => handleSourceCardClick(s.sourceType)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleSourceCardClick(s.sourceType);
+                }
+              }}
+              className={cn(
+                "rounded-3xl shadow-sm transition-all border border-border/50",
+                "hover:shadow-xl hover:-translate-y-1",
+                "cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                isActive
+                  ? "border-primary/60 bg-primary/5 shadow-lg shadow-primary/10"
+                  : "hover:border-primary/20",
+              )}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  {s.sourceType}
+                </CardTitle>
+                <Badge
+                  variant="secondary"
+                  className="px-2 py-0 h-5 text-[10px] font-bold rounded-full"
+                >
+                  {s.sourceType}s
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{s._count._all}</div>
+                <p className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-tighter opacity-70">
+                  {t("activeChunks")}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      <Card className="rounded-3xl shadow-2xl border-border/50 overflow-hidden bg-card/50 backdrop-blur-sm">
+      <div ref={tableSectionRef}>
+        <Card className="rounded-3xl shadow-2xl border-border/50 overflow-hidden bg-card/50 backdrop-blur-sm">
         <CardHeader className="border-b border-border/50 bg-muted/10 p-6 sm:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-1">
@@ -538,7 +619,8 @@ export default function EmbeddingsPage() {
             </Table>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
 
       {/* Detail Drawer */}
       <AnimatePresence>
@@ -625,6 +707,44 @@ export default function EmbeddingsPage() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-muted/10 p-6 rounded-3xl border border-border/50">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {t("sourceIdLabel")}
+                      </span>
+                      <p className="font-bold text-sm break-all">
+                        {selectedItem.id}
+                      </p>
+                    </div>
+                    <div className="space-y-1 text-right md:text-left">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {t("lastSourceUpdate")}
+                      </span>
+                      <p className="font-bold text-sm">
+                        {selectedItemLastUpdated || "—"}
+                      </p>
+                      {latestChunkUpdatedAt && (
+                        <p className="text-[10px] text-muted-foreground">
+                          {t("latestChunk")}: {latestChunkUpdatedAt}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {t("chunks")}
+                      </span>
+                      <p className="font-bold text-sm">{chunkInsights.total}</p>
+                    </div>
+                    <div className="space-y-1 text-right md:text-left">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {t("languageBreakdown")}
+                      </span>
+                      <p className="font-bold text-sm text-foreground/80">
+                        {languageSummary || "—"}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="space-y-6">
                     <div className="flex items-center justify-between px-1">
                       <h4 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
@@ -668,48 +788,68 @@ export default function EmbeddingsPage() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {detailsData?.embeddings.map((emb) => (
-                          <div
-                            key={emb.id}
-                            className="group relative bg-card border border-border/50 rounded-3xl p-5 sm:p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <Badge
-                                variant="outline"
-                                className="bg-primary/5 text-primary text-[10px] font-bold px-3 py-1 rounded-full border-primary/10"
-                              >
-                                Chunk #{emb.chunkIndex}
-                              </Badge>
-                              <Badge className="text-[10px] font-bold px-3 py-1 bg-muted text-muted-foreground rounded-full border-border/50">
-                                {emb.language.toUpperCase()}
-                              </Badge>
+                        {detailsData?.embeddings.map((emb) => {
+                          const metadataValue = emb.metadata;
+                          const hasMetadata =
+                            metadataValue &&
+                            (typeof metadataValue !== "object"
+                              ? true
+                              : Array.isArray(metadataValue)
+                                ? metadataValue.length > 0
+                                : Object.keys(metadataValue).length > 0);
+                          return (
+                            <div
+                              key={emb.id}
+                              className="group relative bg-card border border-border/50 rounded-3xl p-5 sm:p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300"
+                            >
+                              <div className="flex items-center justify-between mb-4">
+                                <Badge
+                                  variant="outline"
+                                  className="bg-primary/5 text-primary text-[10px] font-bold px-3 py-1 rounded-full border-primary/10"
+                                >
+                                  Chunk #{emb.chunkIndex}
+                                </Badge>
+                                <Badge className="text-[10px] font-bold px-3 py-1 bg-muted text-muted-foreground rounded-full border-border/50">
+                                  {emb.language.toUpperCase()}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-foreground/80 leading-relaxed font-mono bg-muted/30 p-4 sm:p-5 rounded-2xl border border-border/50 group-hover:bg-background transition-colors max-h-[300px] overflow-y-auto custom-scrollbar">
+                                {emb.chunkText}
+                              </div>
+                              {hasMetadata && (
+                                <div className="mt-3 bg-muted/20 p-3 rounded-2xl border border-border/50 text-[11px]">
+                                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                                    Metadata
+                                  </p>
+                                  <pre className="mt-2 font-mono whitespace-pre-wrap break-words max-h-32 overflow-auto">
+                                    {JSON.stringify(metadataValue, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+                              <div className="mt-4 text-[10px] text-muted-foreground flex items-center justify-between px-1">
+                                <span
+                                  className="font-medium italic"
+                                  suppressHydrationWarning
+                                >
+                                  {mounted &&
+                                    new Date(emb.updatedAt).toLocaleString(
+                                      undefined,
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      },
+                                    )}
+                                </span>
+                                <span className="font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                  ID: {emb.id.slice(0, 8)}...
+                                </span>
+                              </div>
                             </div>
-                            <div className="text-sm text-foreground/80 leading-relaxed font-mono bg-muted/30 p-4 sm:p-5 rounded-2xl border border-border/50 group-hover:bg-background transition-colors max-h-[300px] overflow-y-auto custom-scrollbar">
-                              {emb.chunkText}
-                            </div>
-                            <div className="mt-4 text-[10px] text-muted-foreground flex items-center justify-between px-1">
-                              <span
-                                className="font-medium italic"
-                                suppressHydrationWarning
-                              >
-                                {mounted &&
-                                  new Date(emb.updatedAt).toLocaleString(
-                                    undefined,
-                                    {
-                                      year: "numeric",
-                                      month: "short",
-                                      day: "2-digit",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    },
-                                  )}
-                              </span>
-                              <span className="font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                ID: {emb.id.slice(0, 8)}...
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
