@@ -51,7 +51,7 @@ import { CategorySelector } from "./CategorySelector";
 import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 const transformTranslationsToObject = (translations: ProjectTranslation[]) => {
   const result: Record<
@@ -222,6 +222,10 @@ export default function ProjectForm({
   const selectedSkills = watch("technologies");
   const githubValue = watch("github");
   const liveDemoValue = watch("liveDemo");
+  const slugValue = watch("slug");
+  const isEditingProject = Boolean(initialData?.id);
+  const slugValueTrimmed = slugValue?.trim() || "";
+  const locale = useLocale();
 
   const openLinkInNewTab = (value?: string) => {
     if (!value) return;
@@ -231,6 +235,12 @@ export default function ProjectForm({
       ? trimmed
       : `https://${trimmed}`;
     window.open(normalized, "_blank");
+  };
+
+  const openPreviewPage = (path: string) => {
+    if (!path) return;
+    const base = window.location.origin;
+    window.open(`${base}${path}`, "_blank");
   };
 
   const handleImageUpload = async (
@@ -770,9 +780,25 @@ export default function ProjectForm({
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         <div className="xl:col-span-7 space-y-6 bg-muted/20 p-4 sm:p-8 rounded-3xl border border-border/50 shadow-sm">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
-              {t("slug")}
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("slug")}
+              </label>
+              {isEditingProject && slugValueTrimmed && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    openPreviewPage(
+                      `${locale ? `/${locale}` : ""}/projects/${slugValueTrimmed}`,
+                    )
+                  }
+                  className="text-muted-foreground hover:text-primary transition text-[11px]"
+                  aria-label="Yeni sekmede önizle"
+                >
+                  <ExternalLink size={16} />
+                </button>
+              )}
+            </div>
             <input
               {...register("slug")}
               required

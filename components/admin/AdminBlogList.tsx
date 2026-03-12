@@ -1,10 +1,11 @@
 "use client";
 
 import { deleteBlogAction } from "@/app/[locale]/admin/actions";
-import { Link, useRouter } from "@/i18n/routing";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 interface BlogListProps {
@@ -33,7 +34,13 @@ export default function AdminBlogList({ posts }: BlogListProps) {
   const tBlog = useTranslations("Blog");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const [sortBy, setSortBy] = useState<BlogSort>("dateDesc");
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const [sortBy, setSortBy] = useState<BlogSort>(() => {
+    const param = searchParams.get("sort");
+    const valid = BLOG_SORT_OPTIONS.some((option) => option.value === param);
+    return (valid ? (param as BlogSort) : "dateDesc") as BlogSort;
+  });
 
   const sortedPosts = useMemo(() => {
     const list = [...posts];
@@ -76,6 +83,30 @@ export default function AdminBlogList({ posts }: BlogListProps) {
     return list;
   }, [posts, sortBy]);
 
+  useEffect(() => {
+    const param = searchParams.get("sort");
+    const normalized = BLOG_SORT_OPTIONS.some((option) => option.value === param)
+      ? (param as BlogSort)
+      : "dateDesc";
+    if (normalized !== sortBy) {
+      setSortBy(normalized);
+    }
+  }, [searchParams, sortBy]);
+
+  const handleSortChange = (value: BlogSort) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "dateDesc") {
+      params.delete("sort");
+    } else {
+      params.set("sort", value);
+    }
+    const queryString = params.toString();
+    startTransition(() => {
+      router.push(queryString ? `${pathname}?${queryString}` : pathname);
+    });
+    setSortBy(value);
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm(t("deleteConfirm"))) return;
 
@@ -93,20 +124,22 @@ export default function AdminBlogList({ posts }: BlogListProps) {
     <div className="bg-card/95 border border-border/60 rounded-3xl overflow-hidden shadow-xl shadow-black/5 backdrop-blur-sm">
       <div className="overflow-x-auto">
         <div className="flex justify-end px-6 py-4 border-b border-border/60 bg-muted/40">
-          <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80 flex items-center gap-2 font-semibold">
-            Sırala:
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value as BlogSort)}
-              className="text-[10px] font-bold uppercase tracking-[0.2em] rounded-xl border border-border/60 bg-background/80 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-            >
-              {BLOG_SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80 flex items-center gap-2 font-semibold">
+              Sırala:
+              <select
+                value={sortBy}
+                onChange={(event) =>
+                  handleSortChange(event.target.value as BlogSort)
+                }
+                className="text-[10px] font-bold uppercase tracking-[0.2em] rounded-xl border border-border/60 bg-background/80 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              >
+                {BLOG_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
         </div>
         <table className="w-full text-left border-collapse table-fixed">
           <colgroup>

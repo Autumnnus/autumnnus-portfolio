@@ -20,6 +20,7 @@ import {
 import { BlogFormValues, BlogSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ExternalLink,
   FileText,
   ImagePlus,
   Layout,
@@ -37,7 +38,7 @@ import TipTapEditor from "./TipTapEditor";
 
 import { formatDate } from "@/lib/utils";
 import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { CategorySelector } from "./CategorySelector";
 
@@ -139,6 +140,14 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
   const isEditing = !!initialData;
   const sourceTitle = watch(`translations.${sourceLang}.title` as const);
+  const slugValue = watch("slug");
+  const slugValueTrimmed = slugValue?.trim() || "";
+  const locale = useLocale();
+  const openPreviewPage = (path: string) => {
+    if (!path) return;
+    const base = window.location.origin;
+    window.open(`${base}${path}`, "_blank");
+  };
   useEffect(() => {
     if (!isEditing && sourceTitle) {
       const currentSlug = getValues("slug");
@@ -452,9 +461,25 @@ export default function BlogForm({ initialData }: BlogFormProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-12 xl:col-span-7 space-y-6 bg-muted/20 p-4 sm:p-6 rounded-2xl border border-border/50">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
-              {t("slug")}
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                {t("slug")}
+              </label>
+              {isEditing && slugValueTrimmed && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    openPreviewPage(
+                      `${locale ? `/${locale}` : ""}/blog/${slugValueTrimmed}`,
+                    )
+                  }
+                  className="text-muted-foreground hover:text-primary transition text-[11px]"
+                  aria-label="Yeni sekmede önizle"
+                >
+                  <ExternalLink size={16} />
+                </button>
+              )}
+            </div>
             <input
               {...register("slug")}
               className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
