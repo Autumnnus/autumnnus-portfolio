@@ -1170,7 +1170,7 @@ export async function incrementView(itemId: string, itemType: CommentItemType) {
 
       totalViews = c;
 
-      if (shouldNotify(totalViews)) {
+      if (totalViews >= 5 && shouldNotify(totalViews)) {
         const auditLogs = await db.query.auditLog.findMany({
           where: and(
             eq(auditLog.action, "VIEW_MILESTONE"),
