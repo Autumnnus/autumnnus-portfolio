@@ -41,9 +41,12 @@ export default function AdminHeader() {
             </span>
           </Link>
           <div className="w-px h-6 bg-border/50 hidden sm:block" />
-          <span className="font-bold text-base sm:text-lg tracking-tight text-primary truncate max-w-[120px] sm:max-w-none">
+          <Link
+            href="/admin"
+            className="font-bold text-base sm:text-lg tracking-tight text-primary truncate max-w-[120px] sm:max-w-none hover:opacity-80 transition-opacity"
+          >
             {t("title")}
-          </span>
+          </Link>
         </div>
 
         {/* Desktop Navigation */}

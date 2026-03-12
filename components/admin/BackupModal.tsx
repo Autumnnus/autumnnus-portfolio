@@ -17,7 +17,7 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -30,6 +30,11 @@ interface SectionMeta {
   iconCount?: number;
   logoCount?: number;
   questCount?: number;
+  translationCount?: number;
+  categoryCount?: number;
+  techRelationCount?: number;
+  embeddingCount?: number;
+  usedInProjects?: number;
   hasAvatar?: boolean;
   exists?: boolean;
   name?: string;
@@ -45,6 +50,8 @@ interface ExportPreview {
     hasAvatar: boolean;
     name?: string;
     questCount: number;
+    translationCount?: number;
+    embeddingCount?: number;
   };
   totalAssets: number;
 }
@@ -60,6 +67,8 @@ interface ImportPreview {
     name?: string;
     hasAvatar: boolean;
     questCount: number;
+    translationCount?: number;
+    embeddingCount?: number;
   };
   assets: { count: number };
 }
@@ -101,6 +110,8 @@ export default function BackupModal({
   onSuccess,
 }: BackupModalProps) {
   const t = useTranslations("Admin.Database");
+  const locale = useLocale();
+  const isTurkish = locale.startsWith("tr");
 
   const [step, setStep] = useState<"loading" | "preview" | "executing">(
     "loading",
@@ -174,7 +185,11 @@ export default function BackupModal({
   const toggleSection = (s: Section) =>
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(s) ? next.delete(s) : next.add(s);
+      if (next.has(s)) {
+        next.delete(s);
+      } else {
+        next.add(s);
+      }
       return next;
     });
 
@@ -249,6 +264,7 @@ export default function BackupModal({
       assetCount?: number;
       assetLabel?: string;
       extra?: string;
+      details?: string[];
     },
   ) => {
     const isSelected = selected.has(section);
@@ -316,6 +332,19 @@ export default function BackupModal({
                 )}
               </p>
             )}
+
+            {data.details && data.details.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {data.details.map((detail, idx) => (
+                  <span
+                    key={`${section}-detail-${idx}`}
+                    className="inline-flex rounded-full border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] text-muted-foreground"
+                  >
+                    {detail}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </button>
@@ -334,24 +363,62 @@ export default function BackupModal({
           items: projects.items,
           assetCount: projects.imageCount,
           assetLabel: t("images"),
+          details: isTurkish
+            ? [
+                `${projects.translationCount ?? 0} çeviri`,
+                `${projects.categoryCount ?? 0} kategori`,
+                `${projects.techRelationCount ?? 0} teknoloji ilişkisi`,
+                `${projects.embeddingCount ?? 0} embedding`,
+                "Bağımlı skill kayıtları otomatik dahil",
+              ]
+            : [
+                `${projects.translationCount ?? 0} translations`,
+                `${projects.categoryCount ?? 0} categories`,
+                `${projects.techRelationCount ?? 0} technology links`,
+                `${projects.embeddingCount ?? 0} embeddings`,
+                "Dependent skill records are auto-included",
+              ],
         })}
         {renderSectionRow("blogs", {
           count: blogs.count,
           items: blogs.items,
           assetCount: blogs.imageCount,
           assetLabel: t("images"),
+          details: isTurkish
+            ? [
+                `${blogs.translationCount ?? 0} çeviri`,
+                `${blogs.categoryCount ?? 0} kategori`,
+                `${blogs.embeddingCount ?? 0} embedding`,
+              ]
+            : [
+                `${blogs.translationCount ?? 0} translations`,
+                `${blogs.categoryCount ?? 0} categories`,
+                `${blogs.embeddingCount ?? 0} embeddings`,
+              ],
         })}
         {renderSectionRow("skills", {
           count: skills.count,
           items: skills.items,
           assetCount: skills.iconCount,
           assetLabel: t("icons"),
+          details: isTurkish
+            ? [`${skills.usedInProjects ?? 0} proje-teknoloji bağlantısı`]
+            : [`${skills.usedInProjects ?? 0} project-tech links`],
         })}
         {renderSectionRow("experiences", {
           count: experiences.count,
           items: experiences.items,
           assetCount: experiences.logoCount,
           assetLabel: t("logos"),
+          details: isTurkish
+            ? [
+                `${experiences.translationCount ?? 0} çeviri`,
+                `${experiences.embeddingCount ?? 0} embedding`,
+              ]
+            : [
+                `${experiences.translationCount ?? 0} translations`,
+                `${experiences.embeddingCount ?? 0} embeddings`,
+              ],
         })}
         {renderSectionRow("profile", {
           count: profile.exists ? 1 : 0,
@@ -359,6 +426,15 @@ export default function BackupModal({
           extra: profile.exists
             ? `${profile.hasAvatar ? t("withAvatar") : t("noAvatar")}${profile.questCount > 0 ? ` · ${profile.questCount} ${t("quests")}` : ""}`
             : undefined,
+          details: isTurkish
+            ? [
+                `${profile.translationCount ?? 0} çeviri`,
+                `${profile.embeddingCount ?? 0} embedding`,
+              ]
+            : [
+                `${profile.translationCount ?? 0} translations`,
+                `${profile.embeddingCount ?? 0} embeddings`,
+              ],
         })}
       </div>
     );
@@ -374,18 +450,62 @@ export default function BackupModal({
         {renderSectionRow("projects", {
           count: projects.count,
           items: projects.items,
+          details: isTurkish
+            ? [
+                `${projects.translationCount ?? 0} çeviri`,
+                `${projects.categoryCount ?? 0} kategori`,
+                `${projects.techRelationCount ?? 0} teknoloji ilişkisi`,
+                `${projects.embeddingCount ?? 0} embedding`,
+                "Gerekli skill kayıtları import sırasında tamamlanır",
+              ]
+            : [
+                `${projects.translationCount ?? 0} translations`,
+                `${projects.categoryCount ?? 0} categories`,
+                `${projects.techRelationCount ?? 0} technology links`,
+                `${projects.embeddingCount ?? 0} embeddings`,
+                "Required skill records are completed during import",
+              ],
         })}
         {renderSectionRow("blogs", {
           count: blogs.count,
           items: blogs.items,
+          details: isTurkish
+            ? [
+                `${blogs.translationCount ?? 0} çeviri`,
+                `${blogs.categoryCount ?? 0} kategori`,
+                `${blogs.embeddingCount ?? 0} embedding`,
+              ]
+            : [
+                `${blogs.translationCount ?? 0} translations`,
+                `${blogs.categoryCount ?? 0} categories`,
+                `${blogs.embeddingCount ?? 0} embeddings`,
+              ],
         })}
         {renderSectionRow("skills", {
           count: skills.count,
           items: skills.items,
+          details: isTurkish
+            ? [
+                `${skills.usedInProjects ?? 0} proje-teknoloji bağlantısı`,
+                "Seçilirse skill tablosu tamamen bu yedekle değiştirilir",
+              ]
+            : [
+                `${skills.usedInProjects ?? 0} project-tech links`,
+                "If selected, the skills table is fully replaced by this backup",
+              ],
         })}
         {renderSectionRow("experiences", {
           count: experiences.count,
           items: experiences.items,
+          details: isTurkish
+            ? [
+                `${experiences.translationCount ?? 0} çeviri`,
+                `${experiences.embeddingCount ?? 0} embedding`,
+              ]
+            : [
+                `${experiences.translationCount ?? 0} translations`,
+                `${experiences.embeddingCount ?? 0} embeddings`,
+              ],
         })}
         {renderSectionRow("profile", {
           count: profile.exists ? 1 : 0,
@@ -393,6 +513,15 @@ export default function BackupModal({
           extra: profile.exists
             ? `${profile.hasAvatar ? t("withAvatar") : t("noAvatar")}${profile.questCount > 0 ? ` · ${profile.questCount} ${t("quests")}` : ""}`
             : undefined,
+          details: isTurkish
+            ? [
+                `${profile.translationCount ?? 0} çeviri`,
+                `${profile.embeddingCount ?? 0} embedding`,
+              ]
+            : [
+                `${profile.translationCount ?? 0} translations`,
+                `${profile.embeddingCount ?? 0} embeddings`,
+              ],
         })}
       </div>
     );

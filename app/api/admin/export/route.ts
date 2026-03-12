@@ -31,18 +31,26 @@ export async function GET(request: Request) {
     const sections = sectionsParam
       ? new Set(sectionsParam.split(","))
       : new Set(["projects", "blogs", "skills", "experiences", "profile"]);
+    const includeProjects = sections.has("projects");
+    const includeBlogs = sections.has("blogs");
+    const includeSkills = sections.has("skills") || includeProjects;
+    const includeExperiences = sections.has("experiences");
+    const includeProfile = sections.has("profile");
 
     const [projects, blogs, profileData, experiences, skills, categories] =
       await Promise.all([
-        sections.has("projects")
+        includeProjects
           ? db.query.project.findMany({
-              with: { translations: true, technologies: true },
+              with: {
+                translations: true,
+                technologies: { with: { skill: true } },
+              },
             })
           : Promise.resolve([]),
-        sections.has("blogs")
+        includeBlogs
           ? db.query.blogPost.findMany({ with: { translations: true } })
           : Promise.resolve([]),
-        sections.has("profile")
+        includeProfile
           ? db.query.profile.findFirst({
               with: {
                 translations: true,
@@ -50,19 +58,19 @@ export async function GET(request: Request) {
               },
             })
           : Promise.resolve(undefined),
-        sections.has("experiences")
+        includeExperiences
           ? db.query.workExperience.findMany({ with: { translations: true } })
           : Promise.resolve([]),
-        sections.has("skills")
+        includeSkills
           ? db.query.skill.findMany()
           : Promise.resolve([]),
-        sections.has("projects") || sections.has("blogs")
+        includeProjects || includeBlogs
           ? db.query.category.findMany()
           : Promise.resolve([]),
       ]);
 
     const embeddingFilters = [];
-    if (sections.has("projects") && projects.length > 0) {
+    if (includeProjects && projects.length > 0) {
       embeddingFilters.push(
         and(
           eq(embedding.sourceType, "project"),
@@ -73,7 +81,7 @@ export async function GET(request: Request) {
         ),
       );
     }
-    if (sections.has("blogs") && blogs.length > 0) {
+    if (includeBlogs && blogs.length > 0) {
       embeddingFilters.push(
         and(
           eq(embedding.sourceType, "blog"),
@@ -84,7 +92,7 @@ export async function GET(request: Request) {
         ),
       );
     }
-    if (sections.has("experiences") && experiences.length > 0) {
+    if (includeExperiences && experiences.length > 0) {
       embeddingFilters.push(
         and(
           eq(embedding.sourceType, "experience"),
@@ -95,7 +103,7 @@ export async function GET(request: Request) {
         ),
       );
     }
-    if (sections.has("profile") && profileData?.id) {
+    if (includeProfile && profileData?.id) {
       embeddingFilters.push(
         and(
           eq(embedding.sourceType, "profile"),
@@ -161,11 +169,11 @@ export async function GET(request: Request) {
 
     const downloadPromises: Promise<void>[] = [];
 
-    if (sections.has("profile") && profileData?.avatar) {
+    if (includeProfile && profileData?.avatar) {
       downloadPromises.push(addFileToZip(profileData.avatar));
     }
 
-    if (sections.has("projects")) {
+    if (includeProjects) {
       for (const p of projects) {
         if (p.coverImage) downloadPromises.push(addFileToZip(p.coverImage));
         if (p.images) {
@@ -174,20 +182,20 @@ export async function GET(request: Request) {
       }
     }
 
-    if (sections.has("blogs")) {
+    if (includeBlogs) {
       for (const b of blogs) {
         if (b.coverImage) downloadPromises.push(addFileToZip(b.coverImage));
       }
     }
 
-    if (sections.has("skills")) {
+    if (includeSkills) {
       for (const s of skills) {
         if (s.icon?.startsWith("http"))
           downloadPromises.push(addFileToZip(s.icon));
       }
     }
 
-    if (sections.has("experiences")) {
+    if (includeExperiences) {
       for (const w of experiences) {
         if (w.logo) downloadPromises.push(addFileToZip(w.logo));
       }

@@ -66,6 +66,36 @@ function normalizeDate(value: unknown): Date | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
+function getTechnologySkillId(tech: unknown): string | null {
+  if (!tech || typeof tech !== "object") return null;
+  const row = tech as Record<string, unknown>;
+  if (typeof row.id === "string") return row.id;
+  if (typeof row.B === "string") return row.B;
+  if (
+    row.skill &&
+    typeof row.skill === "object" &&
+    typeof (row.skill as Record<string, unknown>).id === "string"
+  ) {
+    return (row.skill as Record<string, unknown>).id as string;
+  }
+  return null;
+}
+
+function getTechnologySkillData(tech: unknown) {
+  if (!tech || typeof tech !== "object") return null;
+  const row = tech as Record<string, unknown>;
+  const source =
+    row.skill && typeof row.skill === "object"
+      ? (row.skill as Record<string, unknown>)
+      : row;
+  const id = typeof source.id === "string" ? source.id : null;
+  const key = typeof source.key === "string" ? source.key : null;
+  const name = typeof source.name === "string" ? source.name : null;
+  const icon = typeof source.icon === "string" ? source.icon : null;
+  if (!id && !key) return null;
+  return { id, key, name, icon };
+}
+
 export async function POST(request: Request) {
   try {
     const session = await auth();
@@ -85,6 +115,12 @@ export async function POST(request: Request) {
     const sections: Set<string> = sectionsRaw
       ? new Set(JSON.parse(sectionsRaw))
       : new Set(["projects", "blogs", "skills", "experiences", "profile"]);
+    const includeProjects = sections.has("projects");
+    const includeBlogs = sections.has("blogs");
+    const includeExperiences = sections.has("experiences");
+    const includeProfile = sections.has("profile");
+    const replaceSkills = sections.has("skills");
+    const includeSkills = replaceSkills || includeProjects;
 
     const buffer = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(buffer);
@@ -102,44 +138,44 @@ export async function POST(request: Request) {
       // ── Delete in FK-safe order ──────────────────────────────────────
       // _projectToSkill depends on both project and skill, so delete first
       // if either parent table is being replaced.
-      if (sections.has("projects") || sections.has("skills")) {
+      if (includeProjects || replaceSkills) {
         await tx.delete(_projectToSkill);
       }
-      if (sections.has("projects")) {
+      if (includeProjects) {
         await tx.delete(projectTranslation);
         await tx.delete(project);
       }
-      if (sections.has("blogs")) {
+      if (includeBlogs) {
         await tx.delete(blogPostTranslation);
         await tx.delete(blogPost);
       }
-      if (sections.has("experiences")) {
+      if (includeExperiences) {
         await tx.delete(workExperienceTranslation);
         await tx.delete(workExperience);
       }
-      if (sections.has("profile")) {
+      if (includeProfile) {
         await tx.delete(questTranslation);
         await tx.delete(quest);
         await tx.delete(profileTranslation);
         await tx.delete(profileTable);
       }
-      if (sections.has("skills")) {
+      if (replaceSkills) {
         await tx.delete(skill);
       }
-      if (sections.has("projects")) {
+      if (includeProjects) {
         await tx
           .delete(embedding)
           .where(eq(embedding.sourceType, "project"));
       }
-      if (sections.has("blogs")) {
+      if (includeBlogs) {
         await tx.delete(embedding).where(eq(embedding.sourceType, "blog"));
       }
-      if (sections.has("experiences")) {
+      if (includeExperiences) {
         await tx
           .delete(embedding)
           .where(eq(embedding.sourceType, "experience"));
       }
-      if (sections.has("profile")) {
+      if (includeProfile) {
         await tx.delete(embedding).where(eq(embedding.sourceType, "profile"));
       }
 
@@ -154,7 +190,7 @@ export async function POST(request: Request) {
       const categoryIdMap = new Map<string, string>();
 
       const needsCategorySupport =
-        sections.has("projects") || sections.has("blogs");
+        includeProjects || includeBlogs;
 
       if (needsCategorySupport) {
         const existingCategories = await tx
@@ -239,20 +275,97 @@ export async function POST(request: Request) {
         return null;
       };
 
+      const skillIdMap = new Map<string, string>();
+
       // ── Insert: skills first (needed for project relations) ───────────
-      if (sections.has("skills") && skills?.length) {
-        await tx.insert(skill).values(
-          (skills as any[]).map((s) => ({
+      if (includeSkills) {
+        const skillCandidates = new Map<
+          string,
+          { id: string; key: string; name: string; icon: string }
+        >();
+
+        for (const s of (skills as any[]) ?? []) {
+          if (
+            typeof s?.id !== "string" ||
+            typeof s?.key !== "string" ||
+            typeof s?.name !== "string" ||
+            typeof s?.icon !== "string"
+          ) {
+            continue;
+          }
+          skillCandidates.set(s.id, {
             id: s.id,
             key: s.key,
             name: s.name,
             icon: s.icon,
-          })),
-        );
+          });
+        }
+
+        for (const prj of (projects as any[]) ?? []) {
+          for (const tech of prj?.technologies ?? []) {
+            const candidate = getTechnologySkillData(tech);
+            if (!candidate?.id || !candidate.key || !candidate.name || !candidate.icon)
+              continue;
+            if (!skillCandidates.has(candidate.id)) {
+              skillCandidates.set(candidate.id, {
+                id: candidate.id,
+                key: candidate.key,
+                name: candidate.name,
+                icon: candidate.icon,
+              });
+            }
+          }
+        }
+
+        if (replaceSkills) {
+          const rows = Array.from(skillCandidates.values());
+          if (rows.length) {
+            await tx.insert(skill).values(rows);
+          }
+          for (const sourceId of skillCandidates.keys()) {
+            skillIdMap.set(sourceId, sourceId);
+          }
+        } else {
+          const existingSkills = await tx
+            .select({
+              id: skill.id,
+              key: skill.key,
+            })
+            .from(skill);
+
+          const byId = new Map(existingSkills.map((s) => [s.id, s.id]));
+          const byKey = new Map(existingSkills.map((s) => [s.key, s.id]));
+
+          for (const row of skillCandidates.values()) {
+            if (byId.has(row.id)) {
+              skillIdMap.set(row.id, row.id);
+              continue;
+            }
+            const existingByKey = byKey.get(row.key);
+            if (existingByKey) {
+              skillIdMap.set(row.id, existingByKey);
+              continue;
+            }
+
+            const [created] = await tx
+              .insert(skill)
+              .values({
+                id: row.id,
+                key: row.key,
+                name: row.name,
+                icon: row.icon,
+              })
+              .returning({ id: skill.id });
+
+            skillIdMap.set(row.id, created.id);
+            byId.set(created.id, created.id);
+            byKey.set(row.key, created.id);
+          }
+        }
       }
 
       // ── Insert: profile ──────────────────────────────────────────────
-      if (sections.has("profile") && profile) {
+      if (includeProfile && profile) {
         const pr = profile as any;
         const [newProfile] = await tx
           .insert(profileTable)
@@ -306,7 +419,7 @@ export async function POST(request: Request) {
       }
 
       // ── Insert: experiences ──────────────────────────────────────────
-      if (sections.has("experiences") && experiences?.length) {
+      if (includeExperiences && experiences?.length) {
         for (const exp of experiences as any[]) {
           const [newExp] = await tx
             .insert(workExperience)
@@ -334,7 +447,7 @@ export async function POST(request: Request) {
       }
 
       // ── Insert: blogs ────────────────────────────────────────────────
-      if (sections.has("blogs") && blogs?.length) {
+      if (includeBlogs && blogs?.length) {
         for (const blog of blogs as any[]) {
           const [newBlog] = await tx
             .insert(blogPost)
@@ -372,12 +485,7 @@ export async function POST(request: Request) {
       }
 
       // ── Insert: projects ─────────────────────────────────────────────
-      if (sections.has("projects") && projects?.length) {
-        // Get skill IDs that actually exist (handles skills-not-selected case)
-        const existingSkillIds = new Set(
-          (await tx.select({ id: skill.id }).from(skill)).map((r) => r.id),
-        );
-
+      if (includeProjects && projects?.length) {
         for (const prj of projects as any[]) {
           const [newProject] = await tx
             .insert(project)
@@ -396,14 +504,18 @@ export async function POST(request: Request) {
             .returning();
 
           if (prj.technologies?.length) {
-            const validTechs = (prj.technologies as any[]).filter((tech) =>
-              existingSkillIds.has(tech.id),
-            );
+            const validTechs = (prj.technologies as any[])
+              .map((tech) => {
+                const sourceSkillId = getTechnologySkillId(tech);
+                if (!sourceSkillId) return null;
+                return skillIdMap.get(sourceSkillId) || sourceSkillId;
+              })
+              .filter((id): id is string => !!id);
             if (validTechs.length) {
               await tx.insert(_projectToSkill).values(
-                validTechs.map((tech) => ({
+                Array.from(new Set(validTechs)).map((skillId) => ({
                   A: newProject.id,
-                  B: tech.id,
+                  B: skillId,
                 })),
               );
             }
@@ -428,28 +540,28 @@ export async function POST(request: Request) {
 
       if (Array.isArray(embeddings) && embeddings.length > 0) {
         const allowedProjectIds = new Set(
-          sections.has("projects")
+          includeProjects
             ? ((projects as any[]) ?? [])
                 .map((p) => p.id)
                 .filter((id) => typeof id === "string")
             : [],
         );
         const allowedBlogIds = new Set(
-          sections.has("blogs")
+          includeBlogs
             ? ((blogs as any[]) ?? [])
                 .map((b) => b.id)
                 .filter((id) => typeof id === "string")
             : [],
         );
         const allowedExperienceIds = new Set(
-          sections.has("experiences")
+          includeExperiences
             ? ((experiences as any[]) ?? [])
                 .map((e) => e.id)
                 .filter((id) => typeof id === "string")
             : [],
         );
         const profileId =
-          sections.has("profile") && profile && typeof (profile as any).id === "string"
+          includeProfile && profile && typeof (profile as any).id === "string"
             ? (profile as any).id
             : null;
 
@@ -528,11 +640,11 @@ export async function POST(request: Request) {
       // Build allowed object name set from selected sections
       const allowedAssets = new Set<string>();
 
-      if (sections.has("profile") && profile?.avatar) {
+      if (includeProfile && profile?.avatar) {
         const name = getObjectName(profile.avatar);
         if (name) allowedAssets.add(name);
       }
-      if (sections.has("projects")) {
+      if (includeProjects) {
         for (const p of (projects as any[]) ?? []) {
           const cover = getObjectName(p.coverImage);
           if (cover) allowedAssets.add(cover);
@@ -542,13 +654,13 @@ export async function POST(request: Request) {
           }
         }
       }
-      if (sections.has("blogs")) {
+      if (includeBlogs) {
         for (const b of (blogs as any[]) ?? []) {
           const cover = getObjectName(b.coverImage);
           if (cover) allowedAssets.add(cover);
         }
       }
-      if (sections.has("skills")) {
+      if (includeSkills) {
         for (const s of (skills as any[]) ?? []) {
           if (s.icon?.startsWith("http")) {
             const name = getObjectName(s.icon);
@@ -556,7 +668,7 @@ export async function POST(request: Request) {
           }
         }
       }
-      if (sections.has("experiences")) {
+      if (includeExperiences) {
         for (const e of (experiences as any[]) ?? []) {
           const name = getObjectName(e.logo);
           if (name) allowedAssets.add(name);

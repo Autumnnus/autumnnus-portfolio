@@ -26,7 +26,63 @@ export async function POST(request: Request) {
     const jsonContent = await dataFile.async("string");
     const parsed = JSON.parse(jsonContent);
     const { timestamp, data } = parsed;
-    const { projects, blogs, profile, experiences, skills } = data ?? {};
+    const { projects, blogs, profile, experiences, skills, categories, embeddings } =
+      data ?? {};
+
+    const projectIds = new Set(
+      (projects ?? [])
+        .map((p: any) => p?.id)
+        .filter((id: unknown): id is string => typeof id === "string"),
+    );
+    const blogIds = new Set(
+      (blogs ?? [])
+        .map((b: any) => b?.id)
+        .filter((id: unknown): id is string => typeof id === "string"),
+    );
+    const experienceIds = new Set(
+      (experiences ?? [])
+        .map((e: any) => e?.id)
+        .filter((id: unknown): id is string => typeof id === "string"),
+    );
+    const profileId = typeof profile?.id === "string" ? profile.id : null;
+
+    const projectTranslationCount = (projects ?? []).reduce(
+      (acc: number, p: any) => acc + (p?.translations?.length ?? 0),
+      0,
+    );
+    const blogTranslationCount = (blogs ?? []).reduce(
+      (acc: number, b: any) => acc + (b?.translations?.length ?? 0),
+      0,
+    );
+    const experienceTranslationCount = (experiences ?? []).reduce(
+      (acc: number, e: any) => acc + (e?.translations?.length ?? 0),
+      0,
+    );
+    const projectTechRelationCount = (projects ?? []).reduce(
+      (acc: number, p: any) => acc + (p?.technologies?.length ?? 0),
+      0,
+    );
+    const totalSkillRelations = projectTechRelationCount;
+
+    const projectCategoryCount = (categories ?? []).filter(
+      (c: any) => c?.type === "project",
+    ).length;
+    const blogCategoryCount = (categories ?? []).filter(
+      (c: any) => c?.type === "blog",
+    ).length;
+
+    const projectEmbeddingCount = (embeddings ?? []).filter(
+      (e: any) => e?.sourceType === "project" && projectIds.has(e?.sourceId),
+    ).length;
+    const blogEmbeddingCount = (embeddings ?? []).filter(
+      (e: any) => e?.sourceType === "blog" && blogIds.has(e?.sourceId),
+    ).length;
+    const experienceEmbeddingCount = (embeddings ?? []).filter(
+      (e: any) => e?.sourceType === "experience" && experienceIds.has(e?.sourceId),
+    ).length;
+    const profileEmbeddingCount = (embeddings ?? []).filter(
+      (e: any) => e?.sourceType === "profile" && profileId === e?.sourceId,
+    ).length;
 
     let assetCount = 0;
     zip.folder("assets")?.forEach((_, f) => {
@@ -37,6 +93,10 @@ export async function POST(request: Request) {
       timestamp,
       projects: {
         count: projects?.length ?? 0,
+        translationCount: projectTranslationCount,
+        categoryCount: projectCategoryCount,
+        techRelationCount: projectTechRelationCount,
+        embeddingCount: projectEmbeddingCount,
         items: (projects ?? [])
           .map((p: any) => {
             const t =
@@ -48,6 +108,9 @@ export async function POST(request: Request) {
       },
       blogs: {
         count: blogs?.length ?? 0,
+        translationCount: blogTranslationCount,
+        categoryCount: blogCategoryCount,
+        embeddingCount: blogEmbeddingCount,
         items: (blogs ?? [])
           .map((b: any) => {
             const t =
@@ -59,14 +122,19 @@ export async function POST(request: Request) {
       },
       skills: {
         count: skills?.length ?? 0,
+        usedInProjects: totalSkillRelations,
         items: (skills ?? []).map((s: any) => s.name).slice(0, 12),
       },
       experiences: {
         count: experiences?.length ?? 0,
+        translationCount: experienceTranslationCount,
+        embeddingCount: experienceEmbeddingCount,
         items: (experiences ?? []).map((e: any) => e.company).slice(0, 8),
       },
       profile: {
         exists: !!profile,
+        translationCount: profile?.translations?.length ?? 0,
+        embeddingCount: profileEmbeddingCount,
         name:
           profile?.translations?.find((t: any) => t.language === "en")?.name ||
           profile?.translations?.[0]?.name,
