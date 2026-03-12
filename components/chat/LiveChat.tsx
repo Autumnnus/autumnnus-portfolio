@@ -411,7 +411,7 @@ export default function LiveChat() {
             transition={{ duration: 0.2 }}
             className="fixed z-50 flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl ring-1 ring-black/5 dark:ring-white/5
                        bottom-24 inset-x-4 h-[500px] max-h-[calc(100vh-120px)]
-                       sm:left-auto sm:right-8 sm:w-[380px] sm:h-[600px]"
+                       sm:left-auto sm:right-8 sm:w-[460px] sm:h-[600px]"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border/50 bg-muted/30 backdrop-blur-md">

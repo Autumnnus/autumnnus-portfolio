@@ -17,7 +17,10 @@ import {
   selectGeminiRuntimeCandidate,
   type GeminiRuntimeCandidate,
 } from "@/lib/ai/api-key-pool";
-import { resolveGeminiRateLimit } from "@/lib/ai/gemini-rate-limit";
+import {
+  isGeminiTemporaryUnavailable,
+  resolveGeminiRateLimit,
+} from "@/lib/ai/gemini-rate-limit";
 
 const clientCache = new Map<string, GoogleGenerativeAI>();
 
@@ -101,6 +104,7 @@ export async function withGeminiModel<T>(
 
   const blockedUntilByQuotaGroup = await getQuotaGroupBlockMap(candidates);
   const excludedQuotaGroups = new Set<string>();
+  let lastTemporaryUnavailableError: unknown = null;
 
   while (true) {
     const selection = selectGeminiRuntimeCandidate(
@@ -110,6 +114,9 @@ export async function withGeminiModel<T>(
     );
 
     if (!selection.key) {
+      if (lastTemporaryUnavailableError) {
+        throw lastTemporaryUnavailableError;
+      }
       throw new GeminiApiKeyPoolExhaustedError(selection.nextAvailableAt);
     }
 
@@ -144,26 +151,33 @@ export async function withGeminiModel<T>(
         },
       );
       const rateLimit = resolveGeminiRateLimit(error);
-      if (!rateLimit?.isRateLimited) {
-        throw error;
+      if (rateLimit?.isRateLimited) {
+        blockedUntilByQuotaGroup.set(candidate.quotaGroup, rateLimit.blockedUntil);
+        excludedQuotaGroups.add(candidate.quotaGroup);
+        await runRuntimeTracking(
+          () =>
+            blockGeminiQuotaGroup({
+              quotaGroup: candidate.quotaGroup,
+              blockReason: rateLimit.blockReason,
+              blockedUntil: rateLimit.blockedUntil,
+              retryAfterSeconds: rateLimit.retryAfterSeconds,
+            }),
+          {
+            step: "quota-block",
+            keyId: candidate.id,
+            quotaGroup: candidate.quotaGroup,
+          },
+        );
+        continue;
       }
 
-      blockedUntilByQuotaGroup.set(candidate.quotaGroup, rateLimit.blockedUntil);
-      excludedQuotaGroups.add(candidate.quotaGroup);
-      await runRuntimeTracking(
-        () =>
-          blockGeminiQuotaGroup({
-            quotaGroup: candidate.quotaGroup,
-            blockReason: rateLimit.blockReason,
-            blockedUntil: rateLimit.blockedUntil,
-            retryAfterSeconds: rateLimit.retryAfterSeconds,
-          }),
-        {
-          step: "quota-block",
-          keyId: candidate.id,
-          quotaGroup: candidate.quotaGroup,
-        },
-      );
+      if (isGeminiTemporaryUnavailable(error)) {
+        lastTemporaryUnavailableError = error;
+        excludedQuotaGroups.add(candidate.quotaGroup);
+        continue;
+      }
+
+      throw error;
     }
   }
 }

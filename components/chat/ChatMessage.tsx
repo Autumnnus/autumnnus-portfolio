@@ -24,9 +24,27 @@ interface ChatMessageProps {
   aiImage?: string;
 }
 
+function isGeminiTemporaryErrorMessage(content: string) {
+  const text = content.toLowerCase();
+  return (
+    (text.includes("[googlegenerativeai error]") ||
+      text.includes("generativelanguage.googleapis.com") ||
+      text.includes("gemini")) &&
+    (text.includes("503") ||
+      text.includes("service unavailable") ||
+      text.includes("high demand") ||
+      text.includes("try again later"))
+  );
+}
+
 export function ChatMessage({ message, userImage, aiImage }: ChatMessageProps) {
   const isUser = message.role === "user";
   const avatarImage = isUser ? userImage : aiImage;
+  const isGeminiTemporaryError =
+    !isUser && isGeminiTemporaryErrorMessage(message.content);
+  const renderedContent = isGeminiTemporaryError
+    ? "Gemini su an yogun (503). Lutfen biraz sonra tekrar deneyin."
+    : message.content;
 
   return (
     <motion.div
@@ -65,12 +83,26 @@ export function ChatMessage({ message, userImage, aiImage }: ChatMessageProps) {
         className={cn(
           "flex flex-col gap-1 rounded-2xl px-4 py-2.5 text-sm shadow-sm transition-colors",
           isUser
-            ? "max-w-[85%] bg-primary text-primary-foreground rounded-tr-sm"
-            : "max-w-[85%] bg-muted/80 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm shadow-inner",
+            ? "max-w-[78%] bg-primary text-primary-foreground rounded-tr-sm"
+            : isGeminiTemporaryError
+              ? "max-w-[72%] px-3 py-2 text-xs bg-red-50/95 border border-red-200 text-red-700 rounded-tl-sm shadow-inner dark:bg-red-950/40 dark:border-red-900 dark:text-red-300"
+              : "max-w-[78%] bg-muted/80 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm shadow-inner",
         )}
       >
-        <div className="prose prose-sm dark:prose-invert break-words max-w-none prose-p:leading-relaxed prose-pre:bg-black/10 dark:prose-pre:bg-white/10 prose-pre:rounded-lg">
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+        <div
+          className={cn(
+            "break-words max-w-none",
+            isGeminiTemporaryError
+              ? "leading-relaxed font-medium"
+              : "prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:bg-black/10 dark:prose-pre:bg-white/10 prose-pre:rounded-lg",
+          )}
+          title={isGeminiTemporaryError ? message.content : undefined}
+        >
+          {isGeminiTemporaryError ? (
+            renderedContent
+          ) : (
+            <ReactMarkdown>{renderedContent}</ReactMarkdown>
+          )}
         </div>
 
         {!isUser && message.sources && message.sources.length > 0 && (

@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getNextPacificMidnight, resolveGeminiRateLimit } from "@/lib/ai/gemini-rate-limit";
+import {
+  getNextPacificMidnight,
+  isGeminiTemporaryUnavailable,
+  resolveGeminiRateLimit,
+} from "@/lib/ai/gemini-rate-limit";
 import {
   selectAvailableApiKey,
   sortSelectableApiKeys,
@@ -160,4 +164,20 @@ test("returns null for non-rate-limit errors", () => {
   });
 
   assert.equal(result, null);
+});
+
+test("treats 503 high-demand errors as temporary availability issues, not quota blocks", () => {
+  const error = {
+    status: 503,
+    message: "This model is currently experiencing high demand. Please try again later.",
+    errorDetails: [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        reason: "RESOURCE_EXHAUSTED",
+      },
+    ],
+  };
+
+  assert.equal(isGeminiTemporaryUnavailable(error), true);
+  assert.equal(resolveGeminiRateLimit(error), null);
 });

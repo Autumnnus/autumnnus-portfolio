@@ -9,6 +9,19 @@ export interface GeminiRateLimitResolution {
   retryAfterSeconds: number;
 }
 
+export function isGeminiTemporaryUnavailable(error: unknown) {
+  const status = extractStatus(error);
+  const details = extractErrorDetails(error);
+  const context = getErrorContext(error, details);
+
+  return (
+    status === 503 ||
+    context.includes("service unavailable") ||
+    context.includes("high demand") ||
+    context.includes("try again later")
+  );
+}
+
 function extractStatus(error: unknown) {
   if (typeof error !== "object" || !error) {
     return undefined;
@@ -119,6 +132,10 @@ export function resolveGeminiRateLimit(
   error: unknown,
   now: Date = new Date(),
 ): GeminiRateLimitResolution | null {
+  if (isGeminiTemporaryUnavailable(error)) {
+    return null;
+  }
+
   const status = extractStatus(error);
   const details = extractErrorDetails(error);
   const context = getErrorContext(error, details);
