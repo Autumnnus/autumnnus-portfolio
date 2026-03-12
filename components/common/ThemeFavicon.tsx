@@ -14,13 +14,11 @@ export function ThemeFavicon() {
   useEffect(() => {
     const activeTheme = resolvedTheme || "light";
     const href = activeTheme === "dark" ? THEME_FAVICONS.dark : THEME_FAVICONS.light;
-    const attribute = "data-theme-favicon";
-    let faviconLink = document.head.querySelector<HTMLLinkElement>(`link[${attribute}]`);
+    let faviconLink = document.head.querySelector<HTMLLinkElement>("link[rel~='icon']");
 
     if (!faviconLink) {
       faviconLink = document.createElement("link");
       faviconLink.setAttribute("rel", "icon");
-      faviconLink.setAttribute(attribute, "true");
       document.head.appendChild(faviconLink);
     }
 
