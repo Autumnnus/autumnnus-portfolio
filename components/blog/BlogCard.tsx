@@ -7,7 +7,6 @@ import { ArrowRight, Calendar, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 interface BlogCardProps {
   post: BlogPost;
@@ -17,13 +16,6 @@ interface BlogCardProps {
 export default function BlogCard({ post, index = 0 }: BlogCardProps) {
   const t = useTranslations("Common");
   const bT = useTranslations("Blog");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
 
   return (
     <motion.div
@@ -42,7 +34,9 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
               src={post.coverImage}
               alt={post.title}
               fill
-              unoptimized
+              sizes="(max-width: 768px) 100vw, 50vw"
+              quality={75}
+              priority={index < 2}
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
