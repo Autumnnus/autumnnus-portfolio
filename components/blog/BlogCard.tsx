@@ -34,9 +34,7 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
               src={post.coverImage}
               alt={post.title}
               fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              quality={75}
-              priority={index < 2}
+              unoptimized
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
