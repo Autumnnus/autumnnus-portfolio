@@ -15,7 +15,7 @@ export default function FeaturedBlogs({ posts }: FeaturedBlogsProps) {
   const featuredPosts = posts.slice(0, 2);
 
   return (
-    <section className="py-12" id="blog">
+    <section className="py-12 relative z-10" id="blog">
       <SectionHeading subHeading={t("viewAll")} heading={t("title")} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

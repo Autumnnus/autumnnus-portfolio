@@ -106,7 +106,7 @@ export default function GitHubCalendar({
   const colorScheme = resolvedTheme === "dark" ? "dark" : "light";
 
   return (
-    <section id="github" className="py-12">
+    <section id="github" className="py-12 relative z-10">
       <SectionHeading
         subHeading={t("GitHub.subTitle")}
         heading={t("GitHub.title")}
