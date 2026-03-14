@@ -37,7 +37,8 @@ export default function WorkCard({ experience }: WorkCardProps) {
         <div className="inline-flex items-center justify-center overflow-hidden w-12 h-12 sm:w-14 sm:h-14 rounded bg-secondary/20 pixel-border-sm relative">
           <Image
             src={logo}
-            alt={company}
+            alt={`${company} - ${role}`}
+            title={`${company} - ${role}`}
             fill
             className="object-contain p-2"
             unoptimized

@@ -25,6 +25,7 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
     >
       <Link
         href={`/blog/${post.slug || "#"}`}
+        title={post.title}
         className="group block bg-card hover:bg-card/80 border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
       >
         {/* Cover Image */}
@@ -33,6 +34,7 @@ export default function BlogCard({ post, index = 0 }: BlogCardProps) {
             <Image
               src={post.coverImage}
               alt={post.title}
+              title={post.title}
               fill
               unoptimized
               className="object-cover transition-transform duration-300 group-hover:scale-105"

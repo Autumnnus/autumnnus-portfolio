@@ -69,6 +69,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
             <Image
               src={project.coverImage}
               alt={project.title}
+              title={project.title}
               fill
               unoptimized
               className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
@@ -182,6 +183,7 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
 
           <Link
             href={`/projects/${project.slug}`}
+            title={project.title}
             className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
           >
             {t("details")}
