@@ -5,7 +5,7 @@ export const PROJECT_SORT_OPTIONS = [
   "status",
 ] as const;
 export type ProjectSort = (typeof PROJECT_SORT_OPTIONS)[number];
-export const DEFAULT_PROJECT_SORT: ProjectSort = "recent";
+export const DEFAULT_PROJECT_SORT: ProjectSort = "featured";
 
 export function ensureProjectSort(value?: string): ProjectSort {
   if (PROJECT_SORT_OPTIONS.some((option) => option === value)) {
@@ -16,7 +16,7 @@ export function ensureProjectSort(value?: string): ProjectSort {
 
 export const BLOG_SORT_OPTIONS = ["recent", "oldest", "featured"] as const;
 export type BlogSort = (typeof BLOG_SORT_OPTIONS)[number];
-export const DEFAULT_BLOG_SORT: BlogSort = "recent";
+export const DEFAULT_BLOG_SORT: BlogSort = "featured";
 
 export function ensureBlogSort(value?: string): BlogSort {
   if (BLOG_SORT_OPTIONS.some((option) => option === value)) {
