@@ -1,10 +1,11 @@
 "use client";
 
 import Icon from "@/components/common/Icon";
+import { formatDate } from "@/lib/utils";
 import { Project } from "@/types/contents";
 import { motion } from "framer-motion";
-import { ExternalLink, Github } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { Calendar, ExternalLink, Github } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,6 +17,7 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   const t = useTranslations("Common");
+  const locale = useLocale();
   const tProjects = useTranslations("Projects");
   const getStatusColor = (status: Project["status"]) => {
     switch (status) {
@@ -189,6 +191,14 @@ export default function ProjectCard({ project, index = 0 }: ProjectCardProps) {
             {t("details")}
             <span>→</span>
           </Link>
+        </div>
+
+        {/* Dates */}
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground/70 pt-1">
+          <span className="flex items-center gap-1">
+            <Calendar size={11} />
+            {formatDate(project.createdAt, undefined, locale)}
+          </span>
         </div>
       </div>
     </motion.div>

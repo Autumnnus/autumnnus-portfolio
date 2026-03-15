@@ -54,6 +54,7 @@ export const ProjectSchema = z.object({
     ),
 
   technologies: z.array(z.string()),
+  createdAt: z.string().optional(),
 });
 
 export type ProjectFormValues = z.infer<typeof ProjectSchema>;

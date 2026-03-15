@@ -1,18 +1,27 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { aiChatMessage, aiChatSession, chatRateLimit } from "@/lib/db/schema";
+import {
+  executeToolCall,
+  extractSourcesFromToolResults,
+  portfolioTools,
+} from "@/lib/ai/tools";
 import { generateEmbedding } from "@/lib/embeddings";
-import { generateGeminiContent } from "@/lib/gemini";
+import {
+  generateGeminiContent,
+  generateGeminiContentWithToolLoop,
+} from "@/lib/gemini";
 import { type EmbeddingResult, searchSimilar } from "@/lib/vectordb";
+import { FunctionCallingMode } from "@google/generative-ai";
 import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 const RATE_LIMIT_DAILY = 20;
 const HISTORY_LIMIT = 12;
-const SEARCH_RESULT_LIMIT = 10;
-const SEARCH_DISTANCE_THRESHOLD = 0.58;
+const SEARCH_RESULT_LIMIT = 7;
+const SEARCH_DISTANCE_THRESHOLD = 0.5;
 const PORTFOLIO_UPGRADE_THRESHOLD = 0.67;
-const SOURCE_DISPLAY_THRESHOLD = 0.58;
+const SOURCE_DISPLAY_THRESHOLD = 0.65;
 
 export interface HistorySourceItem {
   sourceType: "project" | "blog" | "profile" | "experience";
@@ -379,6 +388,28 @@ function getSourceSimilarity(
   sourceId: string,
 ): number {
   return groups.get(getSourceKey(sourceType, sourceId))?.maxSimilarity ?? 0;
+}
+
+function summarizeToolResult(name: string, result: object): string {
+  const data = result as Record<string, unknown>;
+
+  if ("error" in data) {
+    return `error: ${data.error}`;
+  }
+
+  if ("count" in data && typeof data.count === "number") {
+    return `${data.count} items`;
+  }
+
+  if ("title" in data) {
+    return `found: ${data.title}`;
+  }
+
+  if ("name" in data) {
+    return `found: ${data.name}`;
+  }
+
+  return `ok (${name})`;
 }
 
 function responseMentionsSource(response: string, source: SourceItem): boolean {
@@ -882,7 +913,9 @@ Return JSON only in this format:
         "The user asked a question unrelated to Kadir's portfolio. Politely explain that you are specialized in Kadir's portfolio, projects, blog posts, and professional background. Decline off-topic requests.";
     }
 
-    const systemPrompt = `You are AutumnAI, an intelligent assistant embedded in Kadir's portfolio website.
+    const lang = locale === "tr" ? "tr" : "en";
+
+    const systemPromptText = `You are AutumnAI, an intelligent assistant embedded in Kadir's portfolio website.
 
 ROLE:
 - You answer questions about Kadir's portfolio, projects, blog posts, work experience, profile, and related technologies that appear in the portfolio.
@@ -897,6 +930,20 @@ NON-NEGOTIABLE RULES:
 - Use Markdown.
 - When you mention a project or blog post that is directly relevant and present in the context, naturally include a markdown link using its PORTFOLIO URL.
 - Do not force links for profile/work experience answers unless a project or blog post is directly relevant.
+
+FOCUS AND PRECISION (CRITICAL):
+- Answer ONLY what the user explicitly asked. Do not volunteer extra information, related topics, or details the user did not request.
+- The PORTFOLIO CONTEXT may contain multiple types of information (projects, experience, profile, blog). Use ONLY the parts that directly answer the user's specific question. Ignore all other context blocks.
+- If the user asks a simple factual question (e.g., "Where does Kadir work?"), give a concise, direct answer. Do not expand with responsibilities, technologies, or other topics unless the user asks for them.
+- Never list or mention projects, blog posts, or other portfolio items as supplementary information just because they appear in the context. Only mention them if the user's question is specifically about them.
+- Match your answer scope to the question scope: a one-sentence question deserves a focused answer, not a comprehensive overview.
+
+TOOL USAGE RULES:
+- You have access to database query tools. Use them for STRUCTURED or AGGREGATE questions: counting items, listing/filtering items, getting specific record details, or comprehensive lists.
+- When you call a tool, base your answer ENTIRELY on the tool result. Do NOT mix tool results with PORTFOLIO CONTEXT.
+- For DESCRIPTIVE or SEMANTIC questions (e.g., "What is project X about?", "Tell me about Kadir's experience with React"), prefer the PORTFOLIO CONTEXT which contains rich descriptions and excerpts.
+- Do NOT call tools if the PORTFOLIO CONTEXT already answers the question adequately.
+- Always pass the language parameter as "${lang}" to tools.
 
 ANSWER LANGUAGE:
 - ${locale === "tr" ? "Turkish (Turkce)" : "English"}
@@ -915,31 +962,106 @@ ${intentInstructions ? `CURRENT INTENT INSTRUCTIONS:\n${intentInstructions}\n` :
 USER QUESTION:
 ${trimmedMessage}`;
 
-    const result = await generateGeminiContent(
-      "gemini-2.5-flash-lite",
-      systemPrompt,
-    );
-    const response = result.response.text();
-    const usageMetadata = result.response.usageMetadata ?? null;
+    let response: string;
+    let usageMetadata: object | null;
+    let relevantSources: SourceItem[];
+    let toolCallsLog: { name: string; args: unknown; resultSummary: string }[] = [];
+    let answerPath: "tool" | "rag" | "simple" = "simple";
 
-    const relevantSources = dedupeSources(
-      sources.filter(
-        (source) =>
-          (source.sourceType === "project" || source.sourceType === "blog") &&
-          (source.similarity >= SOURCE_DISPLAY_THRESHOLD ||
-            responseMentionsSource(response, source)),
-      ),
-    )
-      .sort((left, right) => right.similarity - left.similarity)
-      .slice(0, 3);
+    if (intentData.intent === "portfolio_query") {
+      const toolLoopResult = await generateGeminiContentWithToolLoop(
+        "gemini-2.5-flash-lite",
+        {
+          systemInstruction: { role: "user" as const, parts: [{ text: systemPromptText }] },
+          contents: [{ role: "user" as const, parts: [{ text: trimmedMessage }] }],
+          tools: [portfolioTools],
+          toolConfig: {
+            functionCallingConfig: { mode: FunctionCallingMode.AUTO },
+          },
+        },
+        executeToolCall,
+      );
+
+      response = toolLoopResult.contentResult.response.text();
+      usageMetadata = toolLoopResult.contentResult.response.usageMetadata ?? null;
+
+      if (toolLoopResult.toolCalls.length > 0) {
+        answerPath = "tool";
+        toolCallsLog = toolLoopResult.toolCalls.map((tc) => ({
+          name: tc.name,
+          args: tc.response && typeof tc.response === "object" && "error" in tc.response
+            ? tc.response
+            : undefined,
+          resultSummary: summarizeToolResult(tc.name, tc.response),
+        }));
+        const toolSources = extractSourcesFromToolResults(
+          toolLoopResult.toolCalls,
+          lang,
+        );
+        relevantSources = dedupeSources(
+          toolSources.filter(
+            (source) =>
+              (source.sourceType === "project" ||
+                source.sourceType === "blog") &&
+              responseMentionsSource(response, source),
+          ),
+        ).slice(0, 3);
+      } else {
+        answerPath = "rag";
+        relevantSources = dedupeSources(
+          sources.filter(
+            (source) =>
+              (source.sourceType === "project" ||
+                source.sourceType === "blog") &&
+              (source.similarity >= SOURCE_DISPLAY_THRESHOLD ||
+                responseMentionsSource(response, source)),
+          ),
+        )
+          .sort((left, right) => right.similarity - left.similarity)
+          .slice(0, 3);
+      }
+    } else {
+      const result = await generateGeminiContent(
+        "gemini-2.5-flash-lite",
+        systemPromptText,
+      );
+      response = result.response.text();
+      usageMetadata = result.response.usageMetadata ?? null;
+      relevantSources = [];
+    }
+
+    const ragChunksSummary =
+      intentData.intent === "portfolio_query" && shouldSearch
+        ? sources.map((s) => ({
+            type: s.sourceType,
+            title: s.title,
+            similarity: s.similarity,
+          }))
+        : [];
+
+    if (!response || response.trim() === "") {
+      console.warn("AutumnAI returned empty response", {
+        message: trimmedMessage,
+        intent: intentData.intent,
+        answerPath,
+        ragChunksCount: ragChunksSummary.length,
+        toolCalls: toolCallsLog,
+        usageMetadata,
+      });
+    }
 
     await db.insert(aiChatMessage).values({
       sessionId: sessionId!,
       role: "ai",
       content: response,
       metadata: {
-        systemPrompt,
+        systemPrompt: systemPromptText,
         usage: usageMetadata,
+        intent: intentData,
+        answerPath,
+        ragChunks: ragChunksSummary,
+        toolCalls: toolCallsLog.length > 0 ? toolCallsLog : undefined,
+        responseLength: response.length,
         sources: relevantSources.map(({ sourceType, title, url }) => ({
           sourceType,
           title,

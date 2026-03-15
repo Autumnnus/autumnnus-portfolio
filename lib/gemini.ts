@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  FunctionCallingMode,
   GoogleGenerativeAI,
   type EmbedContentRequest,
   type EmbedContentResponse,
@@ -187,6 +188,77 @@ export async function generateGeminiContent(
   input: string | GenerateContentRequest,
 ): Promise<GenerateContentResult> {
   return withGeminiModel(modelName, (model) => model.generateContent(input));
+}
+
+export interface ToolCallRecord {
+  name: string;
+  response: object;
+}
+
+export interface ToolLoopResult {
+  contentResult: GenerateContentResult;
+  toolCalls: ToolCallRecord[];
+}
+
+export async function generateGeminiContentWithToolLoop(
+  modelName: string,
+  request: GenerateContentRequest,
+  executeTool: (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<object>,
+  maxRounds = 3,
+): Promise<ToolLoopResult> {
+  let currentContents = [...request.contents];
+  const allToolCalls: ToolCallRecord[] = [];
+
+  for (let round = 0; round < maxRounds; round++) {
+    const result = await generateGeminiContent(modelName, {
+      ...request,
+      contents: currentContents,
+    });
+
+    const functionCalls = result.response.functionCalls();
+
+    if (!functionCalls || functionCalls.length === 0) {
+      return { contentResult: result, toolCalls: allToolCalls };
+    }
+
+    const functionResponses = await Promise.all(
+      functionCalls.map(async (fc) => {
+        const response = await executeTool(
+          fc.name,
+          (fc.args ?? {}) as Record<string, unknown>,
+        );
+        allToolCalls.push({ name: fc.name, response });
+        return {
+          functionResponse: { name: fc.name, response },
+        };
+      }),
+    );
+
+    currentContents = [
+      ...currentContents,
+      {
+        role: "model" as const,
+        parts: functionCalls.map((fc) => ({ functionCall: fc })),
+      },
+      {
+        role: "function" as const,
+        parts: functionResponses,
+      },
+    ];
+  }
+
+  const finalResult = await generateGeminiContent(modelName, {
+    ...request,
+    contents: currentContents,
+    toolConfig: {
+      functionCallingConfig: { mode: FunctionCallingMode.NONE },
+    },
+  });
+
+  return { contentResult: finalResult, toolCalls: allToolCalls };
 }
 
 export async function embedGeminiContent(

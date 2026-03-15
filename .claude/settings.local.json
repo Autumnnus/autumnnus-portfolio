@@ -4,7 +4,10 @@
       "Bash(cd /c/Software/autumnnus-portfolio && npx drizzle-kit generate 2>&1)",
       "Bash(xargs cat:*)",
       "Bash(grep:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run build)",
+      "Bash(npx drizzle-kit generate)",
+      "Bash(npx drizzle-kit migrate)"
     ]
   }
 }

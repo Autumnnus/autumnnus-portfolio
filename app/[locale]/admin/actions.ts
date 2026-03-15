@@ -54,6 +54,7 @@ export interface ProjectData {
   images: string[];
   translations: ProjectTranslationInput[];
   technologies: string[];
+  createdAt?: Date | null;
 }
 
 export interface BlogTranslationInput {
@@ -217,7 +218,7 @@ export async function createProjectAction(data: ProjectData) {
     throw new Error("Unauthorized");
   }
 
-  const { translations, technologies, images, ...projectData } = data;
+  const { translations, technologies, images, createdAt, ...projectData } = data;
 
   const existingProject = await db.query.project.findFirst({
     where: eq(project.slug, projectData.slug),
@@ -234,6 +235,7 @@ export async function createProjectAction(data: ProjectData) {
     .values({
       ...projectData,
       images,
+      ...(createdAt ? { createdAt } : {}),
     })
     .returning();
 
@@ -269,7 +271,7 @@ export async function updateProjectAction(id: string, data: ProjectData) {
     throw new Error("Unauthorized");
   }
 
-  const { translations, technologies, images, ...projectData } = data;
+  const { translations, technologies, images, createdAt, ...projectData } = data;
 
   const currentProject = await db.query.project.findFirst({
     where: eq(project.id, id),
@@ -296,6 +298,7 @@ export async function updateProjectAction(id: string, data: ProjectData) {
     .set({
       ...projectData,
       images,
+      ...(createdAt ? { createdAt } : {}),
     })
     .where(eq(project.id, id))
     .returning();
@@ -1190,6 +1193,8 @@ export async function fetchGithubReposAction() {
         html_url: string;
         homepage: string | null;
         language: string | null;
+        created_at: string | null;
+        pushed_at: string | null;
       }) => ({
         id: repo.id,
         name: repo.name,
@@ -1197,12 +1202,59 @@ export async function fetchGithubReposAction() {
         html_url: repo.html_url,
         homepage: repo.homepage,
         language: repo.language,
+        created_at: repo.created_at,
+        pushed_at: repo.pushed_at,
       }),
     );
   } catch (error) {
     console.error("Github repos fetch error:", error);
     throw new Error("GitHub istek hatası: " + (error as Error).message);
   }
+}
+
+export async function fetchGithubRepoByUrlAction(githubUrl: string) {
+  const session = await auth();
+  if (
+    !session?.user?.email ||
+    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  const accessToken = (session as { accessToken?: string }).accessToken;
+  if (!accessToken) {
+    throw new Error(
+      "GitHub erişim token'ı bulunamadı. Lütfen GitHub ile tekrar giriş yapın.",
+    );
+  }
+
+  // Parse owner/repo from URL like https://github.com/owner/repo
+  const match = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+  if (!match) throw new Error("Geçersiz GitHub URL'i.");
+
+  const [, owner, repo] = match;
+  const cleanRepo = repo.replace(/\.git$/, "");
+
+  const res = await fetch(
+    `https://api.github.com/repos/${owner}/${cleanRepo}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+      next: { revalidate: 0 },
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`GitHub repo alınamadı: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return {
+    created_at: data.created_at as string | null,
+    pushed_at: data.pushed_at as string | null,
+  };
 }
 
 export async function createSocialLinkAction(data: {

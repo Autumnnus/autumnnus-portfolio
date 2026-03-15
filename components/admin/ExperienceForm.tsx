@@ -105,7 +105,9 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
   useEffect(() => {
     setTargetLangs((prev) =>
-      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
+      prev.includes(sourceLang)
+        ? prev.filter((lang) => lang !== sourceLang)
+        : prev,
     );
   }, [sourceLang]);
 
@@ -335,10 +337,10 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
                 />
                 <button
                   type="button"
-                    onClick={() => {
-                      setLogo(null);
-                      setValue("logo", "", { shouldDirty: true });
-                    }}
+                  onClick={() => {
+                    setLogo(null);
+                    setValue("logo", "", { shouldDirty: true });
+                  }}
                   className="absolute top-3 right-3 p-2 bg-destructive/80 text-destructive-foreground rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110 hover:bg-destructive backdrop-blur-sm"
                 >
                   <X size={18} />

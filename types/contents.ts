@@ -81,6 +81,8 @@ export interface Project {
   github?: string | null;
   liveDemo?: string | null;
   featured?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface BlogPost {

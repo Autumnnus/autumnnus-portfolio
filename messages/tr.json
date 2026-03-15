@@ -439,6 +439,11 @@
       "questTitle": "Görev Başlığı"
     },
     "Form": {
+      "customDate": "Özel Tarih",
+      "githubDate": "GitHub Tarihi",
+      "createdAt": "Oluşturulma Tarihi",
+      "updatedAt": "Güncellenme Tarihi",
+      "isCover": "Kapak Görseli",
       "slug": "URL Uzantısı (Slug)",
       "clear": "Temizle",
       "contentError": "İçerik Hatası",

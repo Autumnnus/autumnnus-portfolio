@@ -4,6 +4,7 @@ import {
   createProjectAction,
   createSkillAction,
   deleteSkillAction,
+  fetchGithubRepoByUrlAction,
   fetchGithubReposAction,
   ProjectData,
   updateProjectAction,
@@ -29,6 +30,7 @@ import {
 import { ProjectFormValues, ProjectSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Calendar,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -142,10 +144,14 @@ export default function ProjectForm({
     html_url: string;
     homepage: string | null;
     language: string | null;
+    created_at: string | null;
+    pushed_at: string | null;
   }
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [isFetchingRepos, setIsFetchingRepos] = useState(false);
   const [showRepoModal, setShowRepoModal] = useState(false);
+  const [dateMode, setDateMode] = useState<"custom" | "github">("custom");
+  const [showRepoModalForDate, setShowRepoModalForDate] = useState(false);
 
   const handleFetchRepos = async () => {
     if (repos.length > 0) {
@@ -190,7 +196,13 @@ export default function ProjectForm({
       shouldDirty: true,
     });
 
+    if (repo.created_at) {
+      setValue("createdAt", repo.created_at.split("T")[0], {
+        shouldDirty: true,
+      });
+    }
     setShowRepoModal(false);
+    setShowRepoModalForDate(false);
   };
 
   const form = useForm<ProjectFormValues>({
@@ -208,6 +220,9 @@ export default function ProjectForm({
       images: initialData?.images || [],
       technologies: initialData?.technologies?.map((t) => t.id) || [],
       translations: initialTranslations,
+      createdAt: initialData?.createdAt
+        ? initialData.createdAt.toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
     },
   });
 
@@ -562,6 +577,7 @@ export default function ProjectForm({
       images: finalGalleryImages,
       translations: translationsArray,
       technologies: data.technologies,
+      createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
     };
 
     if (initialData?.id) {
@@ -636,7 +652,9 @@ export default function ProjectForm({
 
   useEffect(() => {
     setTargetLangs((prev) =>
-      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
+      prev.includes(sourceLang)
+        ? prev.filter((lang) => lang !== sourceLang)
+        : prev,
     );
   }, [sourceLang]);
 
@@ -715,27 +733,31 @@ export default function ProjectForm({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 p-4 sm:p-5 border border-border rounded-xl">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold">{t("githubRepos")}</h2>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">
-            {t("githubReposDesc")}
-          </p>
+      {!isEditingProject && (
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 p-4 sm:p-5 border border-border rounded-xl">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold">
+              {t("githubRepos")}
+            </h2>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              {t("githubReposDesc")}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleFetchRepos}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-all text-sm"
+            disabled={isFetchingRepos}
+          >
+            {isFetchingRepos ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <Github size={16} />
+            )}
+            {repos.length > 0 ? t("openRepos") : t("fetchRepos")}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleFetchRepos}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-all text-sm"
-          disabled={isFetchingRepos}
-        >
-          {isFetchingRepos ? (
-            <Loader2 className="animate-spin" size={16} />
-          ) : (
-            <Github size={16} />
-          )}
-          {repos.length > 0 ? t("openRepos") : t("fetchRepos")}
-        </button>
-      </div>
+      )}
 
       {showRepoModal && (
         <div className="fixed inset-0 z-60 bg-black/50 flex flex-col items-center justify-center p-2 sm:p-4 backdrop-blur-sm">
@@ -764,6 +786,57 @@ export default function ProjectForm({
                     <span className="text-[10px] text-muted-foreground bg-muted p-1 rounded font-normal">
                       {repo.language || "Unknown"}
                     </span>
+                  </div>
+                  {repo.description && (
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {repo.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRepoModalForDate && (
+        <div className="fixed inset-0 z-60 bg-black/50 flex flex-col items-center justify-center p-2 sm:p-4 backdrop-blur-sm">
+          <div className="bg-card w-full max-w-2xl max-h-[90vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-border">
+              <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
+                <Calendar size={20} /> {t("selectRepo") || "Repo Seç"} (
+                {repos.length})
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowRepoModalForDate(false)}
+                className="text-muted-foreground hover:text-foreground p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-2 sm:p-4 flex flex-col gap-2 sm:gap-3">
+              {repos.map((repo) => (
+                <div
+                  key={repo.id}
+                  className="p-3 sm:p-4 border border-border rounded-lg bg-muted/20 hover:bg-muted/50 hover:border-primary/50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    if (repo.created_at) {
+                      setValue("createdAt", repo.created_at.split("T")[0], {
+                        shouldDirty: true,
+                      });
+                    }
+                    setShowRepoModalForDate(false);
+                  }}
+                >
+                  <div className="font-bold text-primary flex flex-wrap justify-between items-center gap-2">
+                    <span className="text-sm sm:text-base">{repo.name}</span>
+                    {repo.created_at && (
+                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-1 rounded font-normal flex items-center gap-1">
+                        <Calendar size={10} />
+                        {new Date(repo.created_at).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                   {repo.description && (
                     <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -897,10 +970,10 @@ export default function ProjectForm({
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
                       type="button"
-                  onClick={() => {
-                    setCoverImage(null);
-                    setValue("coverImage", "", { shouldDirty: true });
-                  }}
+                      onClick={() => {
+                        setCoverImage(null);
+                        setValue("coverImage", "", { shouldDirty: true });
+                      }}
                       className="p-2 bg-red-500 rounded-full text-white shadow-lg transition-transform hover:scale-110"
                     >
                       <X size={20} />
@@ -996,6 +1069,99 @@ export default function ProjectForm({
               className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
               placeholder="https://..."
             />
+          </div>
+
+          {/* Dates Section */}
+          <div className="space-y-3 pt-4 border-t border-border/50">
+            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1 flex items-center gap-2">
+              <Calendar size={14} className="text-primary" />
+              {t("createdAt") || "Oluşturma Tarihi"}
+            </label>
+
+            {/* Mode toggle */}
+            <div className="flex rounded-xl overflow-hidden border border-border/50 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setDateMode("custom")}
+                className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 transition-colors ${
+                  dateMode === "custom"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <Calendar size={13} />
+                {t("customDate")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateMode("github")}
+                className={`flex-1 py-2.5 flex items-center justify-center gap-1.5 transition-colors ${
+                  dateMode === "github"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <Github size={13} />
+                GitHub
+              </button>
+            </div>
+
+            {dateMode === "custom" && (
+              <input
+                type="date"
+                {...register("createdAt")}
+                className="w-full p-3 bg-background rounded-xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
+              />
+            )}
+
+            {dateMode === "github" && (
+              <div className="space-y-2">
+                {githubValue?.trim() ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsFetchingRepos(true);
+                      try {
+                        const repoData = await fetchGithubRepoByUrlAction(
+                          githubValue.trim(),
+                        );
+                        if (repoData.created_at) {
+                          setValue(
+                            "createdAt",
+                            repoData.created_at.split("T")[0],
+                            { shouldDirty: true },
+                          );
+                          toast.success("GitHub tarihi alındı.");
+                        }
+                      } catch (err: unknown) {
+                        toast.error((err as Error).message);
+                      } finally {
+                        setIsFetchingRepos(false);
+                      }
+                    }}
+                    disabled={isFetchingRepos}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-3 text-sm bg-background rounded-xl border border-border/50 hover:border-primary/50 hover:bg-muted/50 transition-all font-medium"
+                  >
+                    {isFetchingRepos ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Github size={14} />
+                    )}
+                    GitHub&apos;dan tarihi al
+                  </button>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground px-1">
+                    Önce GitHub URL&apos;ini girin.
+                  </p>
+                )}
+                {watch("createdAt") && (
+                  <p className="text-[11px] text-muted-foreground px-1 flex items-center gap-1">
+                    <Calendar size={12} className="text-primary" />
+                    {watch("createdAt")}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-4 border-t border-border/50">
@@ -1416,145 +1582,155 @@ export default function ProjectForm({
                   type="project"
                   language={lang}
                   onSeoGenerated={(result) => {
-                  setValue(
-                    `translations.${lang}.title` as const,
-                    result.title,
-                    { shouldDirty: true },
-                  );
-                  if (result.shortDescription) {
                     setValue(
-                      `translations.${lang}.shortDescription` as const,
-                      result.shortDescription,
+                      `translations.${lang}.title` as const,
+                      result.title,
                       { shouldDirty: true },
                     );
-                  }
-                  if (result.metaTitle) {
-                    setValue(
-                      `translations.${lang}.metaTitle` as const,
-                      result.metaTitle,
-                      { shouldDirty: true },
-                    );
-                  }
-                  if (result.metaDescription) {
-                    setValue(
-                      `translations.${lang}.metaDescription` as const,
-                      result.metaDescription,
-                      { shouldDirty: true },
-                    );
-                  }
-                  if (result.keywords) {
-                    setValue(
-                      `translations.${lang}.keywords` as const,
-                      result.keywords,
-                      { shouldDirty: true },
-                    );
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
-                {t("title")}
-              </label>
-              <input
-                {...register(`translations.${lang}.title` as const)}
-                className="w-full p-4 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-lg"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
-                {t("shortDescription")}
-              </label>
-              <textarea
-                {...register(`translations.${lang}.shortDescription` as const)}
-                className="w-full p-4 bg-background rounded-2xl border border-border/50 h-32 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm leading-relaxed"
-                placeholder="..."
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1 flex items-center gap-2">
-                <FileText size={14} className="text-primary" />{" "}
-                {t("fullDescription")} (HTML)
-              </label>
-              <TipTapEditor
-                content={
-                  getValues(`translations.${lang}.fullDescription` as const) ||
-                  ""
-                }
-                onChange={(html) =>
-                  setValue(
-                    `translations.${lang}.fullDescription` as const,
-                    html,
-                    {
-                      shouldDirty: true,
-                    },
-                  )
-                }
-                uploadPath={`projects/${getValues("slug") || "temp"}`}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
-                Preview
-              </label>
-              <div className="rounded-2xl border border-border/50 bg-background/40 p-4">
-                <ContentRenderer
-                  content={
-                    watch(`translations.${lang}.fullDescription` as const) || ""
-                  }
+                    if (result.shortDescription) {
+                      setValue(
+                        `translations.${lang}.shortDescription` as const,
+                        result.shortDescription,
+                        { shouldDirty: true },
+                      );
+                    }
+                    if (result.metaTitle) {
+                      setValue(
+                        `translations.${lang}.metaTitle` as const,
+                        result.metaTitle,
+                        { shouldDirty: true },
+                      );
+                    }
+                    if (result.metaDescription) {
+                      setValue(
+                        `translations.${lang}.metaDescription` as const,
+                        result.metaDescription,
+                        { shouldDirty: true },
+                      );
+                    }
+                    if (result.keywords) {
+                      setValue(
+                        `translations.${lang}.keywords` as const,
+                        result.keywords,
+                        { shouldDirty: true },
+                      );
+                    }
+                  }}
                 />
               </div>
-            </div>
 
-            {/* SEO Meta Fields for Projects */}
-            <div className="space-y-4 pt-6 border-t border-border/50 mt-6">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
-                {t("seo")}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
-                    {t("metaTitle")}
-                  </label>
-                  <input
-                    {...register(`translations.${lang}.metaTitle` as const)}
-                    className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
-                    {t("keywords")}
-                  </label>
-                  <input
-                    onChange={(e) => {
-                      const tags = e.target.value
-                        .split(",")
-                        .map((t) => t.trim());
-                      setValue(`translations.${lang}.keywords` as const, tags, {
-                        shouldDirty: true,
-                      });
-                    }}
-                    value={keywordsString}
-                    className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
-                    placeholder="react, tailwind..."
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                  {t("title")}
+                </label>
+                <input
+                  {...register(`translations.${lang}.title` as const)}
+                  className="w-full p-4 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-lg"
+                />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
-                  {t("metaDescription")}
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                  {t("shortDescription")}
                 </label>
                 <textarea
-                  {...register(`translations.${lang}.metaDescription` as const)}
+                  {...register(
+                    `translations.${lang}.shortDescription` as const,
+                  )}
                   className="w-full p-4 bg-background rounded-2xl border border-border/50 h-32 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm leading-relaxed"
                   placeholder="..."
                 />
               </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1 flex items-center gap-2">
+                  <FileText size={14} className="text-primary" />{" "}
+                  {t("fullDescription")} (HTML)
+                </label>
+                <TipTapEditor
+                  content={
+                    getValues(
+                      `translations.${lang}.fullDescription` as const,
+                    ) || ""
+                  }
+                  onChange={(html) =>
+                    setValue(
+                      `translations.${lang}.fullDescription` as const,
+                      html,
+                      {
+                        shouldDirty: true,
+                      },
+                    )
+                  }
+                  uploadPath={`projects/${getValues("slug") || "temp"}`}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
+                  Preview
+                </label>
+                <div className="rounded-2xl border border-border/50 bg-background/40 p-4">
+                  <ContentRenderer
+                    content={
+                      watch(`translations.${lang}.fullDescription` as const) ||
+                      ""
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* SEO Meta Fields for Projects */}
+              <div className="space-y-4 pt-6 border-t border-border/50 mt-6">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  {t("seo")}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
+                      {t("metaTitle")}
+                    </label>
+                    <input
+                      {...register(`translations.${lang}.metaTitle` as const)}
+                      className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
+                      {t("keywords")}
+                    </label>
+                    <input
+                      onChange={(e) => {
+                        const tags = e.target.value
+                          .split(",")
+                          .map((t) => t.trim());
+                        setValue(
+                          `translations.${lang}.keywords` as const,
+                          tags,
+                          {
+                            shouldDirty: true,
+                          },
+                        );
+                      }}
+                      value={keywordsString}
+                      className="w-full p-3.5 bg-background rounded-2xl border border-border/50 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm"
+                      placeholder="react, tailwind..."
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">
+                    {t("metaDescription")}
+                  </label>
+                  <textarea
+                    {...register(
+                      `translations.${lang}.metaDescription` as const,
+                    )}
+                    className="w-full p-4 bg-background rounded-2xl border border-border/50 h-32 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm leading-relaxed"
+                    placeholder="..."
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        );
-      }}
+          );
+        }}
       </LanguageTabs>
 
       <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 z-40 px-4 sm:px-0 flex justify-center pointer-events-none">

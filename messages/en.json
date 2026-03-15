@@ -439,6 +439,11 @@
       "questTitle": "Quest Title"
     },
     "Form": {
+      "customDate": "Custom Date",
+      "githubDate": "GitHub Date",
+      "createdAt": "Created At",
+      "isCover": "Cover Image",
+      "updatedAt": "Updated At",
       "slug": "URL Slug",
       "clear": "Clear",
       "loadingEditor": "Loading editor...",
