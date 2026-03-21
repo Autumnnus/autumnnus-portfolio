@@ -1,12 +1,3 @@
-import { Metadata } from "next";
-import Container from "@/components/common/Container";
-import SeasonalEffects from "@/components/decorations/SeasonalEffects";
-import About from "@/components/landing/About";
-import FeaturedBlogs from "@/components/landing/FeaturedBlogs";
-import FeaturedProjects from "@/components/landing/FeaturedProjects";
-import GitHubCalendar from "@/components/landing/GitHubCalendar";
-import Hero from "@/components/landing/Hero";
-import WorkExperienceComponent from "@/components/landing/WorkExperience";
 import {
   getAboutStats,
   getBlogPosts,
@@ -16,18 +7,26 @@ import {
   getSocialLinks,
   getWorkExperiences,
 } from "@/app/actions";
+import Container from "@/components/common/Container";
 import SectionNav from "@/components/common/SectionNav";
+import SeasonalEffects from "@/components/decorations/SeasonalEffects";
+import About from "@/components/landing/About";
+import FeaturedBlogs from "@/components/landing/FeaturedBlogs";
+import FeaturedProjects from "@/components/landing/FeaturedProjects";
+import GitHubCalendar from "@/components/landing/GitHubCalendar";
+import Hero from "@/components/landing/Hero";
+import WorkExperienceComponent from "@/components/landing/WorkExperience";
 import { LanguageType as Language } from "@/lib/db/schema";
 import { BlogPost, Project, WorkExperience } from "@/types/contents";
+import { Metadata } from "next";
 
 interface HomeProps {
   params: Promise<{ locale: string }>;
 }
 
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com").replace(
-  /\/$/,
-  "",
-);
+const BASE_URL = (
+  process.env.NEXT_PUBLIC_APP_URL || "https://kadir-topcu.autumnnus.dev"
+).replace(/\/$/, "");
 
 const GLOBAL_KEYWORDS = [
   "full stack developer",

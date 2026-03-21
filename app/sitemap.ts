@@ -4,7 +4,8 @@ import { Language } from "@/lib/db/schema";
 import { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://kadir-topcu.autumnnus.dev";
   const locales = routing.locales;
 
   // Static routes

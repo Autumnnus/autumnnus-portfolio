@@ -445,7 +445,7 @@ export default function ProjectDetailView({
           author: {
             "@type": "Person",
             name: "Autumnnus",
-            url: "https://autumnnus.com",
+            url: "https://kadir-topcu.autumnnus.dev",
           },
           ...(project.coverImage ? { image: [project.coverImage] } : {}),
           ...(project.liveDemo ? { url: project.liveDemo } : {}),

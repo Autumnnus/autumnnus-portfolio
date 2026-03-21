@@ -179,7 +179,7 @@ export default function BlogPostView({
           author: {
             "@type": "Person",
             name: "Autumnnus",
-            url: "https://autumnnus.com",
+            url: "https://kadir-topcu.autumnnus.dev",
           },
         }}
       />

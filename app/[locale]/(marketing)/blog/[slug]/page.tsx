@@ -1,7 +1,4 @@
-import {
-  getBlogPostBySlug,
-  getSimilarBlogPosts,
-} from "@/app/actions";
+import { getBlogPostBySlug, getSimilarBlogPosts } from "@/app/actions";
 import BlogPostView from "@/components/blog/BlogPostView";
 import { LanguageType as Language } from "@/lib/db/schema";
 import { BlogPost } from "@/types/contents";
@@ -26,7 +23,8 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://kadir-topcu.autumnnus.dev";
   const url = `${baseUrl}/${locale}/blog/${slug}`;
   const ogImage = post.coverImage
     ? [{ url: post.coverImage, alt: post.title }]

@@ -1,7 +1,4 @@
-import {
-  getProjectBySlug,
-  getSimilarProjects,
-} from "@/app/actions";
+import { getProjectBySlug, getSimilarProjects } from "@/app/actions";
 import ProjectDetailView from "@/components/projects/ProjectDetailView";
 import { LanguageType as Language } from "@/lib/db/schema";
 import { Project } from "@/types/contents";
@@ -26,7 +23,8 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://kadir-topcu.autumnnus.dev";
   const url = `${baseUrl}/${locale}/projects/${slug}`;
   const ogImage = project.coverImage
     ? [{ url: project.coverImage, alt: project.title }]

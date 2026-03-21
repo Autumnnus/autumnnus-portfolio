@@ -1,15 +1,14 @@
+import { getProfile, getSocialLinks } from "@/app/actions";
 import LiveChat from "@/components/chat/LiveChat";
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { getProfile, getSocialLinks } from "@/app/actions";
 import { LanguageType as Language } from "@/lib/db/schema";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://autumnnus.com").replace(
-  /\/$/,
-  "",
-);
+const BASE_URL = (
+  process.env.NEXT_PUBLIC_APP_URL || "https://kadir-topcu.autumnnus.dev"
+).replace(/\/$/, "");
 
 export default async function MarketingLayout({
   children,
@@ -25,13 +24,13 @@ export default async function MarketingLayout({
     getSocialLinks(),
   ]);
   const profileUrl = `${BASE_URL}/${locale}`;
-  const socialUrls = (
-    [
-      profileData?.github,
-      profileData?.linkedin,
-      ...socialLinks.map((link) => link.href),
-    ].filter((value): value is string => Boolean(value))
-  ).map((value) => value.trim());
+  const socialUrls = [
+    profileData?.github,
+    profileData?.linkedin,
+    ...socialLinks.map((link) => link.href),
+  ]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => value.trim());
   const uniqueSocialUrls = Array.from(new Set(socialUrls));
   const heroImage =
     profileData?.avatar &&
@@ -41,28 +40,26 @@ export default async function MarketingLayout({
   const description =
     profileData?.description ||
     "Autumnnus is a pixel art themed full stack developer portfolio by Kadir.";
-  const graph = (
-    [
-      profileData && {
-        "@type": "Person",
-        name: profileData.name,
-        url: profileUrl,
-        image: heroImage,
-        jobTitle: profileData.title,
-        description,
-        email: profileData.email,
-        sameAs: uniqueSocialUrls.length ? uniqueSocialUrls : undefined,
-      },
-      {
-        "@type": "WebSite",
-        url: BASE_URL,
-        name: profileData?.title ?? "Autumnnus Portfolio",
-        description,
-        inLanguage: locale,
-        sameAs: uniqueSocialUrls.length ? uniqueSocialUrls : undefined,
-      },
-    ].filter(Boolean) as Record<string, unknown>[]
-  );
+  const graph = [
+    profileData && {
+      "@type": "Person",
+      name: profileData.name,
+      url: profileUrl,
+      image: heroImage,
+      jobTitle: profileData.title,
+      description,
+      email: profileData.email,
+      sameAs: uniqueSocialUrls.length ? uniqueSocialUrls : undefined,
+    },
+    {
+      "@type": "WebSite",
+      url: BASE_URL,
+      name: profileData?.title ?? "Autumnnus Portfolio",
+      description,
+      inLanguage: locale,
+      sameAs: uniqueSocialUrls.length ? uniqueSocialUrls : undefined,
+    },
+  ].filter(Boolean) as Record<string, unknown>[];
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": graph,
