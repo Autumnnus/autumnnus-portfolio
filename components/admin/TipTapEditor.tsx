@@ -5,6 +5,9 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import TableCell from "@tiptap/extension-table-cell";
+import TableHeader from "@tiptap/extension-table-header";
+import TableRow from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -26,6 +29,8 @@ import {
   Redo,
   Sparkles,
   Strikethrough,
+  Table2,
+  Trash2,
   Underline as UnderlineIcon,
   Undo,
 } from "lucide-react";
@@ -39,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Table } from "@tiptap/extension-table";
 import { toast } from "sonner";
 
 const lowlight = createLowlight(common);
@@ -98,7 +104,10 @@ function cleanHtmlForManualFormat(value: string) {
   );
 
   const parser = new DOMParser();
-  const parsedDocument = parser.parseFromString(htmlWithPlaceholders, "text/html");
+  const parsedDocument = parser.parseFromString(
+    htmlWithPlaceholders,
+    "text/html",
+  );
   const body = parsedDocument.body;
   let previousNodeWasSpacer = false;
 
@@ -181,6 +190,24 @@ export default function TipTapEditor({
           class: "text-primary underline",
         },
       }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: "border-collapse table-fixed w-full my-4",
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class:
+            "border border-border bg-muted/40 px-3 py-2 text-left align-top font-bold",
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: "border border-border px-3 py-2 align-top",
+        },
+      }),
       Placeholder.configure({
         placeholder,
       }),
@@ -198,47 +225,33 @@ export default function TipTapEditor({
 
   const editorDeps = useMemo(() => [placeholder], [placeholder]);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    shouldRerenderOnTransaction: false,
-    parseOptions: {
-      preserveWhitespace: "full",
-    },
-    extensions,
-    content: normalizedContent,
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      lastEditorHtmlRef.current = html;
-      pendingExternalContentRef.current = null;
-      onChangeRef.current(html);
-    },
-    onFocus: () => {
-      isEditorFocusedRef.current = true;
-    },
-    onBlur: ({ editor }) => {
-      isEditorFocusedRef.current = false;
-
-      const pendingContent = pendingExternalContentRef.current;
-      if (!pendingContent || pendingContent === lastEditorHtmlRef.current) {
+  const editor = useEditor(
+    {
+      immediatelyRender: false,
+      shouldRerenderOnTransaction: false,
+      parseOptions: {
+        preserveWhitespace: "full",
+      },
+      extensions,
+      content: normalizedContent,
+      onUpdate: ({ editor }) => {
+        const html = editor.getHTML();
+        lastEditorHtmlRef.current = html;
         pendingExternalContentRef.current = null;
-        return;
-      }
-
-      editor.commands.setContent(pendingContent, {
-        emitUpdate: false,
-        parseOptions: {
-          preserveWhitespace: "full",
-        },
-      });
-      const htmlAfterSet = editor.getHTML();
-      lastEditorHtmlRef.current = htmlAfterSet;
-      pendingExternalContentRef.current = null;
-      onChangeRef.current(htmlAfterSet);
+        onChangeRef.current(html);
+      },
+      onFocus: () => {
+        isEditorFocusedRef.current = true;
+      },
+      onBlur: () => {
+        isEditorFocusedRef.current = false;
+      },
+      editorProps: {
+        attributes: editorAttributes,
+      },
     },
-    editorProps: {
-      attributes: editorAttributes,
-    },
-  }, editorDeps);
+    editorDeps,
+  );
 
   useEffect(() => {
     if (!editor) return;
@@ -308,6 +321,20 @@ export default function TipTapEditor({
     const htmlAfterFormatting = editor.getHTML();
     lastEditorHtmlRef.current = htmlAfterFormatting;
     onChange(htmlAfterFormatting);
+  };
+
+  const insertTable = () => {
+    if (!editor) return;
+
+    editor
+      .chain()
+      .focus()
+      .insertTable({
+        rows: 3,
+        cols: 3,
+        withHeaderRow: true,
+      })
+      .run();
   };
 
   const setLink = () => {
@@ -503,6 +530,76 @@ export default function TipTapEditor({
           )}
         </button>
 
+        <button
+          type="button"
+          onClick={insertTable}
+          className={`p-2 rounded hover:bg-muted ${editor.isActive("table") ? "bg-muted" : ""}`}
+          title="Tablo ekle"
+        >
+          <Table2 size={18} />
+        </button>
+
+        {editor.isActive("table") && (
+          <div className="flex items-center gap-1 bg-muted/20 rounded-md px-1">
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              className="p-2 rounded hover:bg-muted"
+              title="Sütun önce ekle"
+            >
+              <span className="text-xs font-bold">+C</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              className="p-2 rounded hover:bg-muted"
+              title="Sütun sonra ekle"
+            >
+              <span className="text-xs font-bold">C+</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              className="p-2 rounded hover:bg-muted"
+              title="Satır önce ekle"
+            >
+              <span className="text-xs font-bold">+R</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              className="p-2 rounded hover:bg-muted"
+              title="Satır sonra ekle"
+            >
+              <span className="text-xs font-bold">R+</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().mergeCells().run()}
+              className="p-2 rounded hover:bg-muted"
+              title="Hücreleri birleştir"
+            >
+              <span className="text-xs font-bold">M</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().splitCell().run()}
+              className="p-2 rounded hover:bg-muted"
+              title="Hücreyi böl"
+            >
+              <span className="text-xs font-bold">S</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              className="p-2 rounded hover:bg-muted"
+              title="Tabloyu sil"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        )}
+
         <div className="w-px h-6 bg-border my-auto mx-1" />
 
         <button
@@ -621,6 +718,40 @@ export default function TipTapEditor({
           display: block !important;
           white-space: inherit !important;
           font-size: inherit !important;
+        }
+
+        .ProseMirror table {
+          border-collapse: collapse;
+          table-layout: fixed;
+          width: 100%;
+          margin: 1.25rem 0;
+          overflow: hidden;
+        }
+
+        .ProseMirror th,
+        .ProseMirror td {
+          border: 1px solid hsl(var(--border));
+          min-width: 1rem;
+          padding: 0.65rem 0.75rem;
+          vertical-align: top;
+          position: relative;
+        }
+
+        .ProseMirror th {
+          background: hsl(var(--muted) / 0.5);
+          font-weight: 700;
+        }
+
+        .ProseMirror .selectedCell:after {
+          background: hsl(var(--primary) / 0.12);
+          content: "";
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          pointer-events: none;
+          position: absolute;
+          z-index: 2;
         }
       `}</style>
     </div>
