@@ -430,8 +430,13 @@ html.lenis body {
   background-color: transparent !important;
 }
 
+.shiki .line {
+  background: transparent !important;
+}
+
 .shiki code {
   @apply font-mono;
+  background: transparent !important;
 }
 
 /* Custom scrollbar for code blocks */
