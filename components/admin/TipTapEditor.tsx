@@ -149,13 +149,16 @@ export default function TipTapEditor({
     [content],
   );
   const lastEditorHtmlRef = useRef<string>(normalizedContent);
+  const pendingExternalContentRef = useRef<string | null>(null);
+  const isEditorFocusedRef = useRef(false);
+  const onChangeRef = useRef(onChange);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    parseOptions: {
-      preserveWhitespace: "full",
-    },
-    extensions: [
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         codeBlock: false,
       }),
@@ -182,26 +185,69 @@ export default function TipTapEditor({
         placeholder,
       }),
     ],
+    [placeholder],
+  );
+
+  const editorAttributes = useMemo(
+    () => ({
+      class:
+        "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4",
+    }),
+    [],
+  );
+
+  const editorDeps = useMemo(() => [placeholder], [placeholder]);
+
+  const editor = useEditor({
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: false,
+    parseOptions: {
+      preserveWhitespace: "full",
+    },
+    extensions,
     content: normalizedContent,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       lastEditorHtmlRef.current = html;
-      onChange(html);
+      pendingExternalContentRef.current = null;
+      onChangeRef.current(html);
     },
-    onTransaction: () => {
-      setSelectionCounter((s) => s + 1);
+    onFocus: () => {
+      isEditorFocusedRef.current = true;
+    },
+    onBlur: ({ editor }) => {
+      isEditorFocusedRef.current = false;
+
+      const pendingContent = pendingExternalContentRef.current;
+      if (!pendingContent || pendingContent === lastEditorHtmlRef.current) {
+        pendingExternalContentRef.current = null;
+        return;
+      }
+
+      editor.commands.setContent(pendingContent, {
+        emitUpdate: false,
+        parseOptions: {
+          preserveWhitespace: "full",
+        },
+      });
+      const htmlAfterSet = editor.getHTML();
+      lastEditorHtmlRef.current = htmlAfterSet;
+      pendingExternalContentRef.current = null;
+      onChangeRef.current(htmlAfterSet);
     },
     editorProps: {
-      attributes: {
-        class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4",
-      },
+      attributes: editorAttributes,
     },
-  });
+  }, editorDeps);
 
   useEffect(() => {
     if (!editor) return;
     if (normalizedContent === lastEditorHtmlRef.current) return;
+
+    if (isEditorFocusedRef.current) {
+      pendingExternalContentRef.current = normalizedContent;
+      return;
+    }
 
     editor.commands.setContent(normalizedContent, {
       emitUpdate: false,
@@ -211,10 +257,8 @@ export default function TipTapEditor({
     });
     const htmlAfterSet = editor.getHTML();
     lastEditorHtmlRef.current = htmlAfterSet;
-    onChange(htmlAfterSet);
-  }, [editor, normalizedContent, onChange]);
-
-  const setSelectionCounter = useState(0)[1];
+    onChangeRef.current(htmlAfterSet);
+  }, [editor, normalizedContent]);
 
   const handleImageUpload = async () => {
     const input = document.createElement("input");
@@ -354,7 +398,6 @@ export default function TipTapEditor({
                     .focus()
                     .updateAttributes("codeBlock", { language: value })
                     .run();
-                  setSelectionCounter((s) => s + 1);
                 }}
               >
                 <SelectTrigger className="h-7 w-[110px] text-[10px] bg-transparent border-none ring-offset-0 focus:ring-0 px-2 uppercase font-bold tracking-tighter">
