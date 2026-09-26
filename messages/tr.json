@@ -88,7 +88,7 @@
         "hintAria": "Bir harf aç",
         "hidden": "Gizli kod",
         "riddles": {
-          "konami": "Eski oyuncuların sırrı: iki kez yukarı, iki kez aşağı, sonra iki harf.",
+          "konami": "Eski oyuncuların sırrı: iki kez yukarı, iki kez aşağı, sonra iki harf. Telefondaysan konsoldaki ok düğmelerini kullan.",
           "fireworks": "Bu sitenin sahibinin adını yaz, gökyüzü onun için patlasın.",
           "ufo": "Gökyüzünden gelir, hayvanları çok sever. Üç harf.",
           "weather": "Gökten düşer; sonbaharda sağanak, kışta tipi olur. Beş harf.",
@@ -286,8 +286,44 @@
     "thinking": "Düşünüyorum…",
     "disclaimer": "Yapay zekâ hata yapabilir — cevaplar kaynaklarını gösterir.",
     "nudge": {
-      "project": "Bu proje nasıl yapıldı merak ediyor musun? Bana sor.",
-      "post": "Bu yazının kısa bir özetini ister misin?"
+      "project": [
+        {
+          "text": "Bu proje nasıl yapıldı merak ediyor musun? Bana sor.",
+          "prompt": "Bu proje nasıl yapıldı? Teknoloji yığınını anlat."
+        },
+        {
+          "text": "Bu projenin hangi problemi çözdüğünü kısaca anlatayım mı?",
+          "prompt": "Bu proje hangi problemi çözüyor?"
+        },
+        {
+          "text": "Buna benzer başka projeleri de gösterebilirim.",
+          "prompt": "Buna benzer projeler var mı?"
+        }
+      ],
+      "post": [
+        {
+          "text": "Bu yazının kısa bir özetini ister misin?",
+          "prompt": "Bu yazıyı özetle"
+        },
+        {
+          "text": "Vaktin mi az? Bu yazıyı 3 maddede özetleyebilirim.",
+          "prompt": "Bu yazıyı 3 maddede özetle"
+        },
+        {
+          "text": "Yazıdan çıkarılacak ana dersleri listeleyeyim mi?",
+          "prompt": "Yazıdan çıkarılacak ana dersler neler?"
+        }
+      ],
+      "work": [
+        {
+          "text": "Kariyerini tek paragrafta özetleyebilirim.",
+          "prompt": "Kariyerini özetle"
+        },
+        {
+          "text": "Şu anki rolünde neler yaptığını merak ediyor musun?",
+          "prompt": "Şu anki rolünde neler yapıyor?"
+        }
+      ]
     },
     "suggestions": {
       "home": [

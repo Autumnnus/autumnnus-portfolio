@@ -12,7 +12,21 @@ import AutumnMascot from "./AutumnMascot";
 import ChatPanel, { type PageKind, type PanelView } from "./ChatPanel";
 
 const THREAD_KEY = "autumn.assistant.thread";
-const NUDGE_KEY = "autumn.assistant.nudged";
+const NUDGE_KEY = "autumn.assistant.nudges";
+/** Pages that get a nudge, and how many a visitor sees per session at most. */
+const NUDGE_KINDS = ["project", "post", "work"] as const;
+const NUDGE_LIMIT = 6;
+
+type Nudge = { text: string; prompt: string };
+
+function readNudged(): string[] {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(NUDGE_KEY) ?? "[]");
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
+}
 
 /**
  * The panel opens and closes with a pixel wipe: cells spill out of the
@@ -68,7 +82,7 @@ export default function AssistantWidget({
   const [mounted, setMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [nudge, setNudge] = useState<string | null>(null);
+  const [nudge, setNudge] = useState<Nudge | null>(null);
   const [initialPrompt, setInitialPrompt] = useState<string | null>(null);
   const [view, setView] = useState<PanelView>("chat");
 
@@ -148,26 +162,33 @@ export default function AssistantWidget({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, openPanel, closePanel]);
 
-  // One gentle, page-aware nudge per session on content pages.
+  // A page-aware nudge on each content page (once per page, a few per
+  // session), rotating through phrasings so repeats don't feel canned.
   useEffect(() => {
-    if (phase !== "closed" || (pageKind !== "project" && pageKind !== "post")) return;
-    let already = false;
-    try {
-      already = sessionStorage.getItem(NUDGE_KEY) === "1";
-    } catch {}
-    if (already) return;
+    if (phase !== "closed") return;
+    const kind = NUDGE_KINDS.find((k) => k === pageKind);
+    if (!kind) return;
+    const nudged = readNudged();
+    if (nudged.includes(pathname) || nudged.length >= NUDGE_LIMIT) return;
+    const options = t.raw(`nudge.${kind}`) as Nudge[];
+    if (!options?.length) return;
     const show = setTimeout(() => {
-      setNudge(pageKind === "project" ? t("nudge.project") : t("nudge.post"));
+      setNudge(options[nudged.length % options.length]);
       try {
-        sessionStorage.setItem(NUDGE_KEY, "1");
+        sessionStorage.setItem(NUDGE_KEY, JSON.stringify([...nudged, pathname]));
       } catch {}
-    }, 9000);
-    const hide = setTimeout(() => setNudge(null), 19000);
+    }, 6000);
+    const hide = setTimeout(() => setNudge(null), 21000);
     return () => {
       clearTimeout(show);
       clearTimeout(hide);
     };
-  }, [pageKind, phase, t]);
+  }, [pageKind, pathname, phase, t]);
+
+  // Navigating away takes the previous page's nudge with it.
+  useEffect(() => {
+    setNudge(null);
+  }, [pathname]);
 
   // Lock page scroll on mobile while the full-screen sheet is open.
   useEffect(() => {
@@ -213,8 +234,8 @@ export default function AssistantWidget({
       <div className="fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-3 p-1 sm:bottom-6 sm:right-6">
         {nudge && phase === "closed" && (
           <div className="launcher-pop flex max-w-[16rem] items-start gap-2 bg-card px-3 py-2 text-sm pixel-frame-sm">
-            <button type="button" onClick={() => openPanel(nudge)} className="text-left hover:text-ember">
-              {nudge}
+            <button type="button" onClick={() => openPanel(nudge.prompt)} className="text-left hover:text-ember">
+              {nudge.text}
             </button>
             <button
               type="button"

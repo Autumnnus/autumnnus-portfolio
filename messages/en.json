@@ -88,7 +88,7 @@
         "hintAria": "Reveal a letter",
         "hidden": "Hidden code",
         "riddles": {
-          "konami": "The old gamers' secret: up twice, down twice, then two letters.",
+          "konami": "The old gamers' secret: up twice, down twice, then two letters. On a phone, use the arrow buttons by the console.",
           "fireworks": "Type the site owner's name and the sky lights up for him.",
           "ufo": "Comes from the sky and really loves critters. Three letters.",
           "weather": "Falls from the sky: a downpour in autumn, a blizzard in winter. Five letters.",
@@ -286,8 +286,44 @@
     "thinking": "Thinking…",
     "disclaimer": "AI can make mistakes — answers link their sources.",
     "nudge": {
-      "project": "Curious how this project was built? Ask me.",
-      "post": "Want a quick summary of this post?"
+      "project": [
+        {
+          "text": "Curious how this project was built? Ask me.",
+          "prompt": "How was this project built? Walk me through the stack."
+        },
+        {
+          "text": "Want a quick take on the problem this project solves?",
+          "prompt": "What problem does this project solve?"
+        },
+        {
+          "text": "I can show you similar projects too.",
+          "prompt": "Are there similar projects?"
+        }
+      ],
+      "post": [
+        {
+          "text": "Want a quick summary of this post?",
+          "prompt": "Summarise this post"
+        },
+        {
+          "text": "Short on time? I can sum this post up in 3 bullets.",
+          "prompt": "Summarise this post in 3 bullet points"
+        },
+        {
+          "text": "Shall I pull out the key takeaways?",
+          "prompt": "What are the key takeaways from this post?"
+        }
+      ],
+      "work": [
+        {
+          "text": "I can sum up his career in one paragraph.",
+          "prompt": "Summarise his career"
+        },
+        {
+          "text": "Curious what he does in his current role?",
+          "prompt": "What does he do in his current role?"
+        }
+      ]
     },
     "suggestions": {
       "home": [

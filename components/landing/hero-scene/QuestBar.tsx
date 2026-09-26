@@ -146,88 +146,101 @@ export default function QuestBar({
         </div>
       ) : (
         <>
-          <form
-            key={shake}
-            onSubmit={(event) => {
-              event.preventDefault();
-              submit();
-            }}
-            className={cn(
-              "mt-3 flex items-stretch gap-3 p-[3px]",
-              shake > 0 && "console-shake",
-            )}
-          >
-            <label
+          {/* On touch screens the pad sits above the input: when the keyboard
+              opens, the input is scrolled to just above it and anything
+              below would be hidden. */}
+          <div className="flex flex-col">
+            <form
+              key={shake}
+              onSubmit={(event) => {
+                event.preventDefault();
+                submit();
+              }}
               className={cn(
-                "flex min-w-0 flex-1 items-center gap-2 bg-card px-3 pixel-frame-sm",
-                fresh && "scene-chip-pulse",
+                "mt-3 flex items-stretch gap-3 p-[3px] pointer-coarse:mt-2",
+                shake > 0 && "console-shake",
               )}
             >
-              <span
-                aria-hidden="true"
-                className="font-pixel text-lg text-ember"
+              <label
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-2 bg-card px-3 pixel-frame-sm",
+                  fresh && "scene-chip-pulse",
+                )}
               >
-                &gt;
-              </span>
-              <span className="sr-only">{t("console.inputLabel")}</span>
-              <input
-                ref={inputRef}
-                value={value}
-                onChange={(event) => setValue(event.target.value.slice(0, 40))}
-                onKeyDown={(event) => {
-                  const glyph = ARROW_GLYPHS[event.key];
-                  if (!glyph || event.altKey || event.metaKey || event.ctrlKey) return;
-                  event.preventDefault();
-                  press(glyph);
-                }}
-                placeholder={t("console.placeholder")}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                enterKeyHint="go"
-                className="h-11 min-w-0 flex-1 bg-transparent font-pixel text-base tracking-wider outline-none placeholder:text-muted-foreground/60 sm:text-lg"
-              />
-            </label>
-            <button
-              type="submit"
-              className="pixel-button pixel-button-primary pixel-button-sm"
-            >
-              {t("console.submit")}
-            </button>
-          </form>
-
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <div
-              className="flex items-center gap-1.5 p-[3px]"
-              role="group"
-              aria-label={t("console.pad")}
-            >
-              {PAD.map((glyph) => (
-                <button
-                  key={glyph}
-                  type="button"
-                  // Keep focus where it is, so typing carries on in the input.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => press(glyph)}
-                  aria-label={t("console.padKey", { key: glyph })}
-                  className="flex h-8 w-7 items-center justify-center bg-card font-pixel text-base font-bold transition-transform duration-100 pixel-frame-sm active:translate-y-0.5 sm:w-8"
+                <span
+                  aria-hidden="true"
+                  className="font-pixel text-lg text-ember"
                 >
-                  {glyph}
-                </button>
-              ))}
+                  &gt;
+                </span>
+                <span className="sr-only">{t("console.inputLabel")}</span>
+                <input
+                  ref={inputRef}
+                  value={value}
+                  onChange={(event) =>
+                    setValue(event.target.value.slice(0, 40))
+                  }
+                  onKeyDown={(event) => {
+                    const glyph = ARROW_GLYPHS[event.key];
+                    if (
+                      !glyph ||
+                      event.altKey ||
+                      event.metaKey ||
+                      event.ctrlKey
+                    )
+                      return;
+                    event.preventDefault();
+                    press(glyph);
+                  }}
+                  placeholder={t("console.placeholder")}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  enterKeyHint="go"
+                  className="h-11 min-w-0 flex-1 bg-transparent font-pixel text-base tracking-wider outline-none placeholder:text-muted-foreground/60 sm:text-lg"
+                />
+              </label>
+              <button
+                type="submit"
+                className="pixel-button pixel-button-primary pixel-button-sm"
+              >
+                {t("console.submit")}
+              </button>
+            </form>
+
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pointer-coarse:order-first pointer-coarse:mt-3">
+              <div
+                className="flex items-center gap-1.5 p-[3px]"
+                role="group"
+                aria-label={t("console.pad")}
+              >
+                {PAD.map((glyph) => (
+                  <button
+                    key={glyph}
+                    type="button"
+                    // Keep focus where it is, so typing carries on in the input.
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => press(glyph)}
+                    aria-label={t("console.padKey", { key: glyph })}
+                    className="flex h-8 w-7 items-center justify-center bg-card font-pixel text-base font-bold transition-transform duration-100 pixel-frame-sm active:translate-y-0.5 sm:w-8 pointer-coarse:h-10 pointer-coarse:w-10"
+                  >
+                    {glyph}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={onOpenHints}
+                className={cn(
+                  "pixel-button pixel-button-sm max-sm:w-full max-sm:justify-center",
+                  misses >= 2 && "console-nudge",
+                )}
+              >
+                <PixelIcon name="sparkles" className="h-3.5 w-3.5" />
+                {t("quest.hints")}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={onOpenHints}
-              className={cn(
-                "pixel-button pixel-button-sm max-sm:w-full max-sm:justify-center",
-                misses >= 2 && "console-nudge",
-              )}
-            >
-              <PixelIcon name="sparkles" className="h-3.5 w-3.5" />
-              {t("quest.hints")}
-            </button>
           </div>
           <p
             aria-live="polite"
