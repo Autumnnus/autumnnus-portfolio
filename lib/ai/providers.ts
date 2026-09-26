@@ -4,6 +4,7 @@ import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
 import type { Experimental_EvaluationModel } from "ai";
 import { AI_MODELS } from "./config";
 import { DEFAULT_MODELS } from "./models";
+import { geminiKeys, hasGeminiKey, rotatingGeminiFetch } from "./gemini-keys";
 
 /**
  * Provider wiring.
@@ -16,8 +17,10 @@ import { DEFAULT_MODELS } from "./models";
  *   latency does not matter, or run without an evaluator at all.
  */
 
+// Several keys can be configured; the fetch fails over when one runs out.
 const google = createGoogle({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+  apiKey: geminiKeys()[0],
+  fetch: rotatingGeminiFetch,
 });
 
 export function languageModel(modelId: string) {
@@ -65,7 +68,7 @@ function resolveJev(): ResolvedEvaluator | null {
 
 function geminiFallbackEnabled() {
   return (
-    Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY) &&
+    hasGeminiKey() &&
     (process.env.AI_EVALUATOR_FALLBACK ?? "gemini") !== "off"
   );
 }
@@ -96,7 +99,8 @@ export function resolveEvaluator({
 export function getAiProviderStatus() {
   const jev = resolveJev();
   return {
-    llmConfigured: Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY),
+    llmConfigured: hasGeminiKey(),
+    geminiKeys: geminiKeys().length,
     evaluator: (jev
       ? "jev"
       : geminiFallbackEnabled()

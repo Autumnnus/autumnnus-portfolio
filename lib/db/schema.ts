@@ -430,6 +430,11 @@ export const assistantThread = pgTable(
     lastMessageAt: timestamp("lastMessageAt", { mode: "date" })
       .defaultNow()
       .notNull(),
+    /**
+     * Set when the visitor deletes the chat from the widget: it disappears
+     * for them but stays visible to the admin. Admin deletes are hard.
+     */
+    deletedAt: timestamp("deletedAt", { mode: "date" }),
   },
   (t) => [index().on(t.visitorId), index().on(t.ipKey), index().on(t.lastMessageAt)],
 );
@@ -472,6 +477,8 @@ export const assistantSettings = pgTable("AssistantSettings", {
   visitorDailyLimit: integer("visitorDailyLimit").default(40).notNull(),
   globalDailyLimit: integer("globalDailyLimit").default(1500).notNull(),
   retentionDays: integer("retentionDays").default(90).notNull(),
+  /** When false, chats are never pruned by the retention job. */
+  autoDelete: boolean("autoDelete").default(true).notNull(),
   lastMaintenanceAt: timestamp("lastMaintenanceAt", { mode: "date" }),
   lastIndexReport: jsonb("lastIndexReport"),
   updatedAt: timestamp("updatedAt", { mode: "date" })

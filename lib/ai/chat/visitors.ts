@@ -25,6 +25,8 @@ export interface VisitorSummary {
   lastTitle: string;
   /** For visitor grouping: distinct networks; for IP grouping: distinct browsers. */
   linked: number;
+  /** Threads the visitor deleted from the widget (still kept here). */
+  deleted: number;
 }
 
 export function shortKey(key: string) {
@@ -47,6 +49,7 @@ export async function listVisitors(by: VisitorGrouping, limit = 200): Promise<Vi
       languages: sql<string[]>`array_agg(distinct ${assistantThread.language}::text)`,
       lastTitle: sql<string>`(array_agg(${assistantThread.title} order by ${assistantThread.lastMessageAt} desc))[1]`,
       linked: sql<number>`count(distinct ${other})::int`,
+      deleted: sql<number>`count(${assistantThread.deletedAt})::int`,
     })
     .from(assistantThread)
     .where(sql`${column} is not null`)
@@ -73,6 +76,7 @@ export interface VisitorThread {
   tokens: number;
   visitorId: string;
   ipKey: string | null;
+  deletedAt: Date | null;
   messages: AssistantUIMessage[];
 }
 
@@ -116,6 +120,7 @@ export async function getVisitorThreads(by: VisitorGrouping, key: string): Promi
     tokens: thread.inputTokens + thread.outputTokens,
     visitorId: thread.visitorId,
     ipKey: thread.ipKey,
+    deletedAt: thread.deletedAt,
     messages: byThread.get(thread.id) ?? [],
   }));
 }

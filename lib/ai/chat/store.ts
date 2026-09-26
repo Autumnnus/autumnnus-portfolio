@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { assistantMessage, assistantThread } from "@/lib/db/schema";
-import { and, asc, desc, eq, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, notInArray, sql } from "drizzle-orm";
 import type { AssistantUIMessage } from "../agent/portfolio-agent";
 import { CHAT_LIMITS, type AssistantLocale } from "../config";
 
@@ -13,6 +13,7 @@ import { CHAT_LIMITS, type AssistantLocale } from "../config";
  * - A thread keeps at most `maxStoredMessagesPerThread` messages.
  * - Threads expire after the configured retention window (see settings.ts).
  * - Only an HMAC of the visitor id is stored; no IPs, no full prompts.
+ * - Visitors "delete" softly (deletedAt); only the admin removes for good.
  */
 
 const MAX_STRING = 600;
@@ -46,17 +47,18 @@ export function compactMessage(message: AssistantUIMessage): AssistantUIMessage 
 }
 
 export interface LoadedThread {
-  status: "new" | "owned" | "foreign";
+  status: "new" | "owned" | "foreign" | "deleted";
   messages: AssistantUIMessage[];
 }
 
 export async function loadThread(threadId: string, visitorKey: string): Promise<LoadedThread> {
   const thread = await db.query.assistantThread.findFirst({
     where: eq(assistantThread.id, threadId),
-    columns: { visitorId: true },
+    columns: { visitorId: true, deletedAt: true },
   });
   if (!thread) return { status: "new", messages: [] };
   if (thread.visitorId !== visitorKey) return { status: "foreign", messages: [] };
+  if (thread.deletedAt) return { status: "deleted", messages: [] };
 
   const rows = await db
     .select()
@@ -126,8 +128,9 @@ export async function saveTurn({
           outputTokens: sql`${assistantThread.outputTokens} + ${usage.outputTokens}`,
           flagged: sql`${assistantThread.flagged} OR ${flagged}`,
         },
-        // never let one visitor write into another visitor's thread
-        setWhere: eq(assistantThread.visitorId, visitorKey),
+        // never let one visitor write into another visitor's thread, and
+        // never revive a thread the visitor deleted
+        setWhere: and(eq(assistantThread.visitorId, visitorKey), isNull(assistantThread.deletedAt)),
       })
       .returning({ id: assistantThread.id });
     if (!owned.length) throw new Error("Thread belongs to another visitor.");
@@ -177,8 +180,39 @@ export async function saveTurn({
   });
 }
 
+export interface ThreadSummary {
+  id: string;
+  title: string;
+  messageCount: number;
+  lastMessageAt: string;
+}
+
+/** The visitor's own conversations, newest first. */
+export async function listThreads(visitorKey: string, limit = 30): Promise<ThreadSummary[]> {
+  const rows = await db
+    .select({
+      id: assistantThread.id,
+      title: assistantThread.title,
+      messageCount: assistantThread.messageCount,
+      lastMessageAt: assistantThread.lastMessageAt,
+    })
+    .from(assistantThread)
+    .where(and(eq(assistantThread.visitorId, visitorKey), isNull(assistantThread.deletedAt)))
+    .orderBy(desc(assistantThread.lastMessageAt))
+    .limit(limit);
+  return rows.map((row) => ({ ...row, lastMessageAt: row.lastMessageAt.toISOString() }));
+}
+
+/** A visitor's delete: hidden from them, kept for the admin. */
 export async function deleteThread(threadId: string, visitorKey: string) {
   await db
-    .delete(assistantThread)
-    .where(and(eq(assistantThread.id, threadId), eq(assistantThread.visitorId, visitorKey)));
+    .update(assistantThread)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(assistantThread.id, threadId),
+        eq(assistantThread.visitorId, visitorKey),
+        isNull(assistantThread.deletedAt),
+      ),
+    );
 }

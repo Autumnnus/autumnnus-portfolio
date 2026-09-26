@@ -9,7 +9,7 @@ import { getOwnerIdentity } from "@/lib/ai/agent/data";
 import { getVisitorThreads, shortKey, type VisitorGrouping } from "@/lib/ai/chat/visitors";
 import { toAssistantLocale } from "@/lib/ai/config";
 import { formatDateTime } from "@/lib/utils";
-import { ArrowLeft, Flag } from "lucide-react";
+import { ArrowLeft, Flag, Trash2 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -83,6 +83,15 @@ export default async function AdminVisitorPage({
               <span className="flex min-w-0 flex-1 items-center gap-2 font-semibold">
                 {thread.flagged && <Flag className="h-4 w-4 shrink-0 text-destructive" aria-label={t("threads.flagged")} />}
                 <span className="truncate">{thread.title || "—"}</span>
+                {thread.deletedAt && (
+                  <span
+                    className="inline-flex shrink-0 items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-destructive"
+                    title={formatDateTime(thread.deletedAt, locale)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    {t("threads.deletedByUser")}
+                  </span>
+                )}
               </span>
               <span className="font-mono text-[0.7rem] text-muted-foreground">
                 {formatDateTime(thread.lastMessageAt, locale)} · {thread.language.toUpperCase()} ·{" "}

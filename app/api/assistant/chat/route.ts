@@ -24,6 +24,7 @@ import { getTranslations } from "next-intl/server";
 import { cookies } from "next/headers";
 import { after } from "next/server";
 import { z } from "zod";
+import { hasGeminiKey } from "@/lib/ai/gemini-keys";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
   const isAdmin =
     !!session?.user?.email && session.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
   if (!settings.enabled && !isAdmin) return json(503, { error: "disabled" });
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) return json(503, { error: "not_configured" });
+  if (!hasGeminiKey()) return json(503, { error: "not_configured" });
 
   // ── visitor identity ──────────────────────────────────────────────────────
   const jar = await cookies();
@@ -82,7 +83,9 @@ export async function POST(req: Request) {
   const ipKey = ipKeyFor(clientIp(req.headers));
 
   const thread = await loadThread(threadId, visitorKey);
-  if (thread.status === "foreign") return json(409, { error: "thread_conflict" });
+  if (thread.status === "foreign" || thread.status === "deleted") {
+    return json(409, { error: "thread_conflict" });
+  }
 
   // ── build the conversation (server is the source of truth) ────────────────
   let messages: AssistantUIMessage[];

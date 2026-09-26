@@ -10,13 +10,16 @@ import { isToolUIPart } from "ai";
 import { BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import NextLink from "next/link";
-import { useMemo } from "react";
+import { playSound } from "@/lib/pixel/sound";
+import { useMemo, useRef } from "react";
 import ActivityTimeline, { RouteChip } from "./ActivityTimeline";
 import ApprovalCard from "./ApprovalCard";
+import AutumnMascot from "./AutumnMascot";
 import { collectSources, linkCitations, localizeHref, type ToolPart } from "./lib";
 import Markdown from "./Markdown";
-import PixelLeaf from "./PixelLeaf";
 import ToolCard from "./ToolCards";
+import { typingSparks } from "./typing-events";
+import { useTypewriter } from "./useTypewriter";
 
 function Sources({
   data,
@@ -67,11 +70,22 @@ function Sources({
   );
 }
 
-export function UserMessage({ message }: { message: AssistantUIMessage }) {
+export function UserMessage({
+  message,
+  animate = false,
+}: {
+  message: AssistantUIMessage;
+  animate?: boolean;
+}) {
   const text = message.parts.map((part) => (part.type === "text" ? part.text : "")).join("");
   return (
-    <div className="flex justify-end">
-      <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-primary px-3.5 py-2 text-[0.925rem] leading-relaxed text-primary-foreground shadow-[2px_2px_0_0_var(--shadow-color)]">
+    <div className="flex justify-end pr-1">
+      <p
+        className={cn(
+          "max-w-[85%] whitespace-pre-wrap break-words bg-primary px-3.5 py-2 text-[0.925rem] leading-relaxed text-primary-foreground pixel-frame-sm",
+          animate && "chat-msg-in-right",
+        )}
+      >
         {text}
       </p>
     </div>
@@ -85,6 +99,9 @@ export function AssistantMessage({
   streaming,
   onApproval,
   busy,
+  animate = false,
+  fresh = false,
+  onTyped,
 }: {
   message: AssistantUIMessage;
   locale: string;
@@ -92,6 +109,10 @@ export function AssistantMessage({
   streaming: boolean;
   onApproval: (approvalId: string, approved: boolean) => void;
   busy: boolean;
+  animate?: boolean;
+  /** New this session: write it out even if the stream already finished. */
+  fresh?: boolean;
+  onTyped?: () => void;
 }) {
   const t = useTranslations("Assistant");
 
@@ -119,11 +140,23 @@ export function AssistantMessage({
   const mentionsContact = /iletişim|contact|e-?posta|email|linkedin|ulaş|reach/i.test(text);
   const metadata = message.metadata;
   const thinking = streaming && !body && !toolParts.length;
+  const proseRef = useRef<HTMLDivElement>(null);
+  const typed = useTypewriter(body, streaming || fresh, {
+    onType: (count) => {
+      if (proseRef.current) typingSparks.emit({ kind: "type", el: proseRef.current, count });
+    },
+    onFinish: () => {
+      if (proseRef.current) typingSparks.emit({ kind: "finish", el: proseRef.current });
+      if (body) playSound("pop");
+      onTyped?.();
+    },
+  });
+  const mood = thinking ? "think" : typed.revealing ? "talk" : "idle";
 
   return (
-    <div className="group/message flex gap-2.5">
-      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10 text-primary">
-        <PixelLeaf className="h-4 w-4" animated={streaming} />
+    <div className={cn("group/message flex gap-2.5", animate && "chat-msg-in-left")}>
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center pixel-slot">
+        <AutumnMascot mood={mood} className="h-6 w-6" />
       </div>
       <div className="min-w-0 flex-1">
         <ActivityTimeline
@@ -134,22 +167,30 @@ export function AssistantMessage({
         />
 
         {thinking && (
-          <div className="flex items-center gap-2 py-1.5" aria-live="polite">
-            <span className="flex gap-1">
+          <div className="flex items-center gap-2.5 py-1.5" aria-live="polite">
+            <span className="flex items-end gap-1 bg-card px-2 py-1.5 pixel-frame-sm">
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="h-1.5 w-1.5 animate-bounce bg-primary/70"
-                  style={{ animationDelay: `${i * 120}ms` }}
+                  className="chat-dot h-1.5 w-1.5 bg-primary"
+                  style={{ animationDelay: `${i * 150}ms` }}
                 />
               ))}
             </span>
-            <span className="text-xs text-muted-foreground">{t("thinking")}</span>
+            <span className="font-pixel text-xs text-muted-foreground">{t("thinking")}</span>
           </div>
         )}
 
-        {body && (
-          <Markdown text={body} locale={locale} sources={known} streaming={streaming} />
+        {typed.text && (
+          <div ref={proseRef}>
+            {/* While the quill writes, it replaces the block caret. */}
+            <Markdown
+              text={typed.text}
+              locale={locale}
+              sources={known}
+              streaming={streaming && !typed.live}
+            />
+          </div>
         )}
 
         {toolParts.map((part) => (

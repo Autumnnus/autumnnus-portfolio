@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import type { SyncTarget } from "./documents";
 import { describeTarget, syncKnowledge } from "./indexer";
+import { hasGeminiKey } from "../gemini-keys";
 
 /**
  * Keeps the knowledge index fresh without slowing down admin saves.
@@ -34,7 +35,7 @@ function enqueue(target: SyncTarget): Promise<void> {
 }
 
 export function scheduleKnowledgeSync(target: SyncTarget) {
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) return;
+  if (!hasGeminiKey()) return;
   try {
     after(() => enqueue(target));
   } catch {

@@ -43,6 +43,7 @@ export type EditableAssistantSettings = Pick<
   | "visitorDailyLimit"
   | "globalDailyLimit"
   | "retentionDays"
+  | "autoDelete"
 >;
 
 export async function updateAssistantSettings(values: EditableAssistantSettings) {
@@ -81,10 +82,13 @@ export async function runMaintenanceIfDue(): Promise<void> {
   const oldestWindow = new Date(Date.now() - 3 * DAY_MS).toISOString().slice(0, 10);
 
   const [threads, windows] = await Promise.all([
-    db
-      .delete(assistantThread)
-      .where(lt(assistantThread.lastMessageAt, expiry))
-      .returning({ id: assistantThread.id }),
+    // With auto-delete off, conversations are kept until the admin removes them.
+    settings.autoDelete
+      ? db
+          .delete(assistantThread)
+          .where(lt(assistantThread.lastMessageAt, expiry))
+          .returning({ id: assistantThread.id })
+      : Promise.resolve([]),
     db
       .delete(assistantRateLimit)
       .where(lt(assistantRateLimit.window, oldestWindow))

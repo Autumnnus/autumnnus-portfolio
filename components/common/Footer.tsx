@@ -9,7 +9,7 @@ export default async function Footer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "Footer" });
 
   return (
-    <footer className="border-t-4 border-border bg-card mt-20">
+    <footer className="mt-20 border-t-4 border-px-ink bg-card">
       <VisitorTracker />
       <Container className="py-12 sm:py-16">
         <div className="flex flex-col items-center gap-8 sm:gap-10">
