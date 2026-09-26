@@ -1,5 +1,5 @@
 import { getProfile, getSocialLinks } from "@/app/actions";
-import LiveChat from "@/components/chat/LiveChat";
+import Assistant from "@/components/assistant/Assistant";
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
@@ -77,7 +77,7 @@ export default async function MarketingLayout({
           <div className="marketing-gradient-surface relative flex min-h-screen flex-col">
             <Navbar />
             <main className="flex-1 flex flex-col">{children}</main>
-            <LiveChat />
+            <Assistant locale={locale} />
             <Footer locale={locale} />
           </div>
         </TooltipProvider>

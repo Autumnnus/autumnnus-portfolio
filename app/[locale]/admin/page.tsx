@@ -1,17 +1,14 @@
 import { auth } from "@/auth";
 import DatabaseManagement from "@/components/admin/DatabaseManagement";
-import GeminiApiKeyForm from "@/components/admin/GeminiApiKeyForm";
 import SystemStatus from "@/components/admin/SystemStatus";
 import Container from "@/components/common/Container";
 import { Link } from "@/i18n/routing";
-import { getGeminiApiKeysAdminSnapshot } from "@/lib/ai/api-key-pool";
-import { BarChart, BrainCircuit, FileText, Folder, Plus } from "lucide-react";
+import { BarChart, FileText, Folder, Plus, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 export default async function AdminDashboard() {
   const session = await auth();
   const t = await getTranslations("Admin.Dashboard");
-  const geminiKeys = await getGeminiApiKeysAdminSnapshot();
 
   return (
     <Container className="py-8 sm:py-16">
@@ -150,81 +147,28 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Live Chat Yönetimi */}
-        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col group hover:border-green-500/50 transition-all duration-500 shadow-xl hover:shadow-green-500/5 relative overflow-hidden">
+        {/* AI Asistan */}
+        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col group hover:border-amber-500/50 transition-all duration-500 shadow-xl hover:shadow-amber-500/5 relative overflow-hidden">
           <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none rotate-12">
-            <Plus size={120} />
+            <Sparkles size={120} />
           </div>
           <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 bg-green-500/10 rounded-2xl shadow-inner group-hover:bg-green-500/20 transition-colors">
-              <Plus className="w-8 h-8 text-green-500" />
+            <div className="p-3 bg-amber-500/10 rounded-2xl shadow-inner group-hover:bg-amber-500/20 transition-colors">
+              <Sparkles className="w-8 h-8 text-amber-500" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight">
-              {t("livechat.title")}
+              {t("assistant.title")}
             </h2>
           </div>
           <p className="text-muted-foreground font-medium text-sm sm:text-base leading-relaxed relative z-10 flex-1">
-            {t("livechat.description")}
+            {t("assistant.description")}
           </p>
           <div className="flex gap-4 mt-auto relative z-10">
             <Link
-              href="/admin/livechat"
-              className="w-full text-center px-6 py-3 bg-green-500 text-white rounded-xl font-bold hover:scale-[1.02] transition-all text-sm shadow-lg shadow-green-500/20 active:scale-[0.98]"
+              href="/admin/assistant"
+              className="w-full text-center px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:scale-[1.02] transition-all text-sm shadow-lg shadow-amber-500/20 active:scale-[0.98]"
             >
-              {t("livechat.manage")}
-            </Link>
-          </div>
-        </div>
-
-        {/* AI Logs */}
-        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col group hover:border-indigo-500/50 transition-all duration-500 shadow-xl hover:shadow-indigo-500/5 relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none rotate-12">
-            <Plus size={120} />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 bg-indigo-500/10 rounded-2xl shadow-inner group-hover:bg-indigo-500/20 transition-colors">
-              <Plus className="w-8 h-8 text-indigo-500" />
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              {t("aiLogs.title") || "AI Logs"}
-            </h2>
-          </div>
-          <p className="text-muted-foreground font-medium text-sm sm:text-base leading-relaxed relative z-10 flex-1">
-            {t("aiLogs.description") ||
-              "Manage and view AI chat conversations."}
-          </p>
-          <div className="flex gap-4 mt-auto relative z-10">
-            <Link
-              href="/admin/ai-logs"
-              className="w-full text-center px-6 py-3 bg-indigo-500 text-white rounded-xl font-bold hover:scale-[1.02] transition-all text-sm shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
-            >
-              {t("livechat.manage")}
-            </Link>
-          </div>
-        </div>
-
-        {/* Vektör Veri Yönetimi */}
-        <div className="p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col group hover:border-cyan-500/50 transition-all duration-500 shadow-xl hover:shadow-cyan-500/5 relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none rotate-12">
-            <BrainCircuit size={120} />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 bg-cyan-500/10 rounded-2xl shadow-inner group-hover:bg-cyan-500/20 transition-colors">
-              <BrainCircuit className="w-8 h-8 text-cyan-500" />
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              {t("embeddings.title")}
-            </h2>
-          </div>
-          <p className="text-muted-foreground font-medium text-sm sm:text-base leading-relaxed relative z-10 flex-1">
-            {t("embeddings.description")}
-          </p>
-          <div className="flex gap-4 mt-auto relative z-10">
-            <Link
-              href="/admin/embeddings"
-              className="w-full text-center px-6 py-3 bg-cyan-500 text-white rounded-xl font-bold hover:scale-[1.02] transition-all text-sm shadow-lg shadow-cyan-500/20 active:scale-[0.98]"
-            >
-              {t("embeddings.manage")}
+              {t("assistant.manage")}
             </Link>
           </div>
         </div>
@@ -267,26 +211,6 @@ export default async function AdminDashboard() {
         {/* Veritabanı Yönetimi */}
         <div className="lg:col-span-3">
           <DatabaseManagement />
-        </div>
-
-        {/* AI Configuration */}
-        <div className="md:col-span-2 lg:col-span-3 p-6 sm:p-8 bg-card border border-border/50 rounded-3xl space-y-6 sm:space-y-8 flex flex-col hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/10 relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 p-8 opacity-[0.03] transition-opacity pointer-events-none rotate-12">
-            <BrainCircuit size={120} />
-          </div>
-          <div className="space-y-6 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-primary/10">
-                <BrainCircuit className="w-7 h-7 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight">
-                AI Configuration
-              </h2>
-            </div>
-            <GeminiApiKeyForm
-              initialKeys={geminiKeys}
-            />
-          </div>
         </div>
       </div>
     </Container>

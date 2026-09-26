@@ -1,8 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { embedding } from "@/lib/db/schema";
 import { getFile } from "@/lib/minio";
-import { and, eq, inArray, or } from "drizzle-orm";
 import JSZip from "jszip";
 
 const BUCKET = process.env.MINIO_BUCKET_NAME || "autumnnus-assets";
@@ -69,68 +67,6 @@ export async function GET(request: Request) {
           : Promise.resolve([]),
       ]);
 
-    const embeddingFilters = [];
-    if (includeProjects && projects.length > 0) {
-      embeddingFilters.push(
-        and(
-          eq(embedding.sourceType, "project"),
-          inArray(
-            embedding.sourceId,
-            projects.map((p) => p.id),
-          ),
-        ),
-      );
-    }
-    if (includeBlogs && blogs.length > 0) {
-      embeddingFilters.push(
-        and(
-          eq(embedding.sourceType, "blog"),
-          inArray(
-            embedding.sourceId,
-            blogs.map((b) => b.id),
-          ),
-        ),
-      );
-    }
-    if (includeExperiences && experiences.length > 0) {
-      embeddingFilters.push(
-        and(
-          eq(embedding.sourceType, "experience"),
-          inArray(
-            embedding.sourceId,
-            experiences.map((e) => e.id),
-          ),
-        ),
-      );
-    }
-    if (includeProfile && profileData?.id) {
-      embeddingFilters.push(
-        and(
-          eq(embedding.sourceType, "profile"),
-          eq(embedding.sourceId, profileData.id),
-        ),
-      );
-    }
-
-    const embeddings =
-      embeddingFilters.length > 0
-        ? await db
-            .select({
-              id: embedding.id,
-              sourceType: embedding.sourceType,
-              sourceId: embedding.sourceId,
-              language: embedding.language,
-              chunkText: embedding.chunkText,
-              chunkIndex: embedding.chunkIndex,
-              embedding: embedding.embedding,
-              metadata: embedding.metadata,
-              createdAt: embedding.createdAt,
-              updatedAt: embedding.updatedAt,
-            })
-            .from(embedding)
-            .where(or(...embeddingFilters))
-        : [];
-
     const zip = new JSZip();
     zip.file(
       "data.json",
@@ -145,7 +81,6 @@ export async function GET(request: Request) {
             experiences,
             skills,
             categories,
-            embeddings,
           },
         },
         null,

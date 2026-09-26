@@ -151,15 +151,132 @@
       "EternalWinter": "Eternal Winter"
     }
   },
-  "Chat": {
-    "title": "Autumnus AI",
-    "online": "Online",
-    "placeholder": "Ask a question...",
-    "newChat": "New Chat",
-    "rateLimitMessage": "Daily message limit reached. Please try again tomorrow.",
-    "errorMessage": "An error occurred. Please try again.",
-    "sources": "Sources",
-    "liveDemo": "Live Demo"
+  "Assistant": {
+    "name": "Autumn",
+    "launcher": "Ask Autumn",
+    "open": "Open the AI assistant",
+    "close": "Close",
+    "subtitle": "AI guide to {name}'s work",
+    "newChat": "New conversation",
+    "forget": "Delete this conversation",
+    "forgetConfirm": "Delete this conversation from the server? This can't be undone.",
+    "expand": "Expand",
+    "collapse": "Shrink",
+    "greetingTitle": "Hi, I'm Autumn.",
+    "greeting": "Ask me anything about {name}'s projects, writing, stack or experience — I'll look it up and show you where it came from.",
+    "placeholder": "Ask about projects, stack, experience…",
+    "send": "Send",
+    "stop": "Stop",
+    "thinking": "Thinking…",
+    "disclaimer": "AI can make mistakes — answers link their sources.",
+    "nudge": {
+      "project": "Curious how this project was built? Ask me.",
+      "post": "Want a quick summary of this post?"
+    },
+    "suggestions": {
+      "home": [
+        "What are the highlight projects?",
+        "Which technologies does he use most?",
+        "How much experience does he have?",
+        "How can I get in touch?"
+      ],
+      "projects": [
+        "Which projects use React?",
+        "Show the featured projects",
+        "What's the most complex project?"
+      ],
+      "project": [
+        "What's the tech stack of this project?",
+        "What problem does this project solve?",
+        "Are there similar projects?"
+      ],
+      "blog": [
+        "What are the latest posts?",
+        "Which topics does he write about?"
+      ],
+      "post": [
+        "Summarise this post",
+        "What are the key takeaways?",
+        "Are there related posts?"
+      ],
+      "work": [
+        "Summarise his career",
+        "What does he do in his current role?",
+        "Which companies has he worked for?"
+      ]
+    },
+    "activity": {
+      "working": "Working",
+      "show": "How I found this",
+      "steps": "{count, plural, one {# step} other {# steps}}",
+      "count": "{count, plural, one {# result} other {# results}}",
+      "searching": "Searching “{query}”",
+      "searched": "Searched “{query}”",
+      "searchStats": "{kept} kept of {candidates} candidates",
+      "judged": "{provider} judged {count} in {ms} ms",
+      "searchKnowledge": "Searching the site",
+      "listProjects": "Browsing projects",
+      "getProject": "Reading a project",
+      "listPosts": "Browsing blog posts",
+      "getPost": "Reading a post",
+      "getCareer": "Checking work history",
+      "getProfile": "Checking the profile",
+      "contactOwner": "Preparing a message",
+      "failed": "This step failed",
+      "routeFast": "Fast",
+      "routeDeep": "Deep",
+      "routedBy": "Routed by {provider} in {ms} ms",
+      "heuristic": "Routed by heuristics"
+    },
+    "sources": {
+      "title": "Sources",
+      "verified": "Confirmed by System One source attribution",
+      "alsoUsed": "Also used"
+    },
+    "cards": {
+      "viewAll": "See all {count} projects",
+      "open": "Open",
+      "liveDemo": "Live demo",
+      "yearsExperience": "{years} years of experience",
+      "present": "present"
+    },
+    "approval": {
+      "title": "Send this to {name}?",
+      "topic": "Topic",
+      "name": "Name",
+      "replyTo": "Reply to",
+      "message": "Message",
+      "hint": "Nothing is sent until you confirm.",
+      "send": "Send",
+      "cancel": "Don't send",
+      "sending": "Sending…",
+      "sent": "Sent — {name} will get back to you.",
+      "simulated": "Development mode: logged, not actually sent.",
+      "notSent": "The message couldn't be sent.",
+      "denied": "Not sent.",
+      "topics": {
+        "job": "Job opportunity",
+        "freelance": "Freelance project",
+        "collaboration": "Collaboration",
+        "question": "Question",
+        "feedback": "Feedback",
+        "other": "Other"
+      }
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "rate_limited": "You've reached today's message limit. Please come back tomorrow.",
+      "disabled": "The assistant is taking a short break.",
+      "not_configured": "The assistant isn't configured yet.",
+      "message_too_long": "That message is too long.",
+      "offline": "You seem to be offline.",
+      "thread_conflict": "This conversation can't be continued. Start a new one.",
+      "stale_continuation": "This conversation changed. Please send your message again.",
+      "retry": "Try again"
+    },
+    "server": {
+      "blocked": "I can't help with that. If you have a question about the projects, writing or experience on this site, I'm happy to help."
+    }
   },
   "Admin": {
     "Category": {
@@ -214,11 +331,6 @@
         "infoTitle": "Profile Information",
         "extraSettings": "Extra Settings"
       },
-      "livechat": {
-        "title": "Live Chat",
-        "description": "Manage chat behavior and greeting messages.",
-        "manage": "Manage"
-      },
       "experience": {
         "title": "Experience",
         "description": "Manage work experience and professional history.",
@@ -230,15 +342,6 @@
         "ongoing": "Present",
         "addNewTitle": "Add New Experience"
       },
-      "aiLogs": {
-        "title": "AI Logs",
-        "description": "Manage and view AI chat conversations."
-      },
-      "embeddings": {
-        "title": "Vector Embeddings",
-        "description": "Manage your AI knowledge base and content synchronization.",
-        "manage": "Manage"
-      },
       "umami": {
         "title": "Statistics",
         "description": "Analyze site statistics and visitors via the Umami dashboard.",
@@ -248,13 +351,9 @@
         "title": "System Status",
         "db": "Database Connection",
         "minio": "MinIO Connection",
-        "redis": "Redis Connection",
         "umami": "Umami Connection",
         "tables": "Initialized Tables",
         "bucket": "Bucket Status",
-        "redisPing": "Ping Response",
-        "redisHealthy": "Redis is reachable and ready for shared runtime state.",
-        "redisUnavailable": "Redis is unreachable. Shared API key runtime state and live block tracking are unavailable.",
         "bucketExists": "Bucket Ready",
         "bucketMissing": "Bucket Missing",
         "connected": "Connected",
@@ -267,66 +366,18 @@
         "seeding": "Seeding...",
         "checking": "Checking...",
         "allOperational": "All Systems Operational",
-        "seedDisabledTooltip": "This action is disabled in the production environment for security reasons."
+        "seedDisabledTooltip": "This action is disabled in the production environment for security reasons.",
+        "ai": "AI Assistant",
+        "aiReady": "Ready",
+        "aiMissingKey": "No API key",
+        "aiEvaluator": "System One evaluator",
+        "aiIndexedDocuments": "Indexed documents"
+      },
+      "assistant": {
+        "title": "AI Assistant",
+        "description": "Agent settings, knowledge index, retrieval lab and conversations.",
+        "manage": "Manage"
       }
-    },
-    "LiveChat": {
-      "status": "Live Chat Status",
-      "statusDesc": "Enable or disable Live Chat sitewide or for specific pages.",
-      "defaultSound": "Default system sound",
-      "visiblePages": "Visible Pages",
-      "visiblePagesDesc": "Determine which pages the widget will appear on.",
-      "visiblePagesDesc_note": "enter (ex: /blog). If left blank, it appears on all pages.",
-      "noPrefixNote": "WITHOUT LANGUAGE PREFIX",
-      "pathPlaceholder": "/blog",
-      "matchingPages": "Matching Pages:",
-      "addPage": "Add Page",
-      "allPages": "All Pages",
-      "excludedPages": "Excluded Pages",
-      "excludedPagesDesc": "Pages where the widget will DEFINITELY not appear.",
-      "excludedPagesDesc_note": "This setting takes precedence over visible pages.",
-      "blockPage": "Block Page",
-      "noBlocks": "No blocks active.",
-      "greetingMessages": "Greeting Messages",
-      "greetingMessagesDesc": "Initial AI bubble messages specific to pages. Use '/*' for all pages.",
-      "new": "New",
-      "noGreetings": "No custom greeting messages yet.",
-      "editGreeting": "Edit Greeting Message",
-      "pathname": "Pathname",
-      "autoPrefixNote": "Language prefix is added automatically",
-      "allLanguagesNote": "Applies to all languages:",
-      "messageContent": "Message Content (By Language)",
-      "soundSettings": "Sound Settings",
-      "soundSettingsDesc": "Customize notification and message sounds here. Default sounds will be used if left blank.",
-      "pingSound": "Ping (Incoming Message)",
-      "notificationSound": "Notification (Greeting/Error)",
-      "resetToDefault": "Reset to Default",
-      "open": "Open",
-      "close": "Close",
-      "errorPathStart": "Path must start with '/'",
-      "errorPathExists": "This path is already added",
-      "errorPathBlocked": "This path is already in the blocked list",
-      "errorPathVisible": "This path is already in the visible list",
-      "successPathAdded": "Path added",
-      "successPathRemoved": "Path removed",
-      "successPathBlocked": "Path added to blocked",
-      "successBlockRemoved": "Block removed",
-      "errorEnterPath": "Please enter a pathname",
-      "successGreetingSaved": "Greeting message saved",
-      "errorGreetingSave": "Error occurred while saving",
-      "confirmDeleteGreeting": "Are you sure you want to delete this greeting message?",
-      "successGreetingDeleted": "Greeting message deleted",
-      "errorSelectAudio": "Please select an audio file",
-      "successSoundUploaded": "Sound uploaded",
-      "errorSoundUpload": "Error occurred while uploading sound",
-      "successSoundReset": "Sound reset to default",
-      "errorSoundReset": "Error occurred while resetting",
-      "customSound": "Custom sound uploaded (MinIO)",
-      "greetingPlaceholder": "{name} greeting message...",
-      "quickAnswers": "Quick Answers",
-      "maxQuickAnswers": "Max {count} answers",
-      "quickAnswer": "Answer",
-      "quickAnswersDesc": "Quick question/answer buttons to be shown with the greeting message."
     },
     "Editor": {
       "bold": "Bold (Ctrl+B)",
@@ -354,10 +405,8 @@
       "blog": "Blog",
       "experience": "Experience",
       "profile": "Profile",
-      "embeddings": "Embeddings",
-      "liveChat": "Live Chat",
       "signOut": "Sign Out",
-      "aiLogs": "AI Logs"
+      "assistant": "AI Assistant"
     },
     "Database": {
       "title": "Full Backup Management",
@@ -445,7 +494,6 @@
       "isCover": "Cover Image",
       "updatedAt": "Updated At",
       "slug": "URL Slug",
-      "clear": "Clear",
       "loadingEditor": "Loading editor...",
       "status": "Status",
       "Working": "Working On",
@@ -469,17 +517,9 @@
       "metaDescription": "Meta Description",
       "keywords": "Keywords",
       "keywordsPlaceholder": "tags, keywords...",
-      "autoTranslate": "Auto Translate (AI)",
       "sourceLanguage": "Source Language",
-      "targetLanguages": "Target Languages",
-      "selectLanguage": "Select Language",
-      "countLangsSelected": "{count} languages selected",
-      "translate": "Translate",
       "translating": "Translating...",
-      "translateSuccess": "Translation completed!",
       "translateError": "Translation failed.",
-      "translateInSelectedLangs": "Translate in Selected Languages",
-      "translateInSelectedLangsDesc": "After filling in the fields in the source language, you can select at least one target language and translate.",
       "htmlLabel": "(HTML)",
       "selectRepo": "Select Repo",
       "fetchRepos": "Fetch from GitHub",
@@ -557,21 +597,10 @@
       "skillSearchPlaceholder": "Ex: React, Tailwind, Supabase...",
       "skillNamePlaceholder": "Ex: Bun",
       "emojiOrUrl": "🚀 or URL...",
-      "seoOptimize": "SEO Optimize",
-      "seoContext": "Content Context",
-      "seoContextDesc": "Enter context or basic information for the SEO content to be created.",
-      "seoPlaceholder": "Ex: This post is about creating a modern blog application with Next.js 14...",
-      "seoMinChars": "Please enter a context containing at least 30 characters.",
-      "seoSuccess": "SEO content created successfully!",
-      "seoError": "SEO generation failed",
-      "generating": "Generating...",
-      "generate": "Generate",
-      "characters": "characters",
       "pingSound": "Ping (Incoming Message)",
       "notificationSound": "Notification (Greeting/Error)",
       "defaultSound": "Default system sound",
-      "customSound": "Custom sound uploaded (MinIO)",
-      "selectAll": "Select All"
+      "customSound": "Custom sound uploaded (MinIO)"
     },
     "Navigation": {
       "dashboard": "Dashboard",
@@ -579,44 +608,10 @@
       "blog": "Blog Posts",
       "experience": "Experience",
       "profile": "Profile",
-      "embeddings": "Embeddings",
-      "aiLogs": "AI Logs",
       "settings": "Settings",
       "signOut": "Sign Out",
-      "adminPanel": "ADMIN PANEL"
-    },
-    "Embeddings": {
-      "title": "Vector Embeddings",
-      "description": "Manage your AI knowledge base and synchronize content.",
-      "clearDb": "Clear Vector DB",
-      "syncAll": "Sync All Data",
-      "totalChunks": "Total Vector Chunks",
-      "totalChunksDesc": "Total embeddings in DB",
-      "activeChunks": "Vector chunks active",
-      "contentSync": "Content Synchronization",
-      "contentSyncDesc": "Individually update outdated AI contexts.",
-      "searchPlaceholder": "Search titles...",
-      "typeAll": "All Types",
-      "statusAll": "All Status",
-      "synced": "Synced",
-      "outdated": "Outdated",
-      "missing": "Missing",
-      "sync": "Sync",
-      "deleteConfirm": "Are you sure you want to delete ALL embeddings?",
-      "syncSuccess": "All content synced successfully!",
-      "syncError": "Failed to sync all content.",
-      "deleteSuccess": "Content deleted successfully.",
-      "deleteError": "Failed to delete content.",
-      "loading": "Loading content...",
-      "viewDetails": "View Details",
-      "deleteSingle": "Delete Vectors",
-      "chunks": "Vector Chunks",
-      "itemDetails": "Item Details",
-      "noChunks": "No vector records found for this item.",
-      "sourceIdLabel": "Source ID",
-      "lastSourceUpdate": "Last source update",
-      "latestChunk": "Latest chunk",
-      "languageBreakdown": "Languages"
+      "adminPanel": "ADMIN PANEL",
+      "assistant": "AI Assistant"
     },
     "Common": {
       "actions": "Actions",
@@ -644,6 +639,136 @@
       "open": "Open",
       "on": "On",
       "off": "Off"
+    },
+    "Assistant": {
+      "title": "AI Assistant",
+      "subtitle": "Agent, knowledge index, System One layer and conversations.",
+      "tabs": {
+        "overview": "Overview",
+        "knowledge": "Knowledge index",
+        "lab": "Retrieval lab",
+        "conversations": "Conversations"
+      },
+      "providers": {
+        "title": "Models",
+        "llm": "Language model",
+        "fast": "Fast tier",
+        "deep": "Deep tier",
+        "embedding": "Embeddings",
+        "evaluator": "System One evaluator",
+        "evaluatorJev": "Jev ({transport})",
+        "evaluatorGemini": "Gemini fallback (not calibrated)",
+        "evaluatorOff": "Off — heuristics only",
+        "missingKey": "GOOGLE_GENERATIVE_AI_API_KEY is not set — the assistant is hidden."
+      },
+      "usage": {
+        "title": "Last 7 days",
+        "threads": "Conversations",
+        "messages": "Messages",
+        "tokens": "Tokens",
+        "flagged": "Flagged"
+      },
+      "settings": {
+        "title": "Settings",
+        "enabled": "Assistant enabled",
+        "enabledHint": "When off, only admins see the widget.",
+        "visitorDailyLimit": "Messages per visitor / day",
+        "globalDailyLimit": "Messages site-wide / day",
+        "retentionDays": "Keep conversations (days)",
+        "save": "Save settings",
+        "saved": "Settings saved",
+        "modelFast": "Fast model",
+        "modelFastHint": "Answers most questions (greetings, lookups, short explanations).",
+        "modelDeep": "Deep model",
+        "modelDeepHint": "Used when System One scores a question as multi-step or synthesis-heavy.",
+        "freeTier": "free tier",
+        "priceLine": "{input} input / {output} output per 1M tokens",
+        "pricesNote": "Paid-tier prices per 1M tokens, checked {date}. With a free-tier key you pay nothing until you hit Google's limits."
+      },
+      "index": {
+        "title": "Knowledge index",
+        "description": "Derived from published content. Saves update it automatically; use these for a full check.",
+        "sync": "Sync changes",
+        "rebuild": "Rebuild everything",
+        "rebuildConfirm": "Re-embed every document? This uses the embedding quota.",
+        "running": "Indexing…",
+        "done": "Index updated: {indexed} indexed, {unchanged} unchanged, {removed} removed",
+        "failedCount": "{count} failed",
+        "documents": "Documents",
+        "chunks": "Chunks",
+        "lastRun": "Last run",
+        "never": "never",
+        "status": {
+          "fresh": "Fresh",
+          "stale": "Outdated",
+          "missing": "Not indexed",
+          "orphan": "Orphan"
+        },
+        "columns": {
+          "title": "Title",
+          "type": "Type",
+          "language": "Lang",
+          "chunks": "Chunks",
+          "indexedAt": "Indexed",
+          "status": "Status"
+        },
+        "empty": "Nothing indexed yet."
+      },
+      "lab": {
+        "title": "Retrieval lab",
+        "description": "Run the exact search pipeline the agent uses and inspect every stage.",
+        "placeholder": "e.g. which projects use PostgreSQL?",
+        "run": "Search",
+        "judge": "Use System One judge",
+        "stages": "{lexical} lexical · {vector} vector → {pooled} pooled → {kept} kept",
+        "timing": "embed {embed} ms · retrieve {retrieve} ms · judge {judge} ms · total {total} ms",
+        "lexicalRank": "BM25 #",
+        "vectorRank": "Vector #",
+        "similarity": "Cosine",
+        "relevance": "P(relevant)",
+        "noResults": "No results."
+      },
+      "threads": {
+        "title": "Conversations",
+        "empty": "No conversations yet.",
+        "columns": {
+          "title": "First message",
+          "language": "Lang",
+          "messages": "Msgs",
+          "tokens": "Tokens",
+          "lastMessageAt": "Last activity"
+        },
+        "flagged": "Flagged",
+        "back": "Back to conversations",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this conversation?",
+        "entryPath": "Started on",
+        "allChats": "All chats of this visitor"
+      },
+      "visitors": {
+        "title": "People",
+        "description": {
+          "visitor": "One row per browser (signed anonymous cookie).",
+          "ip": "One row per network (hashed IP) — merges the same person across browsers or cleared cookies."
+        },
+        "by": {
+          "visitor": "By visitor",
+          "ip": "By IP"
+        },
+        "label": {
+          "visitor": "Visitor #{id}",
+          "ip": "Network #{id}"
+        },
+        "stats": "{threads, plural, one {# chat} other {# chats}} · {messages} msgs",
+        "linked": {
+          "visitor": "{count} networks",
+          "ip": "{count} browsers"
+        },
+        "summary": "{threads, plural, one {# chat} other {# chats}} · {messages} msgs · {tokens} tok",
+        "openThread": "Open",
+        "deleteAll": "Delete all of their chats",
+        "deleteAllConfirm": "Delete every conversation of this person? This can't be undone."
+      }
     }
   },
   "Login": {

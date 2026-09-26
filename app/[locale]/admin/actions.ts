@@ -21,14 +21,7 @@ import {
   workExperienceTranslation,
 } from "@/lib/db/schema";
 import { deleteFile, deleteFolder, uploadFile } from "@/lib/minio";
-import { deleteEmbeddingsBySource } from "@/lib/vectordb";
-import {
-  createGeminiApiKey,
-  deleteGeminiApiKey,
-  getGeminiApiKeysAdminSnapshot,
-  updateGeminiApiKey,
-  type ApiKeyCategory,
-} from "@/lib/ai/api-key-pool";
+import { scheduleKnowledgeSync } from "@/lib/ai/knowledge/sync";
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -203,6 +196,8 @@ export async function deleteCategoryAction(id: string) {
     .where(eq(categoryTable.id, id))
     .returning();
 
+  scheduleKnowledgeSync({ sourceType: "project" });
+  scheduleKnowledgeSync({ sourceType: "blog" });
   revalidatePath("/[locale]/admin/projects", "page");
   revalidatePath("/[locale]/admin/blog", "page");
 
@@ -257,6 +252,7 @@ export async function createProjectAction(data: ProjectData) {
     );
   }
 
+  scheduleKnowledgeSync({ sourceType: "project", sourceId: newProject.id });
   revalidatePath("/[locale]/admin/projects", "page");
 
   return newProject;
@@ -321,6 +317,7 @@ export async function updateProjectAction(id: string, data: ProjectData) {
     );
   }
 
+  scheduleKnowledgeSync({ sourceType: "project", sourceId: id });
   revalidatePath("/[locale]/admin/projects/[id]/edit", "page");
   revalidatePath("/[locale]/admin/projects", "page");
 
@@ -361,13 +358,12 @@ export async function deleteProjectAction(id: string) {
     await deleteFolder(`projects/${existingProject.slug}`);
   }
 
-  await deleteEmbeddingsBySource("project", id);
-
   const deleted = await db
     .delete(project)
     .where(eq(project.id, id))
     .returning();
 
+  scheduleKnowledgeSync({ sourceType: "project", sourceId: id });
   revalidatePath("/[locale]/admin/projects", "page");
 
   return deleted;
@@ -405,6 +401,7 @@ export async function createBlogAction(data: BlogData) {
     );
   }
 
+  scheduleKnowledgeSync({ sourceType: "blog", sourceId: newBlog.id });
   revalidatePath("/[locale]/admin/blog", "page");
 
   return newBlog;
@@ -455,6 +452,7 @@ export async function updateBlogAction(id: string, data: BlogData) {
     );
   }
 
+  scheduleKnowledgeSync({ sourceType: "blog", sourceId: id });
   revalidatePath("/[locale]/admin/blog/[id]/edit", "page");
   revalidatePath("/[locale]/admin/blog", "page");
 
@@ -486,13 +484,12 @@ export async function deleteBlogAction(id: string) {
     await deleteFolder(`blog/${existingBlog.slug}`);
   }
 
-  await deleteEmbeddingsBySource("blog", id);
-
   const deleted = await db
     .delete(blogPost)
     .where(eq(blogPost.id, id))
     .returning();
 
+  scheduleKnowledgeSync({ sourceType: "blog", sourceId: id });
   revalidatePath("/[locale]/admin/blog", "page");
 
   return deleted;
@@ -589,6 +586,7 @@ export async function updateProfileAction(data: ProfileData) {
       }
     });
 
+    scheduleKnowledgeSync({ sourceType: "profile" });
     revalidatePath("/[locale]", "layout");
 
     if (previousAvatar && previousAvatar !== profileData.avatar) {
@@ -635,6 +633,7 @@ export async function updateProfileAction(data: ProfileData) {
       }
     });
 
+    scheduleKnowledgeSync({ sourceType: "profile" });
     revalidatePath("/[locale]", "layout");
     return newProfileData;
   }
@@ -665,6 +664,7 @@ export async function createExperienceAction(data: ExperienceData) {
     );
   }
 
+  scheduleKnowledgeSync({ sourceType: "experience", sourceId: newExp.id });
   revalidatePath("/[locale]/admin/experience", "page");
 
   return newExp;
@@ -705,6 +705,7 @@ export async function updateExperienceAction(id: string, data: ExperienceData) {
     );
   }
 
+  scheduleKnowledgeSync({ sourceType: "experience", sourceId: id });
   revalidatePath("/[locale]/admin/experience", "page");
 
   if (
@@ -731,6 +732,7 @@ export async function deleteExperienceAction(id: string) {
     .where(eq(workExperience.id, id))
     .returning();
 
+  scheduleKnowledgeSync({ sourceType: "experience", sourceId: id });
   revalidatePath("/[locale]/admin/experience", "page");
 
   return deleted;
@@ -1127,6 +1129,7 @@ export async function importDatabaseAction(jsonData: string) {
       }
     });
 
+    scheduleKnowledgeSync("all");
     return { success: true };
   } catch (error) {
     console.error("Import error:", error);
@@ -1299,75 +1302,6 @@ export async function deleteSkillAction(id: string) {
   )
     throw new Error("Unauthorized");
   await db.delete(skill).where(eq(skill.id, id));
+  scheduleKnowledgeSync({ sourceType: "project" });
   revalidatePath("/[locale]", "layout");
-}
-
-function assertAdminEmail(
-  session: { user?: { email?: string | null } } | null,
-) {
-  if (
-    !session?.user?.email ||
-    session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
-  ) {
-    throw new Error("Unauthorized");
-  }
-}
-
-interface GeminiApiKeyActionInput {
-  id?: string;
-  label: string;
-  apiKey?: string | null;
-  category: ApiKeyCategory;
-  priority: number;
-  quotaGroup: string;
-  isActive: boolean;
-}
-
-export async function createGeminiApiKeyAction(
-  input: GeminiApiKeyActionInput,
-) {
-  const session = await auth();
-  assertAdminEmail(session);
-
-  await createGeminiApiKey({
-    label: input.label,
-    apiKey: input.apiKey?.trim() || "",
-    category: input.category,
-    priority: input.priority,
-    quotaGroup: input.quotaGroup,
-    isActive: input.isActive,
-  });
-  revalidatePath("/[locale]/admin", "page");
-  return getGeminiApiKeysAdminSnapshot();
-}
-
-export async function updateGeminiApiKeyAction(
-  input: GeminiApiKeyActionInput,
-) {
-  const session = await auth();
-  assertAdminEmail(session);
-
-  if (!input.id) {
-    throw new Error("Gemini API key id is required.");
-  }
-
-  await updateGeminiApiKey(input.id, {
-    label: input.label,
-    apiKey: input.apiKey,
-    category: input.category,
-    priority: input.priority,
-    quotaGroup: input.quotaGroup,
-    isActive: input.isActive,
-  });
-  revalidatePath("/[locale]/admin", "page");
-  return getGeminiApiKeysAdminSnapshot();
-}
-
-export async function deleteGeminiApiKeyAction(id: string) {
-  const session = await auth();
-  assertAdminEmail(session);
-
-  await deleteGeminiApiKey(id);
-  revalidatePath("/[locale]/admin", "page");
-  return getGeminiApiKeysAdminSnapshot();
 }

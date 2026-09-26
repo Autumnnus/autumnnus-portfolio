@@ -12,9 +12,9 @@ import {
   HardDrive,
   Info,
   Layers,
-  Radio,
   RefreshCcw,
   ShieldCheck,
+  Sparkles,
   Sprout,
   XCircle,
 } from "lucide-react";
@@ -35,8 +35,10 @@ interface StatusData {
   umami: {
     connected: boolean;
   };
-  redis: {
-    connected: boolean;
+  ai: {
+    llmConfigured: boolean;
+    evaluator: "jev" | "gemini" | "off";
+    indexedDocuments: number;
   };
 }
 
@@ -106,7 +108,7 @@ export default function SystemStatus() {
     status?.db.connected &&
     status?.minio.connected &&
     status?.minio.bucketExists &&
-    status?.redis.connected &&
+    status?.ai.llmConfigured &&
     status?.umami.connected;
 
   return (
@@ -279,54 +281,51 @@ export default function SystemStatus() {
           </div>
         </div>
 
-        {/* Redis Status Card */}
-        <div className="p-6 bg-background/50 border border-border/50 rounded-2xl space-y-4 hover:border-emerald-500/30 transition-colors group/card">
+        {/* AI Status Card */}
+        <div className="p-6 bg-background/50 border border-border/50 rounded-2xl space-y-4 hover:border-amber-500/30 transition-colors group/card">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/10 rounded-lg">
-                <Radio className="w-5 h-5 text-emerald-500" />
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <Sparkles className="w-5 h-5 text-amber-500" />
               </div>
-              <span className="font-bold">{t("redis")}</span>
+              <span className="font-bold">{t("ai")}</span>
             </div>
-            {status?.redis.connected ? (
+            {status?.ai.llmConfigured ? (
               <div className="flex items-center gap-1 text-green-500 bg-green-500/10 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                 <CheckCircle2 size={12} />
-                {t("connected")}
+                {t("aiReady")}
               </div>
             ) : (
               <div className="flex items-center gap-1 text-red-500 bg-red-500/10 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                 <XCircle size={12} />
-                {t("disconnected")}
+                {t("aiMissingKey")}
               </div>
             )}
           </div>
 
-          <div className="space-y-4 pt-2">
+          <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/30">
               <div className="flex items-center gap-2">
                 <Activity size={14} className="text-primary/70" />
                 <span className="text-xs font-medium text-muted-foreground">
-                  {t("redisPing")}
+                  {t("aiEvaluator")}
                 </span>
               </div>
-              {status?.redis.connected ? (
-                <span className="text-[10px] font-bold text-green-500 flex items-center gap-1">
-                  <CheckCircle2 size={10} />
-                  PONG
-                </span>
-              ) : (
-                <span className="text-[10px] font-bold text-red-500 flex items-center gap-1">
-                  <XCircle size={10} />
-                  {t("disconnected")}
-                </span>
-              )}
+              <span className="text-[10px] font-bold uppercase tracking-wider">
+                {status?.ai.evaluator ?? "off"}
+              </span>
             </div>
-
-            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic opacity-70">
-              {status?.redis.connected
-                ? t("redisHealthy")
-                : t("redisUnavailable")}
-            </p>
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/30">
+              <div className="flex items-center gap-2">
+                <Layers size={14} className="text-primary/70" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("aiIndexedDocuments")}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold">
+                {status?.ai.indexedDocuments ?? 0}
+              </span>
+            </div>
           </div>
         </div>
 

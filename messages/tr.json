@@ -151,15 +151,132 @@
       "EternalWinter": "Sonsuz Kış"
     }
   },
-  "Chat": {
-    "title": "Autumnus AI",
-    "online": "Çevrimiçi",
-    "placeholder": "Bir soru sorun...",
-    "newChat": "Yeni Sohbet",
-    "rateLimitMessage": "Günlük mesaj limitine ulaşıldı. Lütfen yarın tekrar deneyin.",
-    "errorMessage": "Bir hata oluştu. Lütfen tekrar deneyin.",
-    "sources": "Kaynaklar",
-    "liveDemo": "Canlı Demo"
+  "Assistant": {
+    "name": "Autumn",
+    "launcher": "Autumn'a sor",
+    "open": "Yapay zekâ asistanını aç",
+    "close": "Kapat",
+    "subtitle": "{name} hakkında yapay zekâ rehberi",
+    "newChat": "Yeni sohbet",
+    "forget": "Bu sohbeti sil",
+    "forgetConfirm": "Bu sohbet sunucudan silinsin mi? Bu işlem geri alınamaz.",
+    "expand": "Genişlet",
+    "collapse": "Küçült",
+    "greetingTitle": "Merhaba, ben Autumn.",
+    "greeting": "{name} hakkında projeler, yazılar, teknoloji yığını ya da deneyim — ne istersen sor; bulurum ve bilginin nereden geldiğini de gösteririm.",
+    "placeholder": "Projeler, teknolojiler, deneyim hakkında sor…",
+    "send": "Gönder",
+    "stop": "Durdur",
+    "thinking": "Düşünüyorum…",
+    "disclaimer": "Yapay zekâ hata yapabilir — cevaplar kaynaklarını gösterir.",
+    "nudge": {
+      "project": "Bu proje nasıl yapıldı merak ediyor musun? Bana sor.",
+      "post": "Bu yazının kısa bir özetini ister misin?"
+    },
+    "suggestions": {
+      "home": [
+        "Öne çıkan projeler neler?",
+        "En çok hangi teknolojileri kullanıyor?",
+        "Ne kadar deneyimi var?",
+        "Kendisiyle nasıl iletişime geçebilirim?"
+      ],
+      "projects": [
+        "Hangi projelerde React kullanıldı?",
+        "Öne çıkan projeleri göster",
+        "En kapsamlı proje hangisi?"
+      ],
+      "project": [
+        "Bu projenin teknoloji yığını ne?",
+        "Bu proje hangi problemi çözüyor?",
+        "Benzer projeler var mı?"
+      ],
+      "blog": [
+        "Son yazılar neler?",
+        "Hangi konularda yazıyor?"
+      ],
+      "post": [
+        "Bu yazıyı özetle",
+        "Yazıdan çıkarılacak ana dersler neler?",
+        "İlgili başka yazılar var mı?"
+      ],
+      "work": [
+        "Kariyerini özetle",
+        "Şu anki rolünde neler yapıyor?",
+        "Hangi şirketlerde çalıştı?"
+      ]
+    },
+    "activity": {
+      "working": "Çalışıyor",
+      "show": "Nasıl buldum",
+      "steps": "{count} adım",
+      "count": "{count} sonuç",
+      "searching": "“{query}” aranıyor",
+      "searched": "“{query}” arandı",
+      "searchStats": "{candidates} adaydan {kept} tanesi seçildi",
+      "judged": "{provider} {count} pasajı {ms} ms'de değerlendirdi",
+      "searchKnowledge": "Sitede aranıyor",
+      "listProjects": "Projelere bakılıyor",
+      "getProject": "Proje okunuyor",
+      "listPosts": "Blog yazılarına bakılıyor",
+      "getPost": "Yazı okunuyor",
+      "getCareer": "İş geçmişine bakılıyor",
+      "getProfile": "Profile bakılıyor",
+      "contactOwner": "Mesaj hazırlanıyor",
+      "failed": "Bu adım başarısız oldu",
+      "routeFast": "Hızlı",
+      "routeDeep": "Derin",
+      "routedBy": "{provider} {ms} ms'de yönlendirdi",
+      "heuristic": "Sezgisel kurallarla yönlendirildi"
+    },
+    "sources": {
+      "title": "Kaynaklar",
+      "verified": "System One kaynak doğrulamasıyla onaylandı",
+      "alsoUsed": "Ayrıca kullanıldı"
+    },
+    "cards": {
+      "viewAll": "{count} projenin tümünü gör",
+      "open": "Aç",
+      "liveDemo": "Canlı demo",
+      "yearsExperience": "{years} yıl deneyim",
+      "present": "halen"
+    },
+    "approval": {
+      "title": "Bu mesaj {name} ile paylaşılsın mı?",
+      "topic": "Konu",
+      "name": "İsim",
+      "replyTo": "Dönüş",
+      "message": "Mesaj",
+      "hint": "Sen onaylamadan hiçbir şey gönderilmez.",
+      "send": "Gönder",
+      "cancel": "Gönderme",
+      "sending": "Gönderiliyor…",
+      "sent": "Gönderildi — {name} sana dönüş yapacak.",
+      "simulated": "Geliştirme modu: kaydedildi, gerçekte gönderilmedi.",
+      "notSent": "Mesaj gönderilemedi.",
+      "denied": "Gönderilmedi.",
+      "topics": {
+        "job": "İş fırsatı",
+        "freelance": "Freelance proje",
+        "collaboration": "İş birliği",
+        "question": "Soru",
+        "feedback": "Geri bildirim",
+        "other": "Diğer"
+      }
+    },
+    "errors": {
+      "generic": "Bir şeyler ters gitti. Lütfen tekrar dene.",
+      "rate_limited": "Bugünkü mesaj sınırına ulaştın. Yarın tekrar bekleriz.",
+      "disabled": "Asistan kısa bir mola verdi.",
+      "not_configured": "Asistan henüz yapılandırılmadı.",
+      "message_too_long": "Mesaj çok uzun.",
+      "offline": "Çevrimdışı görünüyorsun.",
+      "thread_conflict": "Bu sohbete devam edilemiyor. Yeni bir sohbet başlat.",
+      "stale_continuation": "Sohbet değişti. Lütfen mesajını tekrar gönder.",
+      "retry": "Tekrar dene"
+    },
+    "server": {
+      "blocked": "Bu konuda yardımcı olamam. Bu sitedeki projeler, yazılar ya da deneyim hakkında bir sorun varsa memnuniyetle yardım ederim."
+    }
   },
   "Admin": {
     "Category": {
@@ -214,11 +331,6 @@
         "infoTitle": "Profil Bilgileri",
         "extraSettings": "Ekstra Ayarlar"
       },
-      "livechat": {
-        "title": "Live Chat",
-        "description": "Chat davranışını ve karşılama mesajlarını yönetin.",
-        "manage": "Yönet"
-      },
       "experience": {
         "title": "Deneyimler",
         "description": "İş deneyimlerini ve çalışma geçmişini yönet.",
@@ -230,15 +342,6 @@
         "ongoing": "Devam Ediyor",
         "addNewTitle": "Yeni Deneyim Ekle"
       },
-      "aiLogs": {
-        "title": "Yapay Zeka Kayıtları",
-        "description": "Yapay zeka (AI) sohbet görüşmelerini yönetin ve görüntüleyin."
-      },
-      "embeddings": {
-        "title": "Vektör Veri",
-        "description": "Yapay zeka bilgi tabanını ve içerik senkronizasyonunu yönetin.",
-        "manage": "Yönet"
-      },
       "umami": {
         "title": "İstatistikler",
         "description": "Umami paneli üzerinden site istatistiklerini ve ziyaretçileri analiz edin.",
@@ -248,13 +351,9 @@
         "title": "Sistem Durumu",
         "db": "Veritabanı Bağlantısı",
         "minio": "MinIO Bağlantısı",
-        "redis": "Redis Bağlantısı",
         "umami": "Umami Bağlantısı",
         "tables": "İlklendirilmiş Tablolar",
         "bucket": "Bucket Durumu",
-        "redisPing": "Ping Yanıtı",
-        "redisHealthy": "Redis erişilebilir durumda ve paylaşımlı runtime state için hazır.",
-        "redisUnavailable": "Redis'e erişilemiyor. Paylaşımlı API key runtime state ve canlı blok takibi kullanılamıyor.",
         "bucketExists": "Bucket Hazır",
         "bucketMissing": "Bucket Eksik",
         "connected": "Bağlı",
@@ -267,66 +366,18 @@
         "seeding": "Tohumlanıyor...",
         "checking": "Kontrol ediliyor...",
         "allOperational": "Tüm Sistemler Çalışıyor",
-        "seedDisabledTooltip": "Bu işlem üretim (production) ortamında güvenlik gerekçesiyle devre dışı bırakılmıştır."
+        "seedDisabledTooltip": "Bu işlem üretim (production) ortamında güvenlik gerekçesiyle devre dışı bırakılmıştır.",
+        "ai": "AI Asistan",
+        "aiReady": "Hazır",
+        "aiMissingKey": "API anahtarı yok",
+        "aiEvaluator": "System One değerlendirici",
+        "aiIndexedDocuments": "İndekslenen doküman"
+      },
+      "assistant": {
+        "title": "AI Asistan",
+        "description": "Agent ayarları, bilgi indeksi, arama laboratuvarı ve sohbetler.",
+        "manage": "Yönet"
       }
-    },
-    "LiveChat": {
-      "customSound": "Özel ses yüklendi (MinIO)",
-      "status": "Live Chat Durumu",
-      "statusDesc": "Live Chat'i tüm site genelinde açıp kapatabilir veya belirli sayfalarda görünmesini sağlayabilirsiniz.",
-      "visiblePages": "Görüneceği Sayfalar",
-      "visiblePagesDesc": "Hangi sayfalarda widget'ın görüneceğini belirleyin.",
-      "visiblePagesDesc_note": "giriniz (örn: /blog). Boş bırakılırsa tüm sayfalarda görünür.",
-      "noPrefixNote": "DİL ÖN EKİ OLMADAN",
-      "pathPlaceholder": "/blog",
-      "matchingPages": "Eşleşecek Sayfalar:",
-      "addPage": "Sayfa Ekle",
-      "allPages": "Tüm Sayfalar",
-      "excludedPages": "Görünmeyecek Sayfalar",
-      "excludedPagesDesc": "Widget'ın KESİNLİKLE görünmeyeceği sayfalar.",
-      "excludedPagesDesc_note": "Bu ayar görünür sayfalardan daha önceliklidir.",
-      "blockPage": "Sayfayı Engelle",
-      "noBlocks": "Herhangi bir engel yok.",
-      "defaultSound": "Varsayılan sistem sesi",
-      "greetingMessages": "Karşılama Mesajları",
-      "greetingMessagesDesc": "Sayfaya özel ilk AI baloncuğu mesajları. Tüm sayfalar için '/*' kullanın.",
-      "new": "Yeni",
-      "noGreetings": "Henüz özel karşılama mesajı yok.",
-      "editGreeting": "Karşılama Mesajı Düzenle",
-      "pathname": "Sayfa Yolu (Pathname)",
-      "autoPrefixNote": "Dil ön eki otomatik eklenir",
-      "allLanguagesNote": "Tüm dillerde geçerli olur:",
-      "messageContent": "Mesaj İçeriği (Dillere Göre)",
-      "soundSettings": "Ses Ayarları",
-      "soundSettingsDesc": "Bildirim ve mesaj seslerini buradan özelleştirebilirsiniz. Boş bırakılırsa varsayılan sesler kullanılır.",
-      "pingSound": "Ping (Gelen Mesaj)",
-      "notificationSound": "Bildirim (Karşılama/Hata)",
-      "resetToDefault": "Varsayılana Dön",
-      "open": "Aç",
-      "close": "Kapat",
-      "errorPathStart": "Yol '/' ile başlamalıdır",
-      "errorPathExists": "Bu yol zaten ekli",
-      "errorPathBlocked": "Bu yol engellenen sayfalar listesinde mevcut",
-      "errorPathVisible": "Bu yol görünür sayfalar listesinde mevcut",
-      "successPathAdded": "Yol eklendi",
-      "successPathRemoved": "Yol kaldırıldı",
-      "successPathBlocked": "Yol engellenenlere eklendi",
-      "successBlockRemoved": "Engel kaldırıldı",
-      "errorEnterPath": "Lütfen bir yol (pathname) girin",
-      "successGreetingSaved": "Karşılama mesajı kaydedildi",
-      "errorGreetingSave": "Kaydedilirken hata oluştu",
-      "confirmDeleteGreeting": "Bu karşılama mesajını silmek istediğinize emin misiniz?",
-      "successGreetingDeleted": "Karşılama mesajı silindi",
-      "errorSelectAudio": "Lütfen bir ses dosyası seçin",
-      "successSoundUploaded": "Ses yüklendi",
-      "errorSoundUpload": "Ses yüklenirken hata oluştu",
-      "successSoundReset": "Ses varsayılana sıfırlandı",
-      "errorSoundReset": "Sıfırlanırken hata oluştu",
-      "greetingPlaceholder": "{name} karşılama mesajı...",
-      "quickAnswers": "Hızlı Cevaplar",
-      "maxQuickAnswers": "En fazla {count} adet",
-      "quickAnswer": "Cevap",
-      "quickAnswersDesc": "Kullanıcıya karşılama mesajıyla birlikte sunulacak hızlı soru/cevap butonları."
     },
     "Editor": {
       "bold": "Kalın (Ctrl+B)",
@@ -354,10 +405,8 @@
       "blog": "Blog",
       "experience": "Deneyim",
       "profile": "Profil",
-      "embeddings": "Vektör Veri",
-      "liveChat": "Live Chat",
       "signOut": "Çıkış Yap",
-      "aiLogs": "AI Kayıtları"
+      "assistant": "AI Asistan"
     },
     "Database": {
       "title": "Tam Yedekleme Yönetimi",
@@ -445,7 +494,6 @@
       "updatedAt": "Güncellenme Tarihi",
       "isCover": "Kapak Görseli",
       "slug": "URL Uzantısı (Slug)",
-      "clear": "Temizle",
       "contentError": "İçerik Hatası",
       "loadingEditor": "Editör yükleniyor...",
       "status": "Durum",
@@ -470,17 +518,9 @@
       "metaDescription": "Meta Açıklama",
       "keywords": "Anahtar Kelimeler",
       "keywordsPlaceholder": "etiketler, anahtar kelimeler...",
-      "autoTranslate": "Otomatik Çevir (Yapay Zeka)",
       "sourceLanguage": "Kaynak Dil",
-      "targetLanguages": "Hedef Diller",
-      "selectLanguage": "Dil Seç",
-      "countLangsSelected": "{count} dil seçildi",
-      "translate": "Çevir",
       "translating": "Çevriliyor...",
-      "translateSuccess": "Çeviri tamamlandı!",
       "translateError": "Çeviri başarısız oldu.",
-      "translateInSelectedLangs": "Seçilen Dillerde Çevir",
-      "translateInSelectedLangsDesc": "Kaynak dildeki alanları doldurduktan sonra, en az bir hedef dil seçip çeviri yapabilirsiniz.",
       "htmlLabel": "(HTML)",
       "selectRepo": "Repo Seç",
       "fetchRepos": "GitHub'dan Çek",
@@ -558,21 +598,10 @@
       "skillSearchPlaceholder": "Örn: React, Tailwind, Supabase...",
       "skillNamePlaceholder": "Örn: Bun",
       "emojiOrUrl": "🚀 veya URL...",
-      "seoOptimize": "SEO Optimize",
-      "seoContext": "İçerik Bağlamı",
-      "seoContextDesc": "Oluşturulacak SEO içeriği için bağlam veya temel bilgi giriniz.",
-      "seoPlaceholder": "Örn: Bu yazı Next.js 14 ile modern bir blog uygulaması oluşturma hakkında...",
-      "seoMinChars": "Lütfen en az 30 karakter içeren bir bağlam giriniz.",
-      "seoSuccess": "SEO içeriği başarıyla oluşturuldu!",
-      "seoError": "SEO üretimi başarısız",
-      "generating": "Oluşturuluyor...",
-      "generate": "Oluştur",
-      "characters": "karakter",
       "pingSound": "Ping (Gelen Mesaj)",
       "notificationSound": "Bildirim (Karşılama/Hata)",
       "defaultSound": "Varsayılan sistem sesi",
-      "customSound": "Özel ses yüklendi (MinIO)",
-      "selectAll": "Tümünü Seç"
+      "customSound": "Özel ses yüklendi (MinIO)"
     },
     "Navigation": {
       "dashboard": "Panel",
@@ -580,45 +609,11 @@
       "blog": "Blog Yazıları",
       "experience": "Deneyim",
       "profile": "Profil",
-      "embeddings": "Embeddings",
-      "aiLogs": "AI Kayıtları",
       "settings": "Ayarlar",
       "signOut": "Oturumu Kapat",
       "adminPanel": "ADMİN PANELİ",
-      "clear": "Temizle"
-    },
-    "Embeddings": {
-      "title": "Vektör Veri (Embeddings)",
-      "description": "Yapay zeka bilgi tabanınızı yönetin ve içeriği senkronize edin.",
-      "clearDb": "Vektör Veriyi Temizle",
-      "syncAll": "Tüm Veriyi Senkronize Et",
-      "totalChunks": "Toplam Vektör Parçası",
-      "totalChunksDesc": "Veritabanındaki toplam embedding sayısı",
-      "activeChunks": "Aktif vektör parçası",
-      "contentSync": "İçerik Senkronizasyonu",
-      "contentSyncDesc": "Güncelliğini yitirmiş AI bağlamlarını bireysel olarak güncelleyin.",
-      "searchPlaceholder": "Başlıklarda ara...",
-      "typeAll": "Tüm Türler",
-      "statusAll": "Tüm Durumlar",
-      "synced": "Senkronize Edildi",
-      "outdated": "Güncel Değil",
-      "missing": "Eksik",
-      "sync": "Senkronize Et",
-      "deleteConfirm": "TÜM embeddingleri silmek istediğinize emin misiniz?",
-      "syncSuccess": "Tüm içerik başarıyla senkronize edildi!",
-      "syncError": "Senkronizasyon başarısız oldu.",
-      "deleteSuccess": "İçerik başarıyla silindi.",
-      "deleteError": "Silme işlemi başarısız oldu.",
-      "loading": "İçerik yükleniyor...",
-      "viewDetails": "Detayları Gör",
-      "deleteSingle": "Vektörleri Sil",
-      "chunks": "Vektör Parçaları",
-      "itemDetails": "İçerik Detayları",
-      "noChunks": "Bu içerik için henüz vektör kaydı bulunmuyor.",
-      "sourceIdLabel": "Source ID",
-      "lastSourceUpdate": "Last source update",
-      "latestChunk": "Latest chunk",
-      "languageBreakdown": "Languages"
+      "clear": "Temizle",
+      "assistant": "AI Asistan"
     },
     "Common": {
       "actions": "Aksiyonlar",
@@ -646,6 +641,136 @@
       "open": "Aç",
       "on": "Açık",
       "off": "Kapalı"
+    },
+    "Assistant": {
+      "title": "AI Asistan",
+      "subtitle": "Agent, bilgi indeksi, System One katmanı ve sohbetler.",
+      "tabs": {
+        "overview": "Genel bakış",
+        "knowledge": "Bilgi indeksi",
+        "lab": "Arama laboratuvarı",
+        "conversations": "Sohbetler"
+      },
+      "providers": {
+        "title": "Modeller",
+        "llm": "Dil modeli",
+        "fast": "Hızlı katman",
+        "deep": "Derin katman",
+        "embedding": "Embedding",
+        "evaluator": "System One değerlendirici",
+        "evaluatorJev": "Jev ({transport})",
+        "evaluatorGemini": "Gemini yedeği (kalibre değil)",
+        "evaluatorOff": "Kapalı — yalnızca sezgisel kurallar",
+        "missingKey": "GOOGLE_GENERATIVE_AI_API_KEY tanımlı değil — asistan gizli."
+      },
+      "usage": {
+        "title": "Son 7 gün",
+        "threads": "Sohbet",
+        "messages": "Mesaj",
+        "tokens": "Token",
+        "flagged": "İşaretli"
+      },
+      "settings": {
+        "title": "Ayarlar",
+        "enabled": "Asistan açık",
+        "enabledHint": "Kapalıyken widget'ı sadece adminler görür.",
+        "visitorDailyLimit": "Ziyaretçi başına günlük mesaj",
+        "globalDailyLimit": "Site geneli günlük mesaj",
+        "retentionDays": "Sohbet saklama süresi (gün)",
+        "save": "Ayarları kaydet",
+        "saved": "Ayarlar kaydedildi",
+        "modelFast": "Hızlı model",
+        "modelFastHint": "Soruların çoğunu cevaplar (selamlaşma, bilgi sorgusu, kısa açıklama).",
+        "modelDeep": "Derin model",
+        "modelDeepHint": "System One bir soruyu çok adımlı ya da sentez gerektiren olarak puanladığında kullanılır.",
+        "freeTier": "ücretsiz katman",
+        "priceLine": "1M token başına {input} girdi / {output} çıktı",
+        "pricesNote": "Ücretli katman fiyatları (1M token), {date} tarihinde kontrol edildi. Ücretsiz katman key'iyle Google limitlerine kadar ücret ödenmez."
+      },
+      "index": {
+        "title": "Bilgi indeksi",
+        "description": "Yayındaki içerikten türetilir. Kayıtlar indeksi otomatik günceller; tam kontrol için bunları kullan.",
+        "sync": "Değişiklikleri senkronize et",
+        "rebuild": "Tümünü yeniden oluştur",
+        "rebuildConfirm": "Tüm dokümanlar yeniden embed edilsin mi? Bu embedding kotası kullanır.",
+        "running": "İndeksleniyor…",
+        "done": "İndeks güncellendi: {indexed} indekslendi, {unchanged} değişmedi, {removed} kaldırıldı",
+        "failedCount": "{count} başarısız",
+        "documents": "Doküman",
+        "chunks": "Parça",
+        "lastRun": "Son çalışma",
+        "never": "hiç",
+        "status": {
+          "fresh": "Güncel",
+          "stale": "Eski",
+          "missing": "İndekslenmedi",
+          "orphan": "Sahipsiz"
+        },
+        "columns": {
+          "title": "Başlık",
+          "type": "Tür",
+          "language": "Dil",
+          "chunks": "Parça",
+          "indexedAt": "İndekslendi",
+          "status": "Durum"
+        },
+        "empty": "Henüz indekslenmiş içerik yok."
+      },
+      "lab": {
+        "title": "Arama laboratuvarı",
+        "description": "Agent'ın kullandığı arama hattını birebir çalıştır ve her aşamayı incele.",
+        "placeholder": "örn. hangi projelerde PostgreSQL kullanıldı?",
+        "run": "Ara",
+        "judge": "System One hakemini kullan",
+        "stages": "{lexical} kelime · {vector} vektör → {pooled} havuz → {kept} seçildi",
+        "timing": "embed {embed} ms · arama {retrieve} ms · hakem {judge} ms · toplam {total} ms",
+        "lexicalRank": "BM25 #",
+        "vectorRank": "Vektör #",
+        "similarity": "Kosinüs",
+        "relevance": "P(alakalı)",
+        "noResults": "Sonuç yok."
+      },
+      "threads": {
+        "title": "Sohbetler",
+        "empty": "Henüz sohbet yok.",
+        "columns": {
+          "title": "İlk mesaj",
+          "language": "Dil",
+          "messages": "Mesaj",
+          "tokens": "Token",
+          "lastMessageAt": "Son etkinlik"
+        },
+        "flagged": "İşaretli",
+        "back": "Sohbetlere dön",
+        "delete": "Sil",
+        "deleteConfirm": "Bu sohbet silinsin mi?",
+        "entryPath": "Başladığı sayfa",
+        "allChats": "Bu ziyaretçinin tüm sohbetleri"
+      },
+      "visitors": {
+        "title": "Kişiler",
+        "description": {
+          "visitor": "Her satır bir tarayıcı (imzalı anonim çerez).",
+          "ip": "Her satır bir ağ (hash'lenmiş IP) — aynı kişiyi farklı tarayıcılarda ya da çerez silindiğinde birleştirir."
+        },
+        "by": {
+          "visitor": "Ziyaretçiye göre",
+          "ip": "IP'ye göre"
+        },
+        "label": {
+          "visitor": "Ziyaretçi #{id}",
+          "ip": "Ağ #{id}"
+        },
+        "stats": "{threads} sohbet · {messages} mesaj",
+        "linked": {
+          "visitor": "{count} farklı ağ",
+          "ip": "{count} farklı tarayıcı"
+        },
+        "summary": "{threads} sohbet · {messages} mesaj · {tokens} token",
+        "openThread": "Aç",
+        "deleteAll": "Tüm sohbetlerini sil",
+        "deleteAllConfirm": "Bu kişinin tüm sohbetleri silinsin mi? Bu işlem geri alınamaz."
+      }
     }
   },
   "Login": {

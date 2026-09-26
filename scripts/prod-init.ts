@@ -81,7 +81,7 @@ async function main() {
 
     console.log("\n✅ Production kurulumu başarıyla tamamlandı!");
     console.log(
-      "   Artık 'Sync All Embeddings' ile embedding'leri oluşturabilirsin.",
+      "   AI bilgi indeksi için: yarn ai:reindex (veya Admin > AI Asistan > Yeniden indeksle).",
     );
   } catch (error) {
     console.error("\n❌ Kurulum başarısız:", error);

@@ -1,6 +1,7 @@
 ﻿"use server";
 
 import { auth } from "@/auth";
+import { findRelatedSources } from "@/lib/ai/knowledge/related";
 import { db } from "@/lib/db";
 import {
   _projectToSkill,
@@ -24,6 +25,7 @@ import {
   workExperience,
   workExperienceTranslation,
 } from "@/lib/db/schema";
+import { sendTelegramNotification } from "@/lib/telegram";
 import { shouldNotify } from "@/lib/utils";
 import {
   BlogSort,
@@ -1275,53 +1277,6 @@ async function verifyTurnstileToken(token: string) {
   }
 }
 
-async function sendTelegramNotification(message: string, photo?: string) {
-  if (process.env.NODE_ENV === "development") return;
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!botToken || !chatId) {
-    console.error("Telegram bot token or chat ID is missing");
-    return;
-  }
-
-  try {
-    const isPublicPhoto =
-      photo &&
-      photo.startsWith("http") &&
-      !photo.includes("localhost") &&
-      !photo.includes("127.0.0.1");
-    const endpoint = isPublicPhoto ? "sendPhoto" : "sendMessage";
-
-    const body: Record<string, unknown> = {
-      chat_id: chatId,
-      parse_mode: "HTML",
-    };
-
-    if (isPublicPhoto) {
-      body.photo = photo;
-      body.caption = message;
-    } else {
-      body.text = message;
-    }
-
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/${endpoint}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Telegram API Error:", errorData);
-    }
-  } catch (error) {
-    console.error("Telegram notification failed:", error);
-  }
-}
-
 async function createAuditLog(
   actionArg: string,
   entityTypeArg: string,
@@ -1484,50 +1439,14 @@ export async function getSimilarProjects(
   limit: number = 2,
 ) {
   try {
-    const targetLanguage = lang === "tr" ? "tr" : "en";
-    type RawResult = {
-      sourceId: string;
-      distance: number | null;
-      sourceid?: string | null;
-    };
+    const similarProjectIds = await findRelatedSources({
+      sourceType: "project",
+      sourceId: projectId,
+      language: lang,
+      limit,
+    });
 
-    let similarProjectIds: RawResult[] = [];
-
-    try {
-      const res = await db.execute<RawResult>(sql`
-        WITH SourceEmbedding AS (
-          SELECT embedding 
-          FROM "Embedding" 
-          WHERE "sourceType" = 'project' 
-            AND "sourceId" = ${projectId} 
-            AND "language" = ${targetLanguage} 
-          ORDER BY "chunkIndex" ASC 
-          LIMIT 1
-        )
-        SELECT "sourceId", MIN(embedding <=> (SELECT embedding FROM SourceEmbedding)) as distance
-        FROM "Embedding"
-        WHERE "sourceType" = 'project'
-          AND "language" = ${targetLanguage}
-          AND "sourceId" != ${projectId}
-          AND (SELECT embedding FROM SourceEmbedding) IS NOT NULL
-        GROUP BY "sourceId"
-        ORDER BY distance ASC
-        LIMIT ${limit}
-      `);
-      similarProjectIds = res.rows
-        .map((r) => ({
-          sourceId: String(r.sourceId || r.sourceid),
-          distance: r.distance !== null ? Number(r.distance) : null,
-        }))
-        .filter((r) => r.sourceId !== "undefined");
-    } catch (e) {
-      console.error("Project similarity search failed:", e);
-    }
-
-    if (
-      !similarProjectIds.length ||
-      similarProjectIds.every((r) => r.distance === null)
-    ) {
+    if (!similarProjectIds.length) {
       const fallbackProjects = await db.query.project.findMany({
         where: ne(project.id, projectId),
         orderBy: [desc(project.createdAt)],
@@ -1589,50 +1508,14 @@ export async function getSimilarBlogPosts(
   limit: number = 2,
 ) {
   try {
-    const targetLanguage = lang === "tr" ? "tr" : "en";
-    type RawResult = {
-      sourceId: string;
-      distance: number | null;
-      sourceid?: string;
-    };
+    const similarBlogIds = await findRelatedSources({
+      sourceType: "blog",
+      sourceId: blogPostId,
+      language: lang,
+      limit,
+    });
 
-    let similarBlogIds: RawResult[] = [];
-
-    try {
-      const res = await db.execute<RawResult>(sql`
-        WITH SourceEmbedding AS (
-          SELECT embedding 
-          FROM "Embedding" 
-          WHERE "sourceType" = 'blog' 
-            AND "sourceId" = ${blogPostId} 
-            AND "language" = ${targetLanguage} 
-          ORDER BY "chunkIndex" ASC 
-          LIMIT 1
-        )
-        SELECT "sourceId", MIN(embedding <=> (SELECT embedding FROM SourceEmbedding)) as distance
-        FROM "Embedding"
-        WHERE "sourceType" = 'blog'
-          AND "language" = ${targetLanguage}
-          AND "sourceId" != ${blogPostId}
-          AND (SELECT embedding FROM SourceEmbedding) IS NOT NULL
-        GROUP BY "sourceId"
-        ORDER BY distance ASC
-        LIMIT ${limit}
-      `);
-      similarBlogIds = res.rows
-        .map((r) => ({
-          sourceId: String(r.sourceId || r.sourceid),
-          distance: r.distance !== null ? Number(r.distance) : null,
-        }))
-        .filter((r) => r.sourceId !== "undefined");
-    } catch (e) {
-      console.error("Blog similarity search failed:", e);
-    }
-
-    if (
-      !similarBlogIds.length ||
-      similarBlogIds.every((r) => r.distance === null)
-    ) {
+    if (!similarBlogIds.length) {
       const fallbackPosts = await db.query.blogPost.findMany({
         where: and(
           ne(blogPost.id, blogPostId),

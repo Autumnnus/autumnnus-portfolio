@@ -512,3 +512,27 @@ html.lenis body {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+/* AI assistant: pixel caret at the end of a streaming answer */
+.assistant-caret > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--primary);
+  animation: assistant-caret-blink 1s steps(2, start) infinite;
+}
+
+@keyframes assistant-caret-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-caret > :last-child::after {
+    animation: none;
+  }
+}

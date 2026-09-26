@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { _projectToSkill, category, embedding } from "@/lib/db/schema";
-import { and, count, eq, inArray } from "drizzle-orm";
+import { _projectToSkill, category } from "@/lib/db/schema";
+import { count, eq, inArray } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -27,17 +27,10 @@ export async function GET() {
       ]);
 
     const projectIds = projects.map((p) => p.id);
-    const blogIds = blogs.map((b) => b.id);
-    const experienceIds = experiences.map((e) => e.id);
-    const profileId = profileData?.id ?? null;
 
     const [
       projectCategoryCountRes,
       blogCategoryCountRes,
-      projectEmbeddingCountRes,
-      blogEmbeddingCountRes,
-      experienceEmbeddingCountRes,
-      profileEmbeddingCountRes,
       projectSkillRelationCountRes,
       totalSkillRelationCountRes,
     ] = await Promise.all([
@@ -49,50 +42,6 @@ export async function GET() {
         .select({ count: count() })
         .from(category)
         .where(eq(category.type, "blog")),
-      projectIds.length
-        ? db
-            .select({ count: count() })
-            .from(embedding)
-            .where(
-              and(
-                eq(embedding.sourceType, "project"),
-                inArray(embedding.sourceId, projectIds),
-              ),
-            )
-        : Promise.resolve([{ count: 0 }]),
-      blogIds.length
-        ? db
-            .select({ count: count() })
-            .from(embedding)
-            .where(
-              and(
-                eq(embedding.sourceType, "blog"),
-                inArray(embedding.sourceId, blogIds),
-              ),
-            )
-        : Promise.resolve([{ count: 0 }]),
-      experienceIds.length
-        ? db
-            .select({ count: count() })
-            .from(embedding)
-            .where(
-              and(
-                eq(embedding.sourceType, "experience"),
-                inArray(embedding.sourceId, experienceIds),
-              ),
-            )
-        : Promise.resolve([{ count: 0 }]),
-      profileId
-        ? db
-            .select({ count: count() })
-            .from(embedding)
-            .where(
-              and(
-                eq(embedding.sourceType, "profile"),
-                eq(embedding.sourceId, profileId),
-              ),
-            )
-        : Promise.resolve([{ count: 0 }]),
       projectIds.length
         ? db
             .select({ count: count() })
@@ -139,7 +88,6 @@ export async function GET() {
         translationCount: projectTranslationCount,
         categoryCount: projectCategoryCountRes[0]?.count ?? 0,
         techRelationCount: projectSkillRelationCountRes[0]?.count ?? 0,
-        embeddingCount: projectEmbeddingCountRes[0]?.count ?? 0,
         items: projects
           .map((p) => {
             const t =
@@ -154,7 +102,6 @@ export async function GET() {
         imageCount: blogImageCount,
         translationCount: blogTranslationCount,
         categoryCount: blogCategoryCountRes[0]?.count ?? 0,
-        embeddingCount: blogEmbeddingCountRes[0]?.count ?? 0,
         items: blogs
           .map((b) => {
             const t =
@@ -174,14 +121,12 @@ export async function GET() {
         count: experiences.length,
         logoCount: expLogoCount,
         translationCount: experienceTranslationCount,
-        embeddingCount: experienceEmbeddingCountRes[0]?.count ?? 0,
         items: experiences.map((e) => e.company).slice(0, 8),
       },
       profile: {
         exists: !!profileData,
         hasAvatar: !!profileData?.avatar,
         translationCount: profileData?.translations?.length ?? 0,
-        embeddingCount: profileEmbeddingCountRes[0]?.count ?? 0,
         name:
           profileData?.translations.find((t) => t.language === "en")?.name ||
           profileData?.translations[0]?.name,

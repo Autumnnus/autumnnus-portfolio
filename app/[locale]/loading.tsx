@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 
 export default function Loading() {
-  const t = useTranslations("Admin.Embeddings");
+  const t = useTranslations("Common");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">

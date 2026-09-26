@@ -4,7 +4,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { seedDatabase } from "@/lib/db/seed";
 import { getBucketName, minioClient } from "@/lib/minio";
-import { getRedisClient } from "@/lib/redis";
+import { getAiProviderStatus } from "@/lib/ai/providers";
+import { knowledgeDocument } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -29,8 +30,10 @@ export async function getSystemStatus() {
     umami: {
       connected: false,
     },
-    redis: {
-      connected: false,
+    ai: {
+      llmConfigured: false,
+      evaluator: "off" as "jev" | "gemini" | "off",
+      indexedDocuments: 0,
     },
   };
 
@@ -63,13 +66,14 @@ export async function getSystemStatus() {
     status.minio.connected = false;
   }
 
-  // Check Redis
+  // Check AI providers + knowledge index
   try {
-    const redis = await getRedisClient();
-    const pong = await redis.ping();
-    status.redis.connected = pong === "PONG";
+    const providers = getAiProviderStatus();
+    status.ai.llmConfigured = providers.llmConfigured;
+    status.ai.evaluator = providers.evaluator;
+    status.ai.indexedDocuments = await db.$count(knowledgeDocument);
   } catch (error) {
-    console.error("Redis Status Check Error:", error);
+    console.error("AI Status Check Error:", error);
   }
 
   // Check Umami

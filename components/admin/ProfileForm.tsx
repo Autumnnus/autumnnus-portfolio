@@ -5,9 +5,7 @@ import {
   updateProfileAction,
   uploadImageAction,
 } from "@/app/[locale]/admin/actions";
-import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { languageNames, useRouter } from "@/i18n/routing";
@@ -132,20 +130,14 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const initialTranslations = initialData?.translations
     ? transformTranslationsToObject(initialData.translations)
     : {};
-  const initialTranslationLangCodes = Object.keys(initialTranslations);
   const [avatar, setAvatar] = useState<ImageData | null>(
     initialData?.avatar ? { url: initialData.avatar } : null,
   );
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
-    Array.from(
-      new Set(
-        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
-      ),
-    ),
+  const targetLangs = Object.keys(languageNames).filter(
+    (lang) => lang !== sourceLang,
   );
-  const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(ProfileSchema) as Resolver<ProfileFormValues>,
@@ -176,16 +168,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     }
   }, [initialData, form]);
 
-  useEffect(() => {
-    setTargetLangs((prev) =>
-      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
-    );
-  }, [sourceLang]);
-
   const {
     register,
     setValue,
-    getValues,
     formState: { errors, isDirty },
   } = form;
 
@@ -203,80 +188,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
     formData.append("path", path);
     const res = await uploadImageAction(formData);
     return res.url;
-  };
-
-  const handleAutoTranslate = async () => {
-    if (targetLangs.length === 0) {
-      toast.error(t("translateError"));
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      const currentValues = getValues();
-      const sourceContent = currentValues.translations?.[sourceLang];
-
-      if (
-        !sourceContent ||
-        !sourceContent.name ||
-        !sourceContent.title ||
-        !sourceContent.greetingText ||
-        !sourceContent.description ||
-        !sourceContent.aboutTitle ||
-        !sourceContent.aboutDescription
-      ) {
-        toast.error(t("fillRequired"));
-        setIsTranslating(false);
-        return;
-      }
-
-      const translations = await generateTranslationAction({
-        type: "profile",
-        sourceLang,
-        targetLangs,
-        content: {
-          name: sourceContent.name,
-          title: sourceContent.title,
-          greetingText: sourceContent.greetingText,
-          description: sourceContent.description,
-          aboutTitle: sourceContent.aboutTitle,
-          aboutDescription: sourceContent.aboutDescription,
-        },
-      });
-
-      Object.entries(translations).forEach(([lang, content]) => {
-        const c = content as TranslationFields;
-        if (!c) return;
-        setValue(`translations.${lang}.name`, c.name, {
-          shouldDirty: true,
-        });
-        setValue(`translations.${lang}.title`, c.title, {
-          shouldDirty: true,
-        });
-        setValue(`translations.${lang}.greetingText`, c.greetingText, {
-          shouldDirty: true,
-        });
-        setValue(`translations.${lang}.description`, c.description, {
-          shouldDirty: true,
-        });
-        setValue(`translations.${lang}.aboutTitle`, c.aboutTitle, {
-          shouldDirty: true,
-        });
-        setValue(`translations.${lang}.aboutDescription`, c.aboutDescription, {
-          shouldDirty: true,
-        });
-      });
-
-      toast.success(t("translateSuccess"));
-    } catch (error) {
-      toast.error(
-        t("translateError") +
-          ": " +
-          (error instanceof Error ? error.message : "Bilinmeyen hata"),
-      );
-    } finally {
-      setIsTranslating(false);
-    }
   };
 
   const onSubmitAction = async (data: ProfileFormValues) => {
@@ -570,27 +481,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
               ))}
             </select>
           </div>
-
-          <MultiLanguageSelector
-            sourceLang={sourceLang}
-            targetLangs={targetLangs}
-            onChange={setTargetLangs}
-          />
         </div>
-
-        <button
-          type="button"
-          onClick={handleAutoTranslate}
-          disabled={isTranslating || targetLangs.length === 0}
-          className="px-4 py-2.5 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {isTranslating ? (
-            <Loader2 className="animate-spin w-4 h-4" />
-          ) : (
-            <Sparkles className="w-4 h-4" />
-          )}
-          {t("translate")}
-        </button>
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>

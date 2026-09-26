@@ -3,14 +3,13 @@
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import {
-  BrainCircuit,
   Briefcase,
   FileText,
   FolderOpen,
   LayoutDashboard,
   LogOut,
-  MessageSquare,
   Settings,
+  Sparkles,
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -26,8 +25,7 @@ export function AdminSidebar() {
     { name: t("blog"), href: "/admin/blog", icon: FileText },
     { name: t("experience"), href: "/admin/experience", icon: Briefcase },
     { name: t("profile"), href: "/admin/profile", icon: User },
-    { name: t("embeddings"), href: "/admin/embeddings", icon: BrainCircuit },
-    { name: t("aiLogs"), href: "/admin/ai-logs", icon: MessageSquare },
+    { name: t("assistant"), href: "/admin/assistant", icon: Sparkles },
     { name: t("settings"), href: "/admin/settings", icon: Settings },
   ];
 

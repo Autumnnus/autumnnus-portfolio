@@ -33,7 +33,6 @@ interface SectionMeta {
   translationCount?: number;
   categoryCount?: number;
   techRelationCount?: number;
-  embeddingCount?: number;
   usedInProjects?: number;
   hasAvatar?: boolean;
   exists?: boolean;
@@ -51,7 +50,6 @@ interface ExportPreview {
     name?: string;
     questCount: number;
     translationCount?: number;
-    embeddingCount?: number;
   };
   totalAssets: number;
 }
@@ -68,7 +66,6 @@ interface ImportPreview {
     hasAvatar: boolean;
     questCount: number;
     translationCount?: number;
-    embeddingCount?: number;
   };
   assets: { count: number };
 }
@@ -368,14 +365,12 @@ export default function BackupModal({
                 `${projects.translationCount ?? 0} çeviri`,
                 `${projects.categoryCount ?? 0} kategori`,
                 `${projects.techRelationCount ?? 0} teknoloji ilişkisi`,
-                `${projects.embeddingCount ?? 0} embedding`,
                 "Bağımlı skill kayıtları otomatik dahil",
               ]
             : [
                 `${projects.translationCount ?? 0} translations`,
                 `${projects.categoryCount ?? 0} categories`,
                 `${projects.techRelationCount ?? 0} technology links`,
-                `${projects.embeddingCount ?? 0} embeddings`,
                 "Dependent skill records are auto-included",
               ],
         })}
@@ -388,12 +383,10 @@ export default function BackupModal({
             ? [
                 `${blogs.translationCount ?? 0} çeviri`,
                 `${blogs.categoryCount ?? 0} kategori`,
-                `${blogs.embeddingCount ?? 0} embedding`,
               ]
             : [
                 `${blogs.translationCount ?? 0} translations`,
                 `${blogs.categoryCount ?? 0} categories`,
-                `${blogs.embeddingCount ?? 0} embeddings`,
               ],
         })}
         {renderSectionRow("skills", {
@@ -411,14 +404,8 @@ export default function BackupModal({
           assetCount: experiences.logoCount,
           assetLabel: t("logos"),
           details: isTurkish
-            ? [
-                `${experiences.translationCount ?? 0} çeviri`,
-                `${experiences.embeddingCount ?? 0} embedding`,
-              ]
-            : [
-                `${experiences.translationCount ?? 0} translations`,
-                `${experiences.embeddingCount ?? 0} embeddings`,
-              ],
+            ? [`${experiences.translationCount ?? 0} çeviri`]
+            : [`${experiences.translationCount ?? 0} translations`],
         })}
         {renderSectionRow("profile", {
           count: profile.exists ? 1 : 0,
@@ -427,14 +414,8 @@ export default function BackupModal({
             ? `${profile.hasAvatar ? t("withAvatar") : t("noAvatar")}${profile.questCount > 0 ? ` · ${profile.questCount} ${t("quests")}` : ""}`
             : undefined,
           details: isTurkish
-            ? [
-                `${profile.translationCount ?? 0} çeviri`,
-                `${profile.embeddingCount ?? 0} embedding`,
-              ]
-            : [
-                `${profile.translationCount ?? 0} translations`,
-                `${profile.embeddingCount ?? 0} embeddings`,
-              ],
+            ? [`${profile.translationCount ?? 0} çeviri`]
+            : [`${profile.translationCount ?? 0} translations`],
         })}
       </div>
     );
@@ -455,14 +436,12 @@ export default function BackupModal({
                 `${projects.translationCount ?? 0} çeviri`,
                 `${projects.categoryCount ?? 0} kategori`,
                 `${projects.techRelationCount ?? 0} teknoloji ilişkisi`,
-                `${projects.embeddingCount ?? 0} embedding`,
                 "Gerekli skill kayıtları import sırasında tamamlanır",
               ]
             : [
                 `${projects.translationCount ?? 0} translations`,
                 `${projects.categoryCount ?? 0} categories`,
                 `${projects.techRelationCount ?? 0} technology links`,
-                `${projects.embeddingCount ?? 0} embeddings`,
                 "Required skill records are completed during import",
               ],
         })}
@@ -473,12 +452,10 @@ export default function BackupModal({
             ? [
                 `${blogs.translationCount ?? 0} çeviri`,
                 `${blogs.categoryCount ?? 0} kategori`,
-                `${blogs.embeddingCount ?? 0} embedding`,
               ]
             : [
                 `${blogs.translationCount ?? 0} translations`,
                 `${blogs.categoryCount ?? 0} categories`,
-                `${blogs.embeddingCount ?? 0} embeddings`,
               ],
         })}
         {renderSectionRow("skills", {
@@ -498,14 +475,8 @@ export default function BackupModal({
           count: experiences.count,
           items: experiences.items,
           details: isTurkish
-            ? [
-                `${experiences.translationCount ?? 0} çeviri`,
-                `${experiences.embeddingCount ?? 0} embedding`,
-              ]
-            : [
-                `${experiences.translationCount ?? 0} translations`,
-                `${experiences.embeddingCount ?? 0} embeddings`,
-              ],
+            ? [`${experiences.translationCount ?? 0} çeviri`]
+            : [`${experiences.translationCount ?? 0} translations`],
         })}
         {renderSectionRow("profile", {
           count: profile.exists ? 1 : 0,
@@ -514,14 +485,8 @@ export default function BackupModal({
             ? `${profile.hasAvatar ? t("withAvatar") : t("noAvatar")}${profile.questCount > 0 ? ` · ${profile.questCount} ${t("quests")}` : ""}`
             : undefined,
           details: isTurkish
-            ? [
-                `${profile.translationCount ?? 0} çeviri`,
-                `${profile.embeddingCount ?? 0} embedding`,
-              ]
-            : [
-                `${profile.translationCount ?? 0} translations`,
-                `${profile.embeddingCount ?? 0} embeddings`,
-              ],
+            ? [`${profile.translationCount ?? 0} çeviri`]
+            : [`${profile.translationCount ?? 0} translations`],
         })}
       </div>
     );

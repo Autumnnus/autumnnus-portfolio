@@ -10,6 +10,7 @@ import {
   blogPost,
   blogPostTranslation,
   category,
+  knowledgeDocument,
   profile,
   profileTranslation,
   project,
@@ -41,6 +42,8 @@ export async function seedDatabase(
     // Clear existing data
     console.log("Emptying tables...");
     try {
+      // Derived data — rebuilt by `yarn ai:reindex` after seeding.
+      await database.delete(knowledgeDocument);
       await database.delete(projectTranslation);
       await database.delete(_projectToSkill);
       await database.delete(project);
