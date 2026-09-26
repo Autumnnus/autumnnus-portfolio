@@ -1,63 +1,24 @@
 "use client";
 
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
-import { ThemeToggle } from "@/components/common/ThemeToggle";
-import { Link } from "@/i18n/routing";
+import PixelIcon from "@/components/pixel/PixelIcon";
+import SeasonSwitch from "@/components/pixel/SeasonSwitch";
+import SoundToggle from "@/components/pixel/SoundToggle";
+import { Link, usePathname } from "@/i18n/routing";
+import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import NextLink from "next/link";
 import { useState } from "react";
 import Container from "./Container";
 
-interface NavLinksProps {
-  navItems: { name: string; href: string }[];
-  isAdmin: boolean;
-  setIsMenuOpen: (open: boolean) => void;
-  mobile?: boolean;
-}
-
-const NavLinks = ({
-  navItems,
-  isAdmin,
-  setIsMenuOpen,
-  mobile = false,
-}: NavLinksProps) => (
-  <>
-    {navItems.map((item) => (
-      <Link
-        key={item.href}
-        href={item.href}
-        onClick={() => mobile && setIsMenuOpen(false)}
-        className={`pixel-btn-nav uppercase tracking-wide text-foreground hover:text-primary hover:bg-secondary/20 transition-all border-2 border-transparent hover:border-border font-pixel ${
-          mobile
-            ? "text-lg py-4 w-full text-center"
-            : "px-2 py-1 sm:px-3 sm:py-2 text-xs"
-        }`}
-      >
-        {item.name}
-      </Link>
-    ))}
-    {isAdmin && (
-      <NextLink
-        href="/admin"
-        onClick={() => mobile && setIsMenuOpen(false)}
-        className={`pixel-btn-nav uppercase tracking-wide text-accent hover:text-primary hover:bg-secondary/20 transition-all border-2 border-accent/20 hover:border-accent font-pixel ${
-          mobile
-            ? "text-lg py-4 w-full text-center"
-            : "px-2 py-1 sm:px-3 sm:py-2 text-xs"
-        }`}
-      >
-        DASHBOARD
-      </NextLink>
-    )}
-  </>
-);
+const LOGO_PALETTE = { v: "var(--ember)", s: "var(--px-ink)" };
 
 export default function Navbar() {
   const t = useTranslations("Navbar");
   const { data: session } = useSession();
+  const pathname = usePathname();
   const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -68,64 +29,90 @@ export default function Navbar() {
     { name: t("Work"), href: "/work" },
   ];
 
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const links = (mobile: boolean) => (
+    <>
+      {navItems.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          aria-current={isActive(item.href) ? "page" : undefined}
+          onClick={() => setIsMenuOpen(false)}
+          className={cn("pixel-tab", mobile && "w-full justify-center")}
+        >
+          {item.name}
+        </Link>
+      ))}
+      {isAdmin && (
+        <NextLink
+          href="/admin"
+          onClick={() => setIsMenuOpen(false)}
+          className={cn(
+            "pixel-tab text-ember",
+            mobile && "w-full justify-center",
+          )}
+        >
+          {t("Dashboard")}
+        </NextLink>
+      )}
+    </>
+  );
+
   return (
-    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b-4 border-border">
-      <Container className="py-3">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="font-pixel text-primary hover:text-accent transition-colors flex items-center gap-2 uppercase tracking-widest"
-          >
-            <span className="text-lg sm:text-xl">KADIR.DEV</span>
-          </Link>
+    <nav className="sticky top-0 z-50 border-b-4 border-px-ink bg-card">
+      <Container className="flex h-[72px] max-w-6xl items-center justify-between gap-6 lg:h-[88px]">
+        <Link href="/" className="flex items-center gap-3.5">
+          <PixelIcon
+            name="leaf"
+            palette={LOGO_PALETTE}
+            className="h-8 w-8 text-primary"
+          />
+          <span className="font-pixel text-2xl font-bold tracking-wide">
+            KADIR.DEV
+          </span>
+        </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
-            <NavLinks
-              navItems={navItems}
-              isAdmin={isAdmin}
-              setIsMenuOpen={setIsMenuOpen}
-            />
-            <div className="h-6 w-1 bg-border mx-2" />
+        <div className="hidden items-center gap-7 lg:flex">
+          <div className="flex gap-2.5">{links(false)}</div>
+          <div className="flex items-center gap-5 p-1">
+            <SeasonSwitch />
+            <SoundToggle />
             <LanguageSwitcher />
-            <ThemeToggle />
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="flex md:hidden items-center">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="pixel-btn p-2"
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsMenuOpen((open) => !open)}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-menu"
+          aria-label={isMenuOpen ? t("menuClose") : t("menuOpen")}
+          className="pixel-button pixel-button-sm pixel-button-icon lg:hidden"
+        >
+          <PixelIcon name={isMenuOpen ? "close" : "menu"} className="h-4 w-4" />
+        </button>
       </Container>
 
-      {/* Mobile Navigation Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            id="mobile-menu"
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden border-t-4 border-border bg-background"
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.18, ease: "linear" }}
+            className="border-t-4 border-px-ink bg-card lg:hidden"
           >
-            <Container className="py-8 flex flex-col items-center gap-6">
-              <div className="flex flex-col items-center gap-4 w-full">
-                <NavLinks
-                  navItems={navItems}
-                  isAdmin={isAdmin}
-                  setIsMenuOpen={setIsMenuOpen}
-                  mobile
-                />
+            <Container className="flex flex-col items-center gap-6 py-8">
+              <div className="flex w-full max-w-xs flex-col gap-3 p-1">
+                {links(true)}
               </div>
-              <div className="h-1 w-full bg-border max-w-[200px]" />
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-5 p-1">
+                <SeasonSwitch />
+                <SoundToggle />
                 <LanguageSwitcher />
-                <ThemeToggle />
               </div>
             </Container>
           </motion.div>

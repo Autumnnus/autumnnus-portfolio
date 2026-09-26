@@ -4,28 +4,30 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { Press_Start_2P, Space_Grotesk, Space_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Pixelify_Sans } from "next/font/google";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import "../globals.css";
 import { ThemeFavicon } from "@/components/common/ThemeFavicon";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin", "latin-ext"],
 });
 
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
-  variable: "--font-space-mono",
-  subsets: ["latin"],
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin", "latin-ext"],
 });
 
-const pressStart2P = Press_Start_2P({
-  weight: "400",
+const pixelify = Pixelify_Sans({
   variable: "--font-pixel",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
+
+// Marks the homepage intro as already played for this tab session before
+// first paint, so reloads don't replay it.
+const INTRO_SEEN_SCRIPT = `try{if(sessionStorage.getItem("autumnnus:intro-seen"))document.documentElement.dataset.introSeen="1"}catch(e){}`;
 
 interface Messages {
   Metadata?: {
@@ -71,9 +73,10 @@ export default async function LocaleLayout({
           />
         )}
         <link rel="icon" href="/images/autumn.png" />
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SEEN_SCRIPT }} />
       </head>
       <body
-        className={`${spaceGrotesk.variable} ${spaceMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} ${pixelify.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
           <NextIntlClientProvider messages={messages} locale={locale}>

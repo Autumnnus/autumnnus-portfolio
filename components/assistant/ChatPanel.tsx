@@ -1,23 +1,16 @@
 "use client";
 
+import PixelIcon, { PixelIconName } from "@/components/pixel/PixelIcon";
 import type { AssistantUIMessage } from "@/lib/ai/agent/portfolio-agent";
+import { playSound } from "@/lib/pixel/sound";
 import { cn } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
-import {
-  ArrowUp,
-  Maximize2,
-  Minimize2,
-  RotateCcw,
-  Square,
-  Trash2,
-  X,
-} from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AutumnMascot from "./AutumnMascot";
 import { parseChatError } from "./lib";
 import { AssistantMessage, UserMessage } from "./MessageView";
-import PixelLeaf from "./PixelLeaf";
 
 const MAX_CHARS = 1_500;
 
@@ -37,30 +30,69 @@ function EmptyState({
   const suggestions = (t.raw(`suggestions.${key}`) as string[]) ?? [];
 
   return (
-    <div className="flex h-full flex-col justify-end gap-4 px-1 pb-2">
-      <div className="space-y-2">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg border-2 border-primary/40 bg-primary/10 text-primary shadow-[3px_3px_0_0_var(--shadow-color)]">
-          <PixelLeaf className="h-6 w-6" animated />
+    <div className="flex h-full flex-col justify-end gap-5 px-1 pb-2">
+      <div className="space-y-3">
+        <div className="chat-hello flex h-16 w-16 items-center justify-center pixel-slot">
+          <AutumnMascot className="h-12 w-12" />
         </div>
-        <p className="text-base font-semibold">{t("greetingTitle")}</p>
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <p className="px-rise font-pixel text-xl font-bold" style={{ "--d": "120ms" } as CSSProperties}>
+          {t("greetingTitle")}
+        </p>
+        <p
+          className="px-rise text-sm leading-relaxed text-muted-foreground"
+          style={{ "--d": "200ms" } as CSSProperties}
+        >
           {t("greeting", { name: ownerName })}
         </p>
       </div>
-      <div className="flex flex-col gap-1.5">
-        {suggestions.map((suggestion) => (
+      <div className="flex flex-col gap-3 p-1">
+        {suggestions.map((suggestion, index) => (
           <button
             key={suggestion}
             type="button"
             onClick={() => onPick(suggestion)}
-            className="group flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left text-sm transition-all hover:-translate-y-px hover:border-primary/60 hover:shadow-[2px_2px_0_0_var(--shadow-color)]"
+            style={{ "--d": `${280 + index * 70}ms` } as CSSProperties}
+            className="px-rise group flex items-center justify-between gap-2 bg-card px-3 py-2.5 text-left text-sm transition-transform duration-100 pixel-frame-sm hover:-translate-y-0.5 hover:bg-slot-active"
           >
             <span>{suggestion}</span>
-            <ArrowUp className="h-3.5 w-3.5 rotate-45 text-muted-foreground transition-colors group-hover:text-primary" />
+            <PixelIcon
+              name="arrowSmall"
+              className="h-2.5 w-1.5 text-muted-foreground transition-colors group-hover:text-ember"
+            />
           </button>
         ))}
       </div>
     </div>
+  );
+}
+
+function HeaderButton({
+  icon,
+  label,
+  onClick,
+  danger = false,
+  className,
+}: {
+  icon: PixelIconName;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={cn(
+        "flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors duration-100 hover:bg-primary/20 hover:text-foreground",
+        danger && "hover:bg-destructive/15 hover:text-destructive",
+        className,
+      )}
+    >
+      <PixelIcon name={icon} className="h-3.5 w-3.5" />
+    </button>
   );
 }
 
@@ -96,6 +128,8 @@ export default function ChatPanel({
   const t = useTranslations("Assistant");
   const [input, setInput] = useState("");
   const [restoring, setRestoring] = useState(true);
+  const [restoredIds, setRestoredIds] = useState<Set<string>>(() => new Set());
+  const [flights, setFlights] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const stickToBottom = useRef(true);
@@ -142,7 +176,10 @@ export default function ChatPanel({
     fetch(`/api/assistant/thread?id=${encodeURIComponent(threadId)}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : { messages: [] }))
       .then((data: { messages?: AssistantUIMessage[] }) => {
-        if (!cancelled && data.messages?.length) setMessages(data.messages);
+        if (!cancelled && data.messages?.length) {
+          setRestoredIds(new Set(data.messages.map((m) => m.id)));
+          setMessages(data.messages);
+        }
       })
       .catch(() => {})
       .finally(() => !cancelled && setRestoring(false));
@@ -157,6 +194,8 @@ export default function ChatPanel({
       if (!value || busy) return;
       clearError();
       stickToBottom.current = true;
+      setFlights((n) => n + 1);
+      playSound("send");
       void sendMessage(
         { text: value.slice(0, MAX_CHARS) },
         { body: { pathname: pathnameRef.current } },
@@ -198,60 +237,41 @@ export default function ChatPanel({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2.5 border-b-2 border-border bg-card/80 px-3 py-2.5">
-        <div className="relative flex h-9 w-9 items-center justify-center rounded-md border-2 border-primary/40 bg-primary/10 text-primary">
-          <PixelLeaf className="h-5 w-5" animated={busy} />
-          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-green-500" />
+      <div className="flex items-center gap-3 border-b-4 border-px-ink bg-card px-3 py-2.5">
+        <div className="relative flex h-10 w-10 items-center justify-center pixel-slot">
+          <AutumnMascot
+            mood={status === "submitted" ? "think" : status === "streaming" ? "talk" : "idle"}
+            className="h-8 w-8"
+          />
+          <span className="chat-online absolute -bottom-1 -right-1 h-2.5 w-2.5 bg-moss pixel-frame-sm" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-pixel text-[0.7rem] uppercase tracking-wider">{t("name")}</p>
-          <p className="truncate text-xs text-muted-foreground">
+          <p className="font-pixel text-base leading-none font-bold">{t("name")}</p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
             {t("subtitle", { name: ownerName })}
           </p>
         </div>
         <div className="flex items-center gap-0.5">
           {messages.length > 0 && (
             <>
-              <button
-                type="button"
-                onClick={() => onNewThread(false)}
-                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                title={t("newChat")}
-                aria-label={t("newChat")}
-              >
-                <RotateCcw className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
+              <HeaderButton icon="refresh" label={t("newChat")} onClick={() => onNewThread(false)} />
+              <HeaderButton
+                icon="trash"
+                label={t("forget")}
+                danger
                 onClick={() => {
                   if (confirm(t("forgetConfirm"))) onNewThread(true);
                 }}
-                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive"
-                title={t("forget")}
-                aria-label={t("forget")}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              />
             </>
           )}
-          <button
-            type="button"
+          <HeaderButton
+            icon={expanded ? "collapse" : "expand"}
+            label={expanded ? t("collapse") : t("expand")}
             onClick={onToggleExpanded}
-            className="hidden rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground sm:block"
-            title={expanded ? t("collapse") : t("expand")}
-            aria-label={expanded ? t("collapse") : t("expand")}
-          >
-            {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            title={t("close")}
-            aria-label={t("close")}
-          >
-            <X className="h-4 w-4" />
-          </button>
+            className="hidden sm:flex"
+          />
+          <HeaderButton icon="close" label={t("close")} onClick={onClose} />
         </div>
       </div>
 
@@ -273,7 +293,11 @@ export default function ChatPanel({
           <div className={cn("mx-auto flex flex-col gap-5", expanded && "max-w-2xl")}>
             {messages.map((message) =>
               message.role === "user" ? (
-                <UserMessage key={message.id} message={message} />
+                <UserMessage
+                  key={message.id}
+                  message={message}
+                  animate={!restoredIds.has(message.id)}
+                />
               ) : (
                 <AssistantMessage
                   key={message.id}
@@ -288,6 +312,7 @@ export default function ChatPanel({
             )}
             {status === "submitted" && lastMessage?.role === "user" && (
               <AssistantMessage
+                animate
                 message={{ id: "pending", role: "assistant", parts: [] }}
                 locale={locale}
                 ownerName={ownerName}
@@ -299,7 +324,7 @@ export default function ChatPanel({
             {errorCode && (
               <div
                 role="alert"
-                className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+                className="chat-shake flex items-center gap-2 border-2 border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive"
               >
                 <span className="flex-1">
                   {t.has(`errors.${errorCode}`) ? t(`errors.${errorCode}`) : t("errors.generic")}
@@ -314,7 +339,7 @@ export default function ChatPanel({
                       setMessages(messages.filter((m) => m.id !== lastUser.id));
                       submit(text);
                     }}
-                    className="rounded-md border border-destructive/30 px-2 py-0.5 text-xs font-medium hover:bg-destructive/10"
+                    className="border-2 border-destructive px-2 py-0.5 font-pixel text-xs hover:bg-destructive/15"
                   >
                     {t("errors.retry")}
                   </button>
@@ -331,11 +356,11 @@ export default function ChatPanel({
           event.preventDefault();
           submit(input);
         }}
-        className="border-t-2 border-border bg-card/80 px-3 pb-3 pt-2.5"
+        className="border-t-4 border-px-ink bg-card px-3 pb-3 pt-3"
       >
         <div
           className={cn(
-            "flex items-end gap-2 rounded-xl border-2 border-border bg-background px-3 py-2 transition-colors focus-within:border-primary/60",
+            "relative flex items-end gap-2 bg-background px-3 py-2 pixel-frame-sm transition-colors focus-within:bg-slot-active/40",
             expanded && "mx-auto max-w-2xl",
           )}
         >
@@ -362,25 +387,45 @@ export default function ChatPanel({
             <button
               type="button"
               onClick={() => stop()}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-foreground text-background transition-transform active:scale-95"
+              className="pixel-button pixel-button-sm pixel-button-icon h-9 w-9"
               aria-label={t("stop")}
               title={t("stop")}
             >
-              <Square className="h-3 w-3 fill-current" />
+              <PixelIcon name="square" className="h-2.5 w-2.5" />
             </button>
           ) : (
             <button
               type="submit"
               disabled={!input.trim()}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-[2px_2px_0_0_var(--shadow-color)] transition-all active:translate-x-px active:translate-y-px active:shadow-none disabled:opacity-40 disabled:shadow-none"
+              className="pixel-button pixel-button-primary pixel-button-sm pixel-button-icon h-9 w-9"
               aria-label={t("send")}
               title={t("send")}
             >
-              <ArrowUp className="h-4 w-4" />
+              <PixelIcon name="arrowUp" className="h-3.5 w-3.5" />
             </button>
           )}
+
+          {flights > 0 && (
+            <span
+              key={flights}
+              aria-hidden="true"
+              className="pointer-events-none absolute right-4 bottom-4"
+            >
+              <span className="chat-fly absolute text-primary">
+                <PixelIcon name="leaf" className="h-4 w-4 dark:hidden" />
+                <PixelIcon name="snowflake" className="hidden h-4 w-4 dark:block" />
+              </span>
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="chat-fly-spark absolute h-1.5 w-1.5 bg-gold"
+                  style={{ "--i": i } as CSSProperties}
+                />
+              ))}
+            </span>
+          )}
         </div>
-        <p className="mt-1.5 text-center text-[0.65rem] text-muted-foreground/80">
+        <p className="mt-2 text-center text-[0.65rem] text-muted-foreground/80">
           {input.length > MAX_CHARS * 0.8
             ? `${input.length}/${MAX_CHARS}`
             : t("disclaimer", { days: retentionDays })}

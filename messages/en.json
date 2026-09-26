@@ -4,13 +4,37 @@
     "Projects": "Projects",
     "Blog": "Blog",
     "Work": "Work",
-    "Dashboard": "Dashboard"
+    "Dashboard": "Dashboard",
+    "menuOpen": "Open menu",
+    "menuClose": "Close menu"
   },
   "Hero": {
     "greeting": "Hello, I'm ",
     "description": "I code like autumn leaves falling. Building web applications and designing user experiences.",
     "buttons": {
       "projects": "My Projects"
+    },
+    "inventory": "Inventory",
+    "inventoryCount": "{count} skills",
+    "sceneLabel": "Pixel-art landscape that changes with the season: trees, hills and a cabin with a smoking chimney",
+    "scene": {
+      "hint": {
+        "tree": "Psst! Shake the tree",
+        "cabin": "Knock on the door!",
+        "sky": "Poke the sky!"
+      },
+      "tooltip": {
+        "tree": "Shake",
+        "cabin": "Knock",
+        "sun": "Poke the sun",
+        "moon": "Touch the moon"
+      },
+      "secrets": "Secrets",
+      "secretsLabel": "{found} of {total} secrets found",
+      "achievement": {
+        "title": "Explorer",
+        "description": "You found every secret in the scene!"
+      }
     }
   },
   "About": {
@@ -149,7 +173,9 @@
       "Glacier": "Glacier",
       "PolarStar": "Polar Star",
       "EternalWinter": "Eternal Winter"
-    }
+    },
+    "unlocked": "Unlocked",
+    "remaining": "{count} visitors to go"
   },
   "Assistant": {
     "name": "Autumn",
@@ -807,7 +833,17 @@
       "autumnToWinter": "Autumn -> Winter"
     },
     "loadingCode": "Loading Code...",
-    "copyCode": "Copy Code"
+    "copyCode": "Copy Code",
+    "season": {
+      "label": "Season",
+      "autumn": "Autumn",
+      "winter": "Winter"
+    },
+    "sound": {
+      "turnOn": "Turn sound on",
+      "turnOff": "Turn sound off"
+    },
+    "achievementUnlocked": "Achievement unlocked"
   },
   "Comments": {
     "title": "Comments",

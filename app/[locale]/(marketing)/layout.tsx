@@ -2,6 +2,9 @@ import { getProfile, getSocialLinks } from "@/app/actions";
 import Assistant from "@/components/assistant/Assistant";
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
+import AchievementHost from "@/components/pixel/AchievementHost";
+import { SeasonTransitionProvider } from "@/components/pixel/SeasonTransition";
+import SoundEffects from "@/components/pixel/SoundEffects";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import { LanguageType as Language } from "@/lib/db/schema";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
@@ -66,20 +69,22 @@ export default async function MarketingLayout({
   };
   return (
     <>
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      </head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <SmoothScroll>
         <TooltipProvider delayDuration={0}>
-          <div className="marketing-gradient-surface relative flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1 flex flex-col">{children}</main>
-            <Assistant locale={locale} />
-            <Footer locale={locale} />
-          </div>
+          <SeasonTransitionProvider>
+            <SoundEffects />
+            <AchievementHost />
+            <div className="pixel-cursor relative flex min-h-screen flex-col bg-background">
+              <Navbar />
+              <main className="flex-1 flex flex-col">{children}</main>
+              <Assistant locale={locale} />
+              <Footer locale={locale} />
+            </div>
+          </SeasonTransitionProvider>
         </TooltipProvider>
       </SmoothScroll>
     </>

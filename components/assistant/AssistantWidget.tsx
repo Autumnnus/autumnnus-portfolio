@@ -1,17 +1,32 @@
 "use client";
 
+import PixelIcon from "@/components/pixel/PixelIcon";
+import { usePixelWipe } from "@/components/pixel/SeasonTransition";
+import { playSound } from "@/lib/pixel/sound";
 import { cn } from "@/lib/utils";
 import { generateId } from "ai";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import AutumnMascot from "./AutumnMascot";
 import ChatPanel, { type PageKind } from "./ChatPanel";
-import PixelLeaf from "./PixelLeaf";
 
 const THREAD_KEY = "autumn.assistant.thread";
 const NUDGE_KEY = "autumn.assistant.nudged";
+
+/**
+ * The panel opens and closes with a pixel wipe: cells spill out of the
+ * launcher to build the window, and on close they sweep back toward it.
+ */
+type Phase = "closed" | "opening" | "open" | "closing";
+
+function themeColors() {
+  const css = getComputedStyle(document.documentElement);
+  return {
+    fill: css.getPropertyValue("--card").trim() || "#fff6e5",
+    edge: css.getPropertyValue("--primary").trim() || "#e0692e",
+  };
+}
 
 function readThreadId() {
   try {
@@ -46,9 +61,9 @@ export default function AssistantWidget({
   const t = useTranslations("Assistant");
   const locale = useLocale();
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
+  const pixelWipe = usePixelWipe();
 
-  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState<Phase>("closed");
   const [mounted, setMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -57,7 +72,9 @@ export default function AssistantWidget({
 
   const pathnameRef = useRef(pathname);
   const launcherRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const pageKind = pageKindOf(pathname);
+  const open = phase === "open";
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -66,15 +83,53 @@ export default function AssistantWidget({
   const openPanel = useCallback((prompt?: string) => {
     setThreadId((current) => current ?? readThreadId());
     setMounted(true);
-    setOpen(true);
     setNudge(null);
     if (prompt) setInitialPrompt(prompt);
+    setPhase((current) => (current === "closed" ? "opening" : current));
   }, []);
 
   const closePanel = useCallback(() => {
-    setOpen(false);
-    requestAnimationFrame(() => launcherRef.current?.focus());
+    setPhase((current) => (current === "open" ? "closing" : current));
   }, []);
+
+  // Run the wipe for the phase we just entered.
+  useEffect(() => {
+    if (phase !== "opening" && phase !== "closing") return;
+    const opening = phase === "opening";
+    const panel = panelRef.current;
+    if (!panel) {
+      setPhase(opening ? "open" : "closed");
+      return;
+    }
+    // Include the 4px pixel frame that sits outside the panel on desktop.
+    const pad = window.matchMedia("(min-width: 640px)").matches ? 4 : 0;
+    const box = panel.getBoundingClientRect();
+    const rect = {
+      left: box.left - pad,
+      top: box.top - pad,
+      width: box.width + pad * 2,
+      height: box.height + pad * 2,
+    };
+    const launcher = launcherRef.current?.getBoundingClientRect();
+    const origin = opening
+      ? launcher
+        ? { x: launcher.left + launcher.width / 2, y: launcher.top + launcher.height / 2 }
+        : { x: box.right, y: box.bottom }
+      : { x: box.left, y: box.top };
+    playSound(opening ? "open" : "close");
+    pixelWipe({
+      rect,
+      origin,
+      ...themeColors(),
+      cell: 10,
+      coverMs: opening ? 260 : 240,
+      revealMs: opening ? 320 : 300,
+      onCovered: () => setPhase(opening ? "open" : "closed"),
+      onDone: () => {
+        if (!opening) launcherRef.current?.focus();
+      },
+    });
+  }, [phase, pixelWipe]);
 
   // ⌘K / Ctrl+K toggles, Esc closes.
   useEffect(() => {
@@ -93,7 +148,7 @@ export default function AssistantWidget({
 
   // One gentle, page-aware nudge per session on content pages.
   useEffect(() => {
-    if (open || (pageKind !== "project" && pageKind !== "post")) return;
+    if (phase !== "closed" || (pageKind !== "project" && pageKind !== "post")) return;
     let already = false;
     try {
       already = sessionStorage.getItem(NUDGE_KEY) === "1";
@@ -110,7 +165,7 @@ export default function AssistantWidget({
       clearTimeout(show);
       clearTimeout(hide);
     };
-  }, [pageKind, open, t]);
+  }, [pageKind, phase, t]);
 
   // Lock page scroll on mobile while the full-screen sheet is open.
   useEffect(() => {
@@ -138,86 +193,71 @@ export default function AssistantWidget({
     [threadId],
   );
 
-  const shown = { opacity: 1, y: 0, scale: 1, visibility: "visible" as const };
-  const hidden = reduceMotion
-    ? { opacity: 0, transitionEnd: { visibility: "hidden" as const } }
-    : { opacity: 0, y: 12, scale: 0.98, transitionEnd: { visibility: "hidden" as const } };
+  const showLauncher = phase === "closed" || phase === "opening";
+  const panelVisible = phase === "open" || phase === "closing";
 
   return (
     <>
       {/* Launcher */}
-      <div className="fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
-        <AnimatePresence>
-          {nudge && !open && (
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              className="flex max-w-[16rem] items-start gap-2 rounded-lg border-2 border-border bg-card px-3 py-2 text-sm shadow-[3px_3px_0_0_var(--shadow-color)]"
-            >
-              <button type="button" onClick={() => openPanel(nudge)} className="text-left hover:text-primary">
-                {nudge}
-              </button>
-              <button
-                type="button"
-                onClick={() => setNudge(null)}
-                className="-mr-1 rounded p-0.5 text-muted-foreground hover:text-foreground"
-                aria-label={t("close")}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {!open && (
-            <motion.button
-              ref={launcherRef}
+      <div className="fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-3 p-1 sm:bottom-6 sm:right-6">
+        {nudge && phase === "closed" && (
+          <div className="launcher-pop flex max-w-[16rem] items-start gap-2 bg-card px-3 py-2 text-sm pixel-frame-sm">
+            <button type="button" onClick={() => openPanel(nudge)} className="text-left hover:text-ember">
+              {nudge}
+            </button>
+            <button
               type="button"
-              onClick={() => openPanel()}
-              initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              whileHover={reduceMotion ? undefined : { y: -2 }}
-              whileTap={reduceMotion ? undefined : { y: 1 }}
-              aria-label={t("open")}
-              aria-keyshortcuts="Meta+K Control+K"
-              className="group flex items-center gap-2 border-[3px] border-foreground bg-card px-3 py-2.5 text-foreground shadow-[4px_4px_0_0_var(--shadow-color)] transition-shadow hover:shadow-[2px_2px_0_0_var(--shadow-color)]"
+              onClick={() => setNudge(null)}
+              className="-mr-1 p-1 text-muted-foreground hover:text-foreground"
+              aria-label={t("close")}
             >
-              <span className="text-primary">
-                <PixelLeaf className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" animated />
-              </span>
-              <span className="hidden font-pixel text-[0.65rem] uppercase tracking-wider sm:inline">
-                {t("launcher")}
-              </span>
-              <kbd className="hidden rounded-sm border border-border bg-muted px-1 font-mono text-[0.6rem] text-muted-foreground lg:inline">
-                ⌘K
-              </kbd>
-            </motion.button>
-          )}
-        </AnimatePresence>
+              <PixelIcon name="close" className="h-2.5 w-2.5" />
+            </button>
+          </div>
+        )}
+
+        {showLauncher && (
+          <button
+            ref={launcherRef}
+            type="button"
+            onClick={() => openPanel()}
+            aria-label={t("open")}
+            aria-keyshortcuts="Meta+K Control+K"
+            className={cn(
+              "launcher-pop pixel-button pixel-button-sm h-12 gap-2.5 px-2.5 sm:pr-3.5",
+              phase === "opening" && "launcher-jump",
+            )}
+          >
+            <span className="launcher-bob flex h-8 w-8 items-center justify-center">
+              <AutumnMascot className="h-7 w-7" />
+            </span>
+            <span className="hidden text-base sm:inline">{t("launcher")}</span>
+            <kbd className="hidden px-1.5 py-0.5 font-mono text-[0.65rem] text-muted-foreground pixel-chip lg:inline">
+              ⌘K
+            </kbd>
+          </button>
+        )}
       </div>
 
       {/* Panel — stays mounted after the first open so a running stream
           survives closing it; hidden panels are inert for keyboard/AT. */}
       {mounted && threadId && (
-        <motion.section
+        <section
+          ref={panelRef}
           role="dialog"
           aria-label={t("name")}
           aria-hidden={!open}
           inert={!open}
-          initial={hidden}
-          animate={open ? shown : hidden}
-          transition={{ duration: 0.18, ease: "easeOut" }}
+          style={{ visibility: panelVisible ? "visible" : "hidden" }}
           className={cn(
             "fixed z-[61] flex flex-col overflow-hidden bg-background",
-            "inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:rounded-xl sm:border-[3px] sm:border-foreground sm:shadow-[6px_6px_0_0_var(--shadow-color)]",
+            "inset-0 sm:inset-auto sm:bottom-6 sm:right-6",
+            "sm:shadow-[0_-4px_0_0_var(--px-ink),0_4px_0_0_var(--px-ink),-4px_0_0_0_var(--px-ink),4px_0_0_0_var(--px-ink),10px_10px_0_0_var(--px-drop)]",
             expanded
               ? "sm:h-[calc(100dvh-3rem)] sm:w-[min(760px,calc(100vw-3rem))]"
               : "sm:h-[min(680px,calc(100dvh-3rem))] sm:w-[400px]",
             "pb-[env(safe-area-inset-bottom)]",
-            !open && "pointer-events-none",
+            !panelVisible && "pointer-events-none",
           )}
         >
           <ChatPanel
@@ -236,7 +276,7 @@ export default function AssistantWidget({
             initialPrompt={initialPrompt}
             onInitialPromptConsumed={() => setInitialPrompt(null)}
           />
-        </motion.section>
+        </section>
       )}
     </>
   );

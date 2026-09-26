@@ -4,13 +4,37 @@
     "Projects": "Projeler",
     "Blog": "Blog",
     "Work": "Deneyim",
-    "Dashboard": "Panel"
+    "Dashboard": "Panel",
+    "menuOpen": "Menüyü aç",
+    "menuClose": "Menüyü kapat"
   },
   "Hero": {
     "greeting": "Merhaba, ben ",
     "description": "Sonbahar yaprakları gibi kod yazıyorum. Web uygulamaları geliştiriyor, kullanıcı deneyimlerini tasarlıyorum.",
     "buttons": {
       "projects": "Projelerim"
+    },
+    "inventory": "Envanter",
+    "inventoryCount": "{count} yetenek",
+    "sceneLabel": "Mevsime göre değişen piksel sanat manzara: ağaçlar, tepeler ve bacası tüten bir kulübe",
+    "scene": {
+      "hint": {
+        "tree": "Psst! Ağacı salla",
+        "cabin": "Kapıyı çal!",
+        "sky": "Gökyüzüne dokun!"
+      },
+      "tooltip": {
+        "tree": "Salla",
+        "cabin": "Kapıyı çal",
+        "sun": "Güneşi dürt",
+        "moon": "Aya dokun"
+      },
+      "secrets": "Sırlar",
+      "secretsLabel": "{total} sırdan {found} tanesi bulundu",
+      "achievement": {
+        "title": "Kâşif",
+        "description": "Sahnedeki bütün sırları buldun!"
+      }
     }
   },
   "About": {
@@ -149,7 +173,9 @@
       "Glacier": "Buzul",
       "PolarStar": "Kutup Yıldızı",
       "EternalWinter": "Sonsuz Kış"
-    }
+    },
+    "unlocked": "Açıldı",
+    "remaining": "{count} ziyaretçi kaldı"
   },
   "Assistant": {
     "name": "Autumn",
@@ -809,7 +835,17 @@
       "autumnToWinter": "Sonbahar -> Kış"
     },
     "loadingCode": "Kod yükleniyor...",
-    "copyCode": "Kodu Kopyala"
+    "copyCode": "Kodu Kopyala",
+    "season": {
+      "label": "Mevsim",
+      "autumn": "Sonbahar",
+      "winter": "Kış"
+    },
+    "sound": {
+      "turnOn": "Sesi aç",
+      "turnOff": "Sesi kapat"
+    },
+    "achievementUnlocked": "Başarım açıldı"
   },
   "Comments": {
     "title": "Yorumlar",

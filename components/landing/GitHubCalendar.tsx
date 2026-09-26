@@ -115,11 +115,8 @@ export default function GitHubCalendar({
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">
-              {resolvedTheme === "dark" ? (
-                <Snowflake className="w-6 h-6 text-primary" />
-              ) : (
-                <Leaf className="w-6 h-6 text-primary" />
-              )}
+              <Leaf className="w-6 h-6 text-primary dark:hidden" />
+              <Snowflake className="hidden w-6 h-6 text-primary dark:block" />
             </span>
             <h3 className="text-lg font-bold">{t("GitHub.activityTitle")}</h3>
             <div className="ml-auto flex flex-wrap gap-1">
