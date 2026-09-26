@@ -6,7 +6,6 @@ import {
   blogPost,
   blogPostTranslation,
   category,
-  embedding,
   profile as profileTable,
   profileTranslation,
   project,
@@ -17,8 +16,8 @@ import {
   workExperience,
   workExperienceTranslation,
 } from "@/lib/db/schema";
+import { scheduleKnowledgeSync } from "@/lib/ai/knowledge/sync";
 import { uploadFile } from "@/lib/minio";
-import { eq } from "drizzle-orm";
 import JSZip from "jszip";
 import path from "path";
 
@@ -35,35 +34,6 @@ function getObjectName(url: string | null | undefined): string | null {
 
 function normalizeCategoryType(value: unknown): "project" | "blog" | null {
   return value === "project" || value === "blog" ? value : null;
-}
-
-function normalizeEmbeddingSourceType(
-  value: unknown,
-): "project" | "blog" | "profile" | "experience" | null {
-  if (
-    value === "project" ||
-    value === "blog" ||
-    value === "profile" ||
-    value === "experience"
-  ) {
-    return value;
-  }
-  return null;
-}
-
-function normalizeEmbeddingVector(value: unknown): number[] | null {
-  if (!Array.isArray(value) || value.length === 0) return null;
-  const normalized = value
-    .map((n) => (typeof n === "number" ? n : Number(n)))
-    .filter((n) => Number.isFinite(n));
-  if (normalized.length !== value.length) return null;
-  return normalized;
-}
-
-function normalizeDate(value: unknown): Date | undefined {
-  if (!value) return undefined;
-  const date = new Date(value as string);
-  return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
 function getTechnologySkillId(tech: unknown): string | null {
@@ -131,8 +101,10 @@ export async function POST(request: Request) {
 
     const jsonContent = await dataFile.async("string");
     const { data } = JSON.parse(jsonContent);
-    const { projects, blogs, profile, experiences, skills, categories, embeddings } =
-      data;
+    // Legacy backups may still contain an `embeddings` section. It is
+    // intentionally ignored: the knowledge index is derived data and is
+    // rebuilt from source content via reindex, so it is never restored.
+    const { projects, blogs, profile, experiences, skills, categories } = data;
 
     await db.transaction(async (tx) => {
       // ── Delete in FK-safe order ──────────────────────────────────────
@@ -161,22 +133,6 @@ export async function POST(request: Request) {
       }
       if (replaceSkills) {
         await tx.delete(skill);
-      }
-      if (includeProjects) {
-        await tx
-          .delete(embedding)
-          .where(eq(embedding.sourceType, "project"));
-      }
-      if (includeBlogs) {
-        await tx.delete(embedding).where(eq(embedding.sourceType, "blog"));
-      }
-      if (includeExperiences) {
-        await tx
-          .delete(embedding)
-          .where(eq(embedding.sourceType, "experience"));
-      }
-      if (includeProfile) {
-        await tx.delete(embedding).where(eq(embedding.sourceType, "profile"));
       }
 
       let categoryById = new Map<
@@ -537,101 +493,6 @@ export async function POST(request: Request) {
           }
         }
       }
-
-      if (Array.isArray(embeddings) && embeddings.length > 0) {
-        const allowedProjectIds = new Set(
-          includeProjects
-            ? ((projects as any[]) ?? [])
-                .map((p) => p.id)
-                .filter((id) => typeof id === "string")
-            : [],
-        );
-        const allowedBlogIds = new Set(
-          includeBlogs
-            ? ((blogs as any[]) ?? [])
-                .map((b) => b.id)
-                .filter((id) => typeof id === "string")
-            : [],
-        );
-        const allowedExperienceIds = new Set(
-          includeExperiences
-            ? ((experiences as any[]) ?? [])
-                .map((e) => e.id)
-                .filter((id) => typeof id === "string")
-            : [],
-        );
-        const profileId =
-          includeProfile && profile && typeof (profile as any).id === "string"
-            ? (profile as any).id
-            : null;
-
-        const deduped = new Map<
-          string,
-          {
-            id?: string;
-            sourceType: "project" | "blog" | "profile" | "experience";
-            sourceId: string;
-            language: string;
-            chunkText: string;
-            chunkIndex: number;
-            embedding: number[];
-            metadata?: unknown;
-            createdAt?: Date;
-            updatedAt?: Date;
-          }
-        >();
-
-        for (const row of embeddings as any[]) {
-          const sourceType = normalizeEmbeddingSourceType(row?.sourceType);
-          const sourceId = typeof row?.sourceId === "string" ? row.sourceId : null;
-          const language = typeof row?.language === "string" ? row.language : null;
-          const chunkText = typeof row?.chunkText === "string" ? row.chunkText : null;
-          const chunkIndex =
-            typeof row?.chunkIndex === "number"
-              ? row.chunkIndex
-              : Number(row?.chunkIndex);
-          const vector = normalizeEmbeddingVector(row?.embedding);
-          if (
-            !sourceType ||
-            !sourceId ||
-            !language ||
-            chunkText === null ||
-            !Number.isInteger(chunkIndex) ||
-            chunkIndex < 0 ||
-            !vector
-          ) {
-            continue;
-          }
-
-          const isAllowed =
-            (sourceType === "project" && allowedProjectIds.has(sourceId)) ||
-            (sourceType === "blog" && allowedBlogIds.has(sourceId)) ||
-            (sourceType === "experience" && allowedExperienceIds.has(sourceId)) ||
-            (sourceType === "profile" && profileId === sourceId);
-
-          if (!isAllowed) continue;
-
-          const key = `${sourceType}:${sourceId}:${language}:${chunkIndex}`;
-          deduped.set(key, {
-            id: typeof row?.id === "string" ? row.id : undefined,
-            sourceType,
-            sourceId,
-            language,
-            chunkText,
-            chunkIndex,
-            embedding: vector,
-            metadata: row?.metadata,
-            createdAt: normalizeDate(row?.createdAt),
-            updatedAt: normalizeDate(row?.updatedAt),
-          });
-        }
-
-        const chunkSize = 200;
-        const rows = Array.from(deduped.values());
-        for (let i = 0; i < rows.length; i += chunkSize) {
-          await tx.insert(embedding).values(rows.slice(i, i + chunkSize));
-        }
-      }
     });
 
     // ── Upload assets (filtered by sections) ────────────────────────────
@@ -704,6 +565,8 @@ export async function POST(request: Request) {
 
       await Promise.all(uploadPromises);
     }
+
+    scheduleKnowledgeSync("all");
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

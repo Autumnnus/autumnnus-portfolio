@@ -7,7 +7,6 @@ import {
   uploadImageAction,
 } from "@/app/[locale]/admin/actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import ContentRenderer from "@/components/common/ContentRenderer";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
@@ -33,13 +32,10 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { FieldError, FieldErrors, useForm } from "react-hook-form";
-import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
 import { formatDate } from "@/lib/utils";
-import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
 import { CategorySelector } from "./CategorySelector";
 
 const transformTranslationsToObject = (translations: BlogPostTranslation[]) => {
@@ -99,20 +95,14 @@ export default function BlogForm({ initialData }: BlogFormProps) {
   const initialTranslations = initialData?.translations
     ? transformTranslationsToObject(initialData.translations)
     : {};
-  const initialTranslationLangCodes = Object.keys(initialTranslations);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
   const [isCoverDragActive, setIsCoverDragActive] = useState(false);
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
-    Array.from(
-      new Set(
-        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
-      ),
-    ),
+  const targetLangs = Object.keys(languageNames).filter(
+    (lang) => lang !== sourceLang,
   );
-  const [isTranslating, setIsTranslating] = useState(false);
 
   const form = useForm<BlogFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,12 +154,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     }
   }, [sourceTitle, isEditing, setValue, getValues, sourceLang]);
 
-  useEffect(() => {
-    setTargetLangs((prev) =>
-      prev.includes(sourceLang) ? prev.filter((lang) => lang !== sourceLang) : prev,
-    );
-  }, [sourceLang]);
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -191,114 +175,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
     formData.append("path", path);
     const res = await uploadImageAction(formData);
     return res.url;
-  };
-
-  const handleAutoTranslate = async () => {
-    if (targetLangs.length === 0) {
-      toast.error(t("translateError"));
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      const currentValues = getValues();
-      const sourceContent =
-        currentValues.translations?.[
-          sourceLang as keyof typeof currentValues.translations
-        ];
-
-      if (!sourceContent || !sourceContent.title || !sourceContent.content) {
-        const missing = [];
-        if (!sourceContent) missing.push(sourceLang.toUpperCase() + " içeriği");
-        else {
-          if (!sourceContent.title) missing.push("Başlık");
-          if (!sourceContent.content) missing.push("İçerik");
-        }
-        toast.error(
-          `${t("fillRequired")} (${sourceLang.toUpperCase()}): ${missing.join(", ")}`,
-        );
-        setIsTranslating(false);
-        return;
-      }
-
-      const translations = (await generateTranslationAction({
-        type: "blog",
-        sourceLang,
-        targetLangs,
-        content: {
-          title: sourceContent.title,
-          description: sourceContent.description || "",
-          content: sourceContent.content,
-          readTime: sourceContent.readTime || "5 min read",
-          excerpt: sourceContent.excerpt || "",
-          metaTitle: sourceContent.metaTitle || "",
-          metaDescription: sourceContent.metaDescription || "",
-          keywords: sourceContent.keywords || [],
-        },
-      })) as Record<
-        string,
-        {
-          title: string;
-          description?: string;
-          content: string;
-          readTime?: string;
-          excerpt?: string;
-          metaTitle?: string;
-          metaDescription?: string;
-          keywords?: string[];
-        } | null
-      >;
-
-      Object.entries(translations).forEach(([lang, content]) => {
-        if (!content) return;
-        setValue(`translations.${lang}.title` as const, content.title, {
-          shouldDirty: true,
-        });
-        setValue(
-          `translations.${lang}.description` as const,
-          content.description || "",
-          { shouldDirty: true },
-        );
-        setValue(`translations.${lang}.content` as const, content.content, {
-          shouldDirty: true,
-        });
-        setValue(
-          `translations.${lang}.readTime` as const,
-          content.readTime || "5 min read",
-          { shouldDirty: true },
-        );
-        if (content.excerpt)
-          setValue(`translations.${lang}.excerpt` as const, content.excerpt, {
-            shouldDirty: true,
-          });
-        if (content.metaTitle)
-          setValue(
-            `translations.${lang}.metaTitle` as const,
-            content.metaTitle,
-            { shouldDirty: true },
-          );
-        if (content.metaDescription)
-          setValue(
-            `translations.${lang}.metaDescription` as const,
-            content.metaDescription,
-            { shouldDirty: true },
-          );
-        if (content.keywords)
-          setValue(`translations.${lang}.keywords` as const, content.keywords, {
-            shouldDirty: true,
-          });
-      });
-
-      toast.success(t("translateSuccess"));
-    } catch (error) {
-      toast.error(
-        t("translateError") +
-          ": " +
-          (error instanceof Error ? error.message : "Bilinmeyen hata"),
-      );
-    } finally {
-      setIsTranslating(false);
-    }
   };
 
   const onSubmitAction = async (data: BlogFormValues) => {
@@ -653,7 +529,7 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
       <div className="h-px bg-border/50" />
 
-      {/* Translation Controls */}
+      {/* Source Language */}
       <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -673,37 +549,14 @@ export default function BlogForm({ initialData }: BlogFormProps) {
                 ))}
               </select>
             </div>
-
-            <MultiLanguageSelector
-              sourceLang={sourceLang}
-              targetLangs={targetLangs}
-              onChange={setTargetLangs}
-            />
           </div>
-
-          <button
-            type="button"
-            onClick={handleAutoTranslate}
-            disabled={isTranslating || targetLangs.length === 0}
-            className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {isTranslating ? (
-              <Loader2 className="animate-spin w-4 h-4" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            {t("translateInSelectedLangs")}
-          </button>
         </div>
-        <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 px-1 opacity-70">
-          <div className="w-1 h-1 rounded-full bg-primary" />
-          {t("translateInSelectedLangsDesc")}
-        </p>
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>
         {(lang) => {
           const keywordsValue =
+            // eslint-disable-next-line react-hooks/incompatible-library -- React Compiler is not enabled; RHF watch() in render is intentional
             watch(`translations.${lang}.keywords` as const) ?? [];
           const keywordsString = Array.isArray(keywordsValue)
             ? keywordsValue.join(", ")
@@ -711,55 +564,6 @@ export default function BlogForm({ initialData }: BlogFormProps) {
 
           return (
             <div className="space-y-6 max-w-3xl mx-auto">
-              <div className="flex justify-end sticky top-0 z-30 py-2 sm:py-0">
-                <SeoPopover
-                type="blog"
-                language={lang}
-                onSeoGenerated={(result) => {
-                  setValue(
-                    `translations.${lang}.title` as const,
-                    result.title,
-                    { shouldDirty: true },
-                  );
-                  if (result.description) {
-                    setValue(
-                      `translations.${lang}.description` as const,
-                      result.description,
-                      { shouldDirty: true },
-                    );
-                  }
-                  if (result.excerpt) {
-                    setValue(
-                      `translations.${lang}.excerpt` as const,
-                      result.excerpt,
-                      { shouldDirty: true },
-                    );
-                  }
-                  if (result.metaTitle) {
-                    setValue(
-                      `translations.${lang}.metaTitle` as const,
-                      result.metaTitle,
-                      { shouldDirty: true },
-                    );
-                  }
-                  if (result.metaDescription) {
-                    setValue(
-                      `translations.${lang}.metaDescription` as const,
-                      result.metaDescription,
-                      { shouldDirty: true },
-                    );
-                  }
-                  if (result.keywords) {
-                    setValue(
-                      `translations.${lang}.keywords` as const,
-                      result.keywords,
-                      { shouldDirty: true },
-                    );
-                  }
-                }}
-              />
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-2 px-1">

@@ -10,12 +10,7 @@ import {
   updateProjectAction,
   uploadImageAction,
 } from "@/app/[locale]/admin/actions";
-import {
-  generateTranslationAction,
-  ProjectContent,
-} from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import ContentRenderer from "@/components/common/ContentRenderer";
 import Icon from "@/components/common/Icon";
 import { useAdminForm } from "@/hooks/useAdminForm";
@@ -50,7 +45,6 @@ import { useEffect, useState } from "react";
 import { FieldError, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { CategorySelector } from "./CategorySelector";
-import SeoPopover from "./SeoPopover";
 import TipTapEditor from "./TipTapEditor";
 
 import { useLocale, useTranslations } from "next-intl";
@@ -103,7 +97,6 @@ export default function ProjectForm({
   const initialTranslations = initialData?.translations
     ? transformTranslationsToObject(initialData.translations)
     : {};
-  const initialTranslationLangCodes = Object.keys(initialTranslations);
   const [coverImage, setCoverImage] = useState<ImageData | null>(
     initialData?.coverImage ? { url: initialData.coverImage } : null,
   );
@@ -129,14 +122,9 @@ export default function ProjectForm({
   const [showIconDropdown, setShowIconDropdown] = useState(false);
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
-    Array.from(
-      new Set(
-        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
-      ),
-    ),
+  const targetLangs = Object.keys(languageNames).filter(
+    (lang) => lang !== sourceLang,
   );
-  const [isTranslating, setIsTranslating] = useState(false);
   interface GithubRepo {
     id: number;
     name: string;
@@ -445,93 +433,6 @@ export default function ProjectForm({
     return res.url;
   };
 
-  const handleAutoTranslate = async () => {
-    if (targetLangs.length === 0) {
-      toast.info("Lütfen en az bir hedef dil seçiniz.");
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      const currentValues = getValues();
-      const sourceContent = currentValues.translations?.[sourceLang];
-
-      if (
-        !sourceContent ||
-        !sourceContent.title ||
-        !sourceContent.shortDescription ||
-        !sourceContent.fullDescription
-      ) {
-        const missing = [];
-        if (!sourceContent) missing.push(sourceLang.toUpperCase() + " içeriği");
-        else {
-          if (!sourceContent.title) missing.push("Proje Adı");
-          if (!sourceContent.shortDescription) missing.push("Kısa Açıklama");
-          if (!sourceContent.fullDescription) missing.push("Tam Açıklama");
-        }
-        toast.warning(
-          `Lütfen kaynak dildeki (${sourceLang.toUpperCase()}) şu alanları doldurunuz: ${missing.join(", ")}`,
-        );
-        setIsTranslating(false);
-        return;
-      }
-
-      const translations = (await generateTranslationAction({
-        type: "project",
-        sourceLang,
-        targetLangs,
-        content: {
-          title: sourceContent.title,
-          shortDescription: sourceContent.shortDescription,
-          fullDescription: sourceContent.fullDescription,
-          metaTitle: sourceContent.metaTitle || "",
-          metaDescription: sourceContent.metaDescription || "",
-          keywords: sourceContent.keywords || [],
-        },
-      })) as Record<string, ProjectContent | null>;
-
-      Object.entries(translations).forEach(([lang, content]) => {
-        if (!content) return;
-        setValue(`translations.${lang}.title` as const, content.title, {
-          shouldDirty: true,
-        });
-        setValue(
-          `translations.${lang}.shortDescription` as const,
-          content.shortDescription,
-          { shouldDirty: true },
-        );
-        setValue(
-          `translations.${lang}.fullDescription` as const,
-          content.fullDescription,
-          { shouldDirty: true },
-        );
-        setValue(
-          `translations.${lang}.metaTitle` as const,
-          content.metaTitle || "",
-          { shouldDirty: true },
-        );
-        setValue(
-          `translations.${lang}.metaDescription` as const,
-          content.metaDescription || "",
-          { shouldDirty: true },
-        );
-        if (content.keywords)
-          setValue(`translations.${lang}.keywords` as const, content.keywords, {
-            shouldDirty: true,
-          });
-      });
-
-      toast.success(t("translateSuccess"));
-    } catch (error) {
-      toast.error(
-        "Çeviri başarısız oldu: " +
-          (error instanceof Error ? error.message : "Bilinmeyen hata"),
-      );
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
   const onSubmitAction = async (data: ProjectFormValues) => {
     let finalCoverImage = data.coverImage || "";
     if (coverImage?.file) {
@@ -649,14 +550,6 @@ export default function ProjectForm({
 
     return () => clearTimeout(timeoutId);
   }, [iconSearchQuery]);
-
-  useEffect(() => {
-    setTargetLangs((prev) =>
-      prev.includes(sourceLang)
-        ? prev.filter((lang) => lang !== sourceLang)
-        : prev,
-    );
-  }, [sourceLang]);
 
   const handleSelectSearchedIcon = (iconItem: {
     name: string;
@@ -1517,7 +1410,7 @@ export default function ProjectForm({
 
       <div className="h-px bg-border/50" />
 
-      {/* Translation Controls */}
+      {/* Source Language */}
       <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20 flex flex-col gap-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex flex-wrap items-center gap-6">
@@ -1537,33 +1430,7 @@ export default function ProjectForm({
                 ))}
               </select>
             </div>
-
-            <MultiLanguageSelector
-              sourceLang={sourceLang}
-              targetLangs={targetLangs}
-              onChange={setTargetLangs}
-            />
           </div>
-
-          <button
-            type="button"
-            onClick={handleAutoTranslate}
-            disabled={isTranslating || targetLangs.length === 0}
-            className="w-full md:w-auto px-6 py-3 bg-purple-600 text-white rounded-2xl text-sm font-bold hover:bg-purple-700 transition-all shadow-xl shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
-          >
-            {isTranslating ? (
-              <Loader2 className="animate-spin w-5 h-5" />
-            ) : (
-              <Sparkles className="w-5 h-5" />
-            )}
-            {t("translate")}
-          </button>
-        </div>
-        <div className="flex items-center gap-2 px-1">
-          <div className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
-          <p className="text-xs text-muted-foreground font-medium">
-            {t("autoTranslate")}
-          </p>
         </div>
       </div>
 
@@ -1577,48 +1444,6 @@ export default function ProjectForm({
 
           return (
             <div className="space-y-4 max-w-3xl mx-auto">
-              <div className="flex justify-end mb-4">
-                <SeoPopover
-                  type="project"
-                  language={lang}
-                  onSeoGenerated={(result) => {
-                    setValue(
-                      `translations.${lang}.title` as const,
-                      result.title,
-                      { shouldDirty: true },
-                    );
-                    if (result.shortDescription) {
-                      setValue(
-                        `translations.${lang}.shortDescription` as const,
-                        result.shortDescription,
-                        { shouldDirty: true },
-                      );
-                    }
-                    if (result.metaTitle) {
-                      setValue(
-                        `translations.${lang}.metaTitle` as const,
-                        result.metaTitle,
-                        { shouldDirty: true },
-                      );
-                    }
-                    if (result.metaDescription) {
-                      setValue(
-                        `translations.${lang}.metaDescription` as const,
-                        result.metaDescription,
-                        { shouldDirty: true },
-                      );
-                    }
-                    if (result.keywords) {
-                      setValue(
-                        `translations.${lang}.keywords` as const,
-                        result.keywords,
-                        { shouldDirty: true },
-                      );
-                    }
-                  }}
-                />
-              </div>
-
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest px-1">
                   {t("title")}

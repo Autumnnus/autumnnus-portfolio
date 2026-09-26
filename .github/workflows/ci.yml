@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Generate Prisma client
+      - name: Check migrations are in sync
         run: yarn db:generate
 
       - name: Type check
@@ -31,3 +31,6 @@ jobs:
 
       - name: Lint
         run: yarn lint
+
+      - name: AI unit tests
+        run: yarn test:ai

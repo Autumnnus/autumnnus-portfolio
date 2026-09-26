@@ -22,6 +22,27 @@
       "when": 1773263150137,
       "tag": "0002_puzzling_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790428550871,
+      "tag": "0003_remove_legacy_ai",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790428597355,
+      "tag": "0004_assistant_v2",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790434544022,
+      "tag": "0005_assistant_models_visitors",
+      "breakpoints": true
     }
   ]
 }

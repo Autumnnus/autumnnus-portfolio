@@ -5,12 +5,15 @@ import {
   index,
   integer,
   json,
+  jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
   uuid,
+  vector,
 } from "drizzle-orm/pg-core";
 
 export const languageEnum = pgEnum("Language", [
@@ -27,10 +30,6 @@ export const languageEnum = pgEnum("Language", [
   "ar",
   "zh",
 ]);
-
-export const aiProviderEnum = pgEnum("AiProvider", ["gemini"]);
-
-export const apiKeyCategoryEnum = pgEnum("ApiKeyCategory", ["free", "paid"]);
 
 export const Language = {
   tr: "tr",
@@ -49,20 +48,19 @@ export const Language = {
 
 export type LanguageType = (typeof Language)[keyof typeof Language];
 
-// Custom type for vector/embeddings
-const vector = customType<{ data: number[]; driverData: string }>({
+export const knowledgeSourceTypeEnum = pgEnum("KnowledgeSourceType", [
+  "project",
+  "blog",
+  "experience",
+  "profile",
+]);
+
+/** Must match the `dimensions` of every vector column below. */
+export const EMBEDDING_DIMENSIONS = 1536;
+
+const tsvector = customType<{ data: string }>({
   dataType() {
-    return "vector(3072)";
-  },
-  toDriver(value: number[] | string): string {
-    if (typeof value === "string") return value;
-    return `[${value.join(",")}]`;
-  },
-  fromDriver(value: string): number[] {
-    return value
-      .replace(/[\[\]]/g, "")
-      .split(",")
-      .map(Number);
+    return "tsvector";
   },
 });
 
@@ -352,128 +350,134 @@ export const visitorMilestone = pgTable("VisitorMilestone", {
   reachedAt: timestamp("reachedAt", { mode: "date" }).defaultNow().notNull(),
 });
 
-export const embedding = pgTable(
-  "Embedding",
+// ─── AI assistant ────────────────────────────────────────────────────────────
+// The knowledge index is derived data: it is rebuilt from the content tables
+// above (see lib/ai/knowledge) and is intentionally excluded from backups.
+
+export const knowledgeDocument = pgTable(
+  "KnowledgeDocument",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    sourceType: text("sourceType").notNull(),
+    sourceType: knowledgeSourceTypeEnum("sourceType").notNull(),
     sourceId: text("sourceId").notNull(),
-    language: text("language").notNull(),
-    chunkText: text("chunkText").notNull(),
-    chunkIndex: integer("chunkIndex").notNull(),
-    embedding: vector("embedding"),
-    metadata: json("metadata"),
-    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
-      .defaultNow()
-      .$onUpdate(() => new Date())
-      .notNull(),
+    language: languageEnum("language").notNull(),
+    title: text("title").notNull(),
+    /** Locale-less path, e.g. `/projects/my-slug`. */
+    path: text("path").notNull(),
+    summary: text("summary").default("").notNull(),
+    contentHash: text("contentHash").notNull(),
+    embeddingModel: text("embeddingModel").notNull(),
+    /** Document-level vector (title + summary), used for "related content". */
+    embedding: vector("embedding", {
+      dimensions: EMBEDDING_DIMENSIONS,
+    }).notNull(),
+    chunkCount: integer("chunkCount").default(0).notNull(),
+    indexedAt: timestamp("indexedAt", { mode: "date" }).defaultNow().notNull(),
   },
-  (t) => ({
-    unq: unique().on(t.sourceType, t.sourceId, t.language, t.chunkIndex),
-  }),
+  (t) => [
+    unique().on(t.sourceType, t.sourceId, t.language),
+    index("KnowledgeDocument_embedding_hnsw").using(
+      "hnsw",
+      t.embedding.op("vector_cosine_ops"),
+    ),
+  ],
 );
 
-export const chatRateLimit = pgTable(
-  "ChatRateLimit",
+export const knowledgeChunk = pgTable(
+  "KnowledgeChunk",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    ipAddress: text("ipAddress").notNull(),
-    date: timestamp("date", { mode: "date" }).notNull(),
-    requestCount: integer("requestCount").default(0).notNull(),
+    documentId: uuid("documentId")
+      .notNull()
+      .references(() => knowledgeDocument.id, { onDelete: "cascade" }),
+    ordinal: integer("ordinal").notNull(),
+    /** Section breadcrumb, e.g. `Architecture › Caching`. */
+    heading: text("heading"),
+    content: text("content").notNull(),
+    tokenCount: integer("tokenCount").notNull(),
+    embedding: vector("embedding", {
+      dimensions: EMBEDDING_DIMENSIONS,
+    }).notNull(),
+    searchVector: tsvector("searchVector").notNull(),
   },
-  (t) => ({
-    unq: unique().on(t.ipAddress, t.date),
-  }),
+  (t) => [
+    unique().on(t.documentId, t.ordinal),
+    index("KnowledgeChunk_embedding_hnsw").using(
+      "hnsw",
+      t.embedding.op("vector_cosine_ops"),
+    ),
+    index("KnowledgeChunk_searchVector_gin").using("gin", t.searchVector),
+  ],
 );
 
-export const aiApiKey = pgTable(
-  "AiApiKey",
+export const assistantThread = pgTable(
+  "AssistantThread",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    provider: aiProviderEnum("provider").notNull(),
-    label: text("label").notNull(),
-    encryptedKey: text("encryptedKey").notNull(),
-    keyFingerprint: text("keyFingerprint").notNull(),
-    category: apiKeyCategoryEnum("category").notNull(),
-    priority: integer("priority").default(0).notNull(),
-    quotaGroup: text("quotaGroup").notNull(),
-    isActive: boolean("isActive").default(true).notNull(),
+    /** Opaque id generated by the client (validated server-side). */
+    id: text("id").primaryKey(),
+    /** HMAC of the signed visitor cookie — never the raw cookie or an IP. */
+    visitorId: text("visitorId").notNull(),
+    /** Keyed hash of the client IP (never the raw IP) — groups visitors per network. */
+    ipKey: text("ipKey"),
+    language: languageEnum("language").notNull(),
+    title: text("title").default("").notNull(),
+    entryPath: text("entryPath"),
+    messageCount: integer("messageCount").default(0).notNull(),
+    inputTokens: integer("inputTokens").default(0).notNull(),
+    outputTokens: integer("outputTokens").default(0).notNull(),
+    flagged: boolean("flagged").default(false).notNull(),
     createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    lastMessageAt: timestamp("lastMessageAt", { mode: "date" })
       .defaultNow()
-      .$onUpdate(() => new Date())
       .notNull(),
   },
-  (t) => ({
-    providerFingerprintUnq: unique().on(t.provider, t.keyFingerprint),
-    providerCategoryPriorityIdx: index().on(t.provider, t.category, t.priority),
-    providerActiveIdx: index().on(t.provider, t.isActive),
-  }),
+  (t) => [index().on(t.visitorId), index().on(t.ipKey), index().on(t.lastMessageAt)],
 );
 
-export const liveChatConfig = pgTable("LiveChatConfig", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  isEnabled: boolean("isEnabled").default(true).notNull(),
-  allowedPaths: text("allowedPaths").array().default([]).notNull(),
-  excludedPaths: text("excludedPaths").array().default([]).notNull(),
-  pingSoundUrl: text("pingSoundUrl"),
-  notificationSoundUrl: text("notificationSoundUrl"),
+export const assistantMessage = pgTable(
+  "AssistantMessage",
+  {
+    id: text("id").notNull(),
+    threadId: text("threadId")
+      .notNull()
+      .references(() => assistantThread.id, { onDelete: "cascade" }),
+    role: text("role").notNull(),
+    /** UIMessage parts, compacted before storage (see lib/ai/chat/store.ts). */
+    parts: jsonb("parts").notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.threadId, t.id] }),
+    index().on(t.threadId, t.createdAt),
+  ],
+);
+
+export const assistantRateLimit = pgTable(
+  "AssistantRateLimit",
+  {
+    key: text("key").notNull(),
+    window: text("window").notNull(),
+    count: integer("count").default(0).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.key, t.window] })],
+);
+
+export const assistantSettings = pgTable("AssistantSettings", {
+  id: integer("id").primaryKey().default(1),
+  enabled: boolean("enabled").default(true).notNull(),
+  /** Gemini model ids, chosen in the admin (see lib/ai/models.ts). */
+  modelFast: text("modelFast").default("gemini-3.5-flash-lite").notNull(),
+  modelDeep: text("modelDeep").default("gemini-3.8-flash").notNull(),
+  visitorDailyLimit: integer("visitorDailyLimit").default(40).notNull(),
+  globalDailyLimit: integer("globalDailyLimit").default(1500).notNull(),
+  retentionDays: integer("retentionDays").default(90).notNull(),
+  lastMaintenanceAt: timestamp("lastMaintenanceAt", { mode: "date" }),
+  lastIndexReport: jsonb("lastIndexReport"),
   updatedAt: timestamp("updatedAt", { mode: "date" })
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
-});
-
-export const liveChatGreeting = pgTable("LiveChatGreeting", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  pathname: text("pathname").notNull().unique(),
-  configId: uuid("configId")
-    .notNull()
-    .references(() => liveChatConfig.id, { onDelete: "cascade" }),
-});
-
-export const liveChatGreetingTranslation = pgTable(
-  "LiveChatGreetingTranslation",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    language: languageEnum("language").notNull(),
-    text: text("text").notNull(),
-    quickAnswers: text("quickAnswers").array().default([]).notNull(),
-    greetingId: uuid("greetingId")
-      .notNull()
-      .references(() => liveChatGreeting.id, { onDelete: "cascade" }),
-  },
-  (t) => ({
-    unq: unique().on(t.greetingId, t.language),
-  }),
-);
-
-export const aiChatSession = pgTable(
-  "AiChatSession",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    ipAddress: text("ipAddress").notNull(),
-    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
-      .defaultNow()
-      .$onUpdate(() => new Date())
-      .notNull(),
-  },
-  (t) => ({
-    ipIdx: index().on(t.ipAddress),
-  }),
-);
-
-export const aiChatMessage = pgTable("AiChatMessage", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  sessionId: uuid("sessionId")
-    .notNull()
-    .references(() => aiChatSession.id, { onDelete: "cascade" }),
-  role: text("role").notNull(),
-  content: text("content").notNull(),
-  metadata: json("metadata"),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
 });
 
 // Relations
@@ -624,44 +628,36 @@ export const questTranslationRelations = relations(
   }),
 );
 
-export const liveChatConfigRelations = relations(
-  liveChatConfig,
+export const knowledgeDocumentRelations = relations(
+  knowledgeDocument,
   ({ many }) => ({
-    greetings: many(liveChatGreeting),
+    chunks: many(knowledgeChunk),
   }),
 );
 
-export const liveChatGreetingRelations = relations(
-  liveChatGreeting,
-  ({ one, many }) => ({
-    config: one(liveChatConfig, {
-      fields: [liveChatGreeting.configId],
-      references: [liveChatConfig.id],
-    }),
-    translations: many(liveChatGreetingTranslation),
+export const knowledgeChunkRelations = relations(knowledgeChunk, ({ one }) => ({
+  document: one(knowledgeDocument, {
+    fields: [knowledgeChunk.documentId],
+    references: [knowledgeDocument.id],
+  }),
+}));
+
+export const assistantThreadRelations = relations(
+  assistantThread,
+  ({ many }) => ({
+    messages: many(assistantMessage),
   }),
 );
 
-export const liveChatGreetingTranslationRelations = relations(
-  liveChatGreetingTranslation,
+export const assistantMessageRelations = relations(
+  assistantMessage,
   ({ one }) => ({
-    greeting: one(liveChatGreeting, {
-      fields: [liveChatGreetingTranslation.greetingId],
-      references: [liveChatGreeting.id],
+    thread: one(assistantThread, {
+      fields: [assistantMessage.threadId],
+      references: [assistantThread.id],
     }),
   }),
 );
-
-export const aiChatSessionRelations = relations(aiChatSession, ({ many }) => ({
-  messages: many(aiChatMessage),
-}));
-
-export const aiChatMessageRelations = relations(aiChatMessage, ({ one }) => ({
-  session: one(aiChatSession, {
-    fields: [aiChatMessage.sessionId],
-    references: [aiChatSession.id],
-  }),
-}));
 
 export type Skill = typeof skill.$inferSelect;
 export type Project = typeof project.$inferSelect;
@@ -681,3 +677,8 @@ export type Quest = typeof quest.$inferSelect;
 export type QuestTranslation = typeof questTranslation.$inferSelect;
 export type AuditLog = typeof auditLog.$inferSelect;
 export type Category = typeof category.$inferSelect;
+export type KnowledgeDocument = typeof knowledgeDocument.$inferSelect;
+export type KnowledgeChunk = typeof knowledgeChunk.$inferSelect;
+export type AssistantThread = typeof assistantThread.$inferSelect;
+export type AssistantMessage = typeof assistantMessage.$inferSelect;
+export type AssistantSettings = typeof assistantSettings.$inferSelect;

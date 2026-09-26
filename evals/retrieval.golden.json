@@ -1,0 +1,38 @@
+[
+  {
+    "id": "stack-portfolio",
+    "question": "What is this portfolio website built with?",
+    "locale": "en",
+    "relevant": ["project:autumnnus-portfolio"]
+  },
+  {
+    "id": "stack-portfolio-tr",
+    "question": "Bu portfolyo sitesi hangi teknolojilerle yapıldı?",
+    "locale": "tr",
+    "relevant": ["project:autumnnus-portfolio"]
+  },
+  {
+    "id": "orm-choice",
+    "question": "Why did he pick Drizzle over Prisma?",
+    "locale": "en",
+    "relevant": ["post:why-drizzle-orm"]
+  },
+  {
+    "id": "orm-choice-crosslingual",
+    "question": "Prisma yerine neden Drizzle tercih edildi?",
+    "locale": "tr",
+    "relevant": ["post:why-drizzle-orm"]
+  },
+  {
+    "id": "who-is",
+    "question": "Who is the developer behind this site and what does he do?",
+    "locale": "en",
+    "relevant": ["about"]
+  },
+  {
+    "id": "who-is-tr",
+    "question": "Bu sitenin sahibi kim, ne iş yapıyor?",
+    "locale": "tr",
+    "relevant": ["about"]
+  }
+]

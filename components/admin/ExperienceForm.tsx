@@ -5,9 +5,7 @@ import {
   updateExperienceAction,
   uploadImageAction,
 } from "@/app/[locale]/admin/actions";
-import { generateTranslationAction } from "@/app/[locale]/admin/ai-actions";
 import LanguageTabs from "@/components/admin/LanguageTabs";
-import MultiLanguageSelector from "@/components/admin/MultiLanguageSelector";
 import { Input } from "@/components/ui/Input";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
@@ -22,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -68,17 +66,11 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   const initialTranslations = initialData?.translations
     ? transformTranslationsToObject(initialData.translations)
     : {};
-  const initialTranslationLangCodes = Object.keys(initialTranslations);
 
   const [sourceLang, setSourceLang] = useState<string>("tr");
-  const [targetLangs, setTargetLangs] = useState<string[]>(() =>
-    Array.from(
-      new Set(
-        initialTranslationLangCodes.filter((lang) => lang !== sourceLang),
-      ),
-    ),
+  const targetLangs = Object.keys(languageNames).filter(
+    (lang) => lang !== sourceLang,
   );
-  const [isTranslating, setIsTranslating] = useState(false);
 
   const [logo, setLogo] = useState<ImageData | null>(
     initialData?.logo ? { url: initialData.logo } : null,
@@ -99,17 +91,8 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
   const {
     register,
     setValue,
-    getValues,
     formState: { errors, isDirty },
   } = form;
-
-  useEffect(() => {
-    setTargetLangs((prev) =>
-      prev.includes(sourceLang)
-        ? prev.filter((lang) => lang !== sourceLang)
-        : prev,
-    );
-  }, [sourceLang]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,74 +109,6 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
     formData.append("path", path);
     const res = await uploadImageAction(formData);
     return res.url;
-  };
-
-  const handleAutoTranslate = async () => {
-    if (targetLangs.length === 0) {
-      toast.error(t("translateError"));
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      const currentValues = getValues();
-      const sourceContent =
-        currentValues.translations?.[
-          sourceLang as keyof typeof currentValues.translations
-        ];
-
-      if (
-        !sourceContent ||
-        !sourceContent.role ||
-        !sourceContent.description ||
-        !sourceContent.locationType
-      ) {
-        toast.error(t("fillRequired"));
-        setIsTranslating(false);
-        return;
-      }
-
-      const translations = (await generateTranslationAction({
-        type: "experience",
-        sourceLang,
-        targetLangs,
-        content: {
-          role: sourceContent.role,
-          description: sourceContent.description,
-          locationType: sourceContent.locationType,
-        },
-      })) as Record<
-        string,
-        { role: string; description: string; locationType: string }
-      >;
-
-      Object.entries(translations).forEach(([lang, content]) => {
-        if (!content) return;
-        setValue(`translations.${lang}.role` as const, content.role, {
-          shouldDirty: true,
-        });
-        setValue(
-          `translations.${lang}.description` as const,
-          content.description,
-          { shouldDirty: true },
-        );
-        setValue(
-          `translations.${lang}.locationType` as const,
-          content.locationType,
-          { shouldDirty: true },
-        );
-      });
-
-      toast.success(t("translateSuccess"));
-    } catch (error) {
-      toast.error(
-        t("translateError") +
-          ": " +
-          (error instanceof Error ? error.message : "Bilinmeyen hata"),
-      );
-    } finally {
-      setIsTranslating(false);
-    }
   };
 
   const onSubmitAction = async (data: ExperienceFormValues) => {
@@ -417,7 +332,7 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
 
       <div className="h-px bg-border/50" />
 
-      {/* Translation Controls */}
+      {/* Source Language */}
       <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -437,31 +352,8 @@ export default function ExperienceForm({ initialData }: ExperienceFormProps) {
                 ))}
               </select>
             </div>
-            <MultiLanguageSelector
-              sourceLang={sourceLang}
-              targetLangs={targetLangs}
-              onChange={setTargetLangs}
-            />
           </div>
-
-          <button
-            type="button"
-            onClick={handleAutoTranslate}
-            disabled={isTranslating || targetLangs.length === 0}
-            className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {isTranslating ? (
-              <Loader2 className="animate-spin w-4 h-4" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            {t("translate")}
-          </button>
         </div>
-        <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 px-1 opacity-70">
-          <div className="w-1 h-1 rounded-full bg-primary" />
-          {t("autoTranslate")}
-        </p>
       </div>
 
       <LanguageTabs sourceLang={sourceLang} targetLangs={targetLangs}>

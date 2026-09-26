@@ -18,9 +18,7 @@ export default function AdminHeader() {
     { href: "/admin/blog", label: t("blog") },
     { href: "/admin/experience", label: t("experience") },
     { href: "/admin/profile", label: t("profile") },
-    { href: "/admin/embeddings", label: t("embeddings") },
-    { href: "/admin/livechat", label: t("liveChat") },
-    { href: "/admin/ai-logs", label: t("aiLogs") || "AI Logs" },
+    { href: "/admin/assistant", label: t("assistant") },
   ];
 
   const handleSignOut = () => signOut({ callbackUrl: `/${locale}` });

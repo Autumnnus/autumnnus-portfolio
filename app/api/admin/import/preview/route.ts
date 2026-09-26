@@ -26,25 +26,10 @@ export async function POST(request: Request) {
     const jsonContent = await dataFile.async("string");
     const parsed = JSON.parse(jsonContent);
     const { timestamp, data } = parsed;
-    const { projects, blogs, profile, experiences, skills, categories, embeddings } =
+    // Legacy backups may still contain an `embeddings` section. It is ignored:
+    // the knowledge index is derived data and is rebuilt via reindex.
+    const { projects, blogs, profile, experiences, skills, categories } =
       data ?? {};
-
-    const projectIds = new Set(
-      (projects ?? [])
-        .map((p: any) => p?.id)
-        .filter((id: unknown): id is string => typeof id === "string"),
-    );
-    const blogIds = new Set(
-      (blogs ?? [])
-        .map((b: any) => b?.id)
-        .filter((id: unknown): id is string => typeof id === "string"),
-    );
-    const experienceIds = new Set(
-      (experiences ?? [])
-        .map((e: any) => e?.id)
-        .filter((id: unknown): id is string => typeof id === "string"),
-    );
-    const profileId = typeof profile?.id === "string" ? profile.id : null;
 
     const projectTranslationCount = (projects ?? []).reduce(
       (acc: number, p: any) => acc + (p?.translations?.length ?? 0),
@@ -71,19 +56,6 @@ export async function POST(request: Request) {
       (c: any) => c?.type === "blog",
     ).length;
 
-    const projectEmbeddingCount = (embeddings ?? []).filter(
-      (e: any) => e?.sourceType === "project" && projectIds.has(e?.sourceId),
-    ).length;
-    const blogEmbeddingCount = (embeddings ?? []).filter(
-      (e: any) => e?.sourceType === "blog" && blogIds.has(e?.sourceId),
-    ).length;
-    const experienceEmbeddingCount = (embeddings ?? []).filter(
-      (e: any) => e?.sourceType === "experience" && experienceIds.has(e?.sourceId),
-    ).length;
-    const profileEmbeddingCount = (embeddings ?? []).filter(
-      (e: any) => e?.sourceType === "profile" && profileId === e?.sourceId,
-    ).length;
-
     let assetCount = 0;
     zip.folder("assets")?.forEach((_, f) => {
       if (!f.dir) assetCount++;
@@ -96,7 +68,6 @@ export async function POST(request: Request) {
         translationCount: projectTranslationCount,
         categoryCount: projectCategoryCount,
         techRelationCount: projectTechRelationCount,
-        embeddingCount: projectEmbeddingCount,
         items: (projects ?? [])
           .map((p: any) => {
             const t =
@@ -110,7 +81,6 @@ export async function POST(request: Request) {
         count: blogs?.length ?? 0,
         translationCount: blogTranslationCount,
         categoryCount: blogCategoryCount,
-        embeddingCount: blogEmbeddingCount,
         items: (blogs ?? [])
           .map((b: any) => {
             const t =
@@ -128,13 +98,11 @@ export async function POST(request: Request) {
       experiences: {
         count: experiences?.length ?? 0,
         translationCount: experienceTranslationCount,
-        embeddingCount: experienceEmbeddingCount,
         items: (experiences ?? []).map((e: any) => e.company).slice(0, 8),
       },
       profile: {
         exists: !!profile,
         translationCount: profile?.translations?.length ?? 0,
-        embeddingCount: profileEmbeddingCount,
         name:
           profile?.translations?.find((t: any) => t.language === "en")?.name ||
           profile?.translations?.[0]?.name,
