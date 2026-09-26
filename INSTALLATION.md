@@ -91,8 +91,14 @@ Use the repository `Dockerfile` for deployment in Coolify. This avoids Nixpacks 
 1.  Connect your repository to Coolify.
 2.  Set the **Build Pack** to `Dockerfile` (or enable Dockerfile auto-detection).
 3.  Configure all environment variables in the Coolify dashboard. Be sure to define `SERVICE_FQDN_APP` and `SERVICE_URL_APP`.
-4.  **Important**: Your production PostgreSQL needs the `pgvector` extension. Migration `0004_assistant_v2` runs `CREATE EXTENSION IF NOT EXISTS vector`. The database user must be allowed to create it, or you enable it once manually.
-5.  **Migrations**: Run `npx drizzle-kit migrate`. `0003` drops the legacy AI tables (old chat logs, embeddings, key pool) and `0004` creates the assistant tables. Then run `yarn ai:reindex` once.
+4.  **pgvector**: production PostgreSQL must have the `pgvector` extension available (e.g. the `pgvector/pgvector:pg15` image). The migration enables it.
+5.  **Migrations**: back up first (`pg_dump`), then run from your machine against the production `DATABASE_URL` (via SSH tunnel if the DB is private):
+    ```bash
+    DATABASE_URL="postgresql://…prod…" yarn db:migrate:safe --dry-run   # inspect
+    DATABASE_URL="postgresql://…prod…" yarn db:migrate:safe --yes       # apply
+    ```
+    The script baselines databases created with `db:push`. It then applies `0003` (drops the legacy AI tables, including the old `Embedding` vector data), `0004` (assistant tables) and `0005` (model settings, per-visitor grouping), and verifies the result. All three are idempotent.
+    After that, open **Admin > AI Assistant** and click **Rebuild everything** to build the knowledge index.
 6.  **Analytics (Production):** Make sure to configure `NEXT_PUBLIC_UMAMI_URL` and `NEXT_PUBLIC_UMAMI_ID` to receive statistics directly in the admin panel.
 
 ---
@@ -107,6 +113,7 @@ Use the repository `Dockerfile` for deployment in Coolify. This avoids Nixpacks 
 | `yarn db:studio` | Opens Drizzle Studio (GUI for the database) |
 | `yarn lint`      | Runs ESLint                                 |
 | `yarn build`     | Builds the production bundle                |
+| `yarn db:migrate:safe` | Safe migration runner (baseline + migrate + verify; `--dry-run`, `--yes`) |
 | `yarn ai:reindex` | Syncs the assistant's knowledge index (`--force` re-embeds all) |
 | `yarn ai:eval`   | Retrieval ablation: lexical / vector / hybrid / hybrid+Jev |
 | `yarn test:ai`   | Unit tests for the AI layer                 |

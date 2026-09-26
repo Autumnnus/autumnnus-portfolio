@@ -20,7 +20,8 @@
     "prod:init": "tsx scripts/prod-init.ts --confirm",
     "test:ai": "tsx --test $(find lib/ai -name '*.test.ts')",
     "ai:reindex": "tsx scripts/ai/reindex.ts",
-    "ai:eval": "tsx scripts/ai/eval-retrieval.ts"
+    "ai:eval": "tsx scripts/ai/eval-retrieval.ts",
+    "db:migrate:safe": "tsx scripts/db-migrate.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.94",
