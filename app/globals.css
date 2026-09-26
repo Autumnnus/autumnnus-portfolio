@@ -233,6 +233,20 @@ html.lenis body {
       10px 10px 0 0 var(--px-drop);
   }
 
+  .pixel-panel-featured {
+    background-color: var(--card);
+    box-shadow:
+      0 -4px 0 0 var(--px-ink),
+      0 4px 0 0 var(--px-ink),
+      -4px 0 0 0 var(--px-ink),
+      4px 0 0 0 var(--px-ink),
+      0 -8px 0 0 var(--gold),
+      0 8px 0 0 var(--gold),
+      -8px 0 0 0 var(--gold),
+      8px 0 0 0 var(--gold),
+      14px 14px 0 0 var(--px-drop);
+  }
+
   .pixel-slot {
     background-color: var(--slot);
     box-shadow:
@@ -619,6 +633,11 @@ html[data-intro-seen] .px-type {
     translate: 5px 0;
   }
 }
+@keyframes scene-tap-down {
+  50% {
+    translate: 0 4px;
+  }
+}
 @keyframes scene-bob {
   50% {
     translate: 0 -2px;
@@ -634,6 +653,9 @@ html[data-intro-seen] .px-type {
 }
 .scene-tap-right {
   animation: scene-tap-right 700ms steps(1, end) infinite;
+}
+.scene-tap-down {
+  animation: scene-tap-down 700ms steps(1, end) infinite;
 }
 .scene-hint {
   animation: scene-bob 900ms steps(1, end) infinite;
@@ -932,6 +954,7 @@ html[data-intro-seen] .px-type {
 @media (prefers-reduced-motion: reduce) {
   .scene-tap-left,
   .scene-tap-right,
+  .scene-tap-down,
   .scene-hint,
   .scene-star-on,
   .achievement-in,
@@ -964,6 +987,196 @@ html[data-intro-seen] .px-type {
   .chat-fly,
   .chat-fly-spark {
     display: none;
+  }
+}
+
+/* Homepage sections: step-in reveal, cards, name wave, chat history */
+@keyframes px-reveal {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+@keyframes reveal-failsafe {
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reveal:not([data-revealed]) {
+    opacity: 0;
+    animation: reveal-failsafe 0s 4s forwards;
+  }
+  .reveal[data-revealed] {
+    animation: px-reveal 360ms steps(4, end) var(--d, 0ms) both;
+  }
+}
+
+.card-pattern {
+  background-color: var(--slot);
+  background-image: repeating-conic-gradient(
+    color-mix(in srgb, var(--px-ink) 9%, transparent) 0 25%,
+    transparent 0 50%
+  );
+  background-size: 16px 16px;
+}
+.card-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgb(255 255 255 / 0.32) 35% 45%,
+    transparent 45%
+  );
+  translate: -120% 0;
+}
+@keyframes card-shine {
+  to {
+    translate: 120% 0;
+  }
+}
+.group:hover .card-shine::after {
+  animation: card-shine 520ms steps(6, end) forwards;
+}
+@keyframes card-star {
+  50% {
+    translate: 0 -2px;
+  }
+}
+.card-star {
+  animation: card-star 1.2s steps(1, end) infinite;
+}
+.work-current {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  animation: badge-current 1s steps(1, end) infinite;
+}
+
+@keyframes letter-hop {
+  50% {
+    translate: 0 -12px;
+  }
+}
+.name-letter {
+  animation: letter-hop 420ms steps(3, end) calc(1500ms + var(--i) * 60ms) both;
+}
+.name-letters:hover .name-letter {
+  animation: letter-hop 420ms steps(3, end) calc(var(--i) * 45ms);
+}
+
+@keyframes history-in {
+  from {
+    opacity: 0;
+    translate: -16px 0;
+  }
+}
+.history-in {
+  animation: history-in 220ms steps(3, end) both;
+}
+@keyframes history-crumble {
+  30% {
+    translate: 3px 0;
+  }
+  60% {
+    translate: -3px 0;
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    scale: 1 0.2;
+  }
+}
+.history-crumble {
+  pointer-events: none;
+  animation: history-crumble 340ms steps(4, end) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-star,
+  .work-current,
+  .name-letter,
+  .history-in,
+  .history-crumble,
+  .group:hover .card-shine::after {
+    animation: none !important;
+  }
+}
+
+/* Cheat console */
+@keyframes console-in {
+  0% {
+    scale: 0.4;
+    opacity: 0;
+  }
+  70% {
+    scale: 1.05;
+    opacity: 1;
+  }
+}
+@keyframes console-out {
+  to {
+    scale: 0.5;
+    opacity: 0;
+  }
+}
+@keyframes console-fade {
+  from {
+    opacity: 0;
+  }
+}
+.console-panel[data-state="open"] {
+  animation: console-in 260ms steps(4, end) both;
+}
+.console-panel[data-state="closed"] {
+  animation: console-out 200ms steps(3, end) both;
+}
+.console-overlay[data-state="open"] {
+  animation: console-fade 200ms steps(3, end) both;
+}
+.console-overlay[data-state="closed"] {
+  animation: console-fade 160ms steps(2, end) reverse both;
+}
+.console-shake {
+  animation: px-shake 200ms steps(4, end) 2;
+}
+@keyframes console-letter {
+  from {
+    translate: 0 -8px;
+    opacity: 0;
+  }
+}
+.console-letter {
+  animation: console-letter 220ms steps(3, end) both;
+}
+@keyframes console-nudge {
+  50% {
+    background-color: var(--gold);
+  }
+}
+.console-nudge {
+  animation: console-nudge 700ms steps(1, end) infinite;
+}
+@keyframes scene-chip-pulse {
+  50% {
+    outline-color: transparent;
+  }
+}
+.scene-chip-pulse {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  animation: scene-chip-pulse 900ms steps(1, end) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .console-panel,
+  .console-overlay,
+  .console-shake,
+  .console-letter,
+  .console-nudge,
+  .scene-chip-pulse {
+    animation: none !important;
   }
 }
 

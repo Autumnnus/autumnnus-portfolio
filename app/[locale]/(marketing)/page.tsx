@@ -123,7 +123,7 @@ export default async function Home({ params }: HomeProps) {
       <Container className="max-w-6xl">
         <Hero data={profileData} skills={skills} socialLinks={socialLinks} />
       </Container>
-      <Container className="min-h-screen py-8">
+      <Container className="min-h-screen max-w-6xl py-8">
         <About data={profileData} stats={aboutStats} />
         <WorkExperienceComponent data={experiencesData as WorkExperience[]} />
         <GitHubCalendar />

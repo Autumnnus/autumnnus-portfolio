@@ -174,10 +174,20 @@ export default function Hero({
               {greeting}
             </span>
             <h1
-              className="px-stamp -mt-2 font-pixel text-7xl leading-[0.9] font-bold [text-shadow:5px_5px_0_var(--gold)] sm:text-8xl lg:text-[6.5rem]"
+              aria-label={displayName}
+              className="name-letters px-stamp -mt-2 font-pixel text-7xl leading-[0.9] font-bold [text-shadow:5px_5px_0_var(--gold)] sm:text-8xl lg:text-[6.5rem]"
               style={delay(STAMP_AT)}
             >
-              {displayName}
+              {Array.from(displayName).map((letter, index) => (
+                <span
+                  key={index}
+                  aria-hidden="true"
+                  className="name-letter inline-block"
+                  style={{ "--i": index } as CSSProperties}
+                >
+                  {letter === " " ? "\u00a0" : letter}
+                </span>
+              ))}
             </h1>
             <span
               className="px-rise mt-2 bg-foreground px-3 py-1.5 font-pixel text-base tracking-wider text-background uppercase"

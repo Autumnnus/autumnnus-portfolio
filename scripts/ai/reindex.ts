@@ -6,6 +6,7 @@
  *   yarn ai:reindex --type=project
  */
 import "dotenv/config";
+import { hasGeminiKey } from "../../lib/ai/gemini-keys";
 
 async function main() {
   const { syncKnowledge } = await import("../../lib/ai/knowledge/indexer");
@@ -16,7 +17,7 @@ async function main() {
       ? { sourceType: typeArg as "project" | "blog" | "experience" | "profile" }
       : ("all" as const);
 
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+  if (!hasGeminiKey()) {
     console.error("GOOGLE_GENERATIVE_AI_API_KEY is not set.");
     process.exit(1);
   }

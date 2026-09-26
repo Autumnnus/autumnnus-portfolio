@@ -3,13 +3,14 @@ import { getOwnerIdentity } from "@/lib/ai/agent/data";
 import { getAssistantSettings } from "@/lib/ai/chat/settings";
 import { toAssistantLocale } from "@/lib/ai/config";
 import AssistantWidget from "./AssistantWidget";
+import { hasGeminiKey } from "@/lib/ai/gemini-keys";
 
 /**
  * Server entry point for the widget: decides visibility (enabled + API key,
  * admins always see it) and passes the owner's name down.
  */
 export default async function Assistant({ locale }: { locale: string }) {
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) return null;
+  if (!hasGeminiKey()) return null;
 
   try {
     const [settings, session, owner] = await Promise.all([
@@ -24,7 +25,7 @@ export default async function Assistant({ locale }: { locale: string }) {
     return (
       <AssistantWidget
         ownerName={owner.name.split(" ")[0] || owner.name}
-        retentionDays={settings.retentionDays}
+        retentionDays={settings.autoDelete ? settings.retentionDays : null}
       />
     );
   } catch (error) {

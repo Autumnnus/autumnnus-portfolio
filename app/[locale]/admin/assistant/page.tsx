@@ -14,7 +14,7 @@ import { db } from "@/lib/db";
 import { assistantMessage, assistantThread, knowledgeChunk, knowledgeDocument } from "@/lib/db/schema";
 import { cn, formatDateTime } from "@/lib/utils";
 import { gte, sql } from "drizzle-orm";
-import { AlertTriangle, Flag, Sparkles } from "lucide-react";
+import { AlertTriangle, Flag, Sparkles, Trash2 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
@@ -143,6 +143,7 @@ export default async function AdminAssistantPage({
               visitorDailyLimit: settings.visitorDailyLimit,
               globalDailyLimit: settings.globalDailyLimit,
               retentionDays: settings.retentionDays,
+              autoDelete: settings.autoDelete,
             }}
           />
         </Card>
@@ -271,6 +272,12 @@ export default async function AdminAssistantPage({
                       {t(`visitors.label.${by}`, { id: shortKey(visitor.key) })}
                       {visitor.flagged && (
                         <Flag className="h-3.5 w-3.5 text-destructive" aria-label={t("threads.flagged")} />
+                      )}
+                      {visitor.deleted > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-destructive">
+                          <Trash2 className="h-3 w-3" />
+                          {t("threads.deletedCount", { count: visitor.deleted })}
+                        </span>
                       )}
                       <span className="font-mono text-[0.65rem] font-normal uppercase text-muted-foreground">
                         {visitor.languages.join(" · ")}

@@ -10,13 +10,15 @@ import { isToolUIPart } from "ai";
 import { BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import NextLink from "next/link";
-import { useMemo } from "react";
+import { playSound } from "@/lib/pixel/sound";
+import { useMemo, useRef } from "react";
 import ActivityTimeline, { RouteChip } from "./ActivityTimeline";
 import ApprovalCard from "./ApprovalCard";
 import AutumnMascot from "./AutumnMascot";
 import { collectSources, linkCitations, localizeHref, type ToolPart } from "./lib";
 import Markdown from "./Markdown";
 import ToolCard from "./ToolCards";
+import { typingSparks } from "./typing-events";
 import { useTypewriter } from "./useTypewriter";
 
 function Sources({
@@ -98,6 +100,8 @@ export function AssistantMessage({
   onApproval,
   busy,
   animate = false,
+  fresh = false,
+  onTyped,
 }: {
   message: AssistantUIMessage;
   locale: string;
@@ -106,6 +110,9 @@ export function AssistantMessage({
   onApproval: (approvalId: string, approved: boolean) => void;
   busy: boolean;
   animate?: boolean;
+  /** New this session: write it out even if the stream already finished. */
+  fresh?: boolean;
+  onTyped?: () => void;
 }) {
   const t = useTranslations("Assistant");
 
@@ -133,7 +140,17 @@ export function AssistantMessage({
   const mentionsContact = /iletişim|contact|e-?posta|email|linkedin|ulaş|reach/i.test(text);
   const metadata = message.metadata;
   const thinking = streaming && !body && !toolParts.length;
-  const typed = useTypewriter(body, streaming);
+  const proseRef = useRef<HTMLDivElement>(null);
+  const typed = useTypewriter(body, streaming || fresh, {
+    onType: (count) => {
+      if (proseRef.current) typingSparks.emit({ kind: "type", el: proseRef.current, count });
+    },
+    onFinish: () => {
+      if (proseRef.current) typingSparks.emit({ kind: "finish", el: proseRef.current });
+      if (body) playSound("pop");
+      onTyped?.();
+    },
+  });
   const mood = thinking ? "think" : typed.revealing ? "talk" : "idle";
 
   return (
@@ -165,12 +182,15 @@ export function AssistantMessage({
         )}
 
         {typed.text && (
-          <Markdown
-            text={typed.text}
-            locale={locale}
-            sources={known}
-            streaming={streaming || typed.revealing}
-          />
+          <div ref={proseRef}>
+            {/* While the quill writes, it replaces the block caret. */}
+            <Markdown
+              text={typed.text}
+              locale={locale}
+              sources={known}
+              streaming={streaming && !typed.live}
+            />
+          </div>
         )}
 
         {toolParts.map((part) => (

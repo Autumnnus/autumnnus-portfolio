@@ -68,7 +68,11 @@ export const PALETTE = {
     panel: "#fff6e5",
   },
   winter: {
-    sky: [["#0e1530", "#141e40", "#1a2750", "#223466"]],
+    // Night, then the pale day the cycle code brings.
+    sky: [
+      ["#0e1530", "#141e40", "#1a2750", "#223466"],
+      ["#9db8de", "#b3c9e8", "#c8d8f0", "#dde7f6"],
+    ],
     far: "#2a3f73",
     farShade: "#24376a",
     snowCap: "#dce8f7",
@@ -386,6 +390,14 @@ function cabin(season: Season, centerX: number): Sprite {
   ctx.fillRect(11, 13, 3, 6);
   ctx.fillStyle = c.window;
   ctx.fillRect(5, 12, 3, 3);
+  if (season === "winter") {
+    // Icicles hang off the eaves on both sides of the wall.
+    ctx.fillStyle = "#cfe9ff";
+    ctx.fillRect(0, 9, 1, 2);
+    ctx.fillRect(1, 9, 1, 1);
+    ctx.fillRect(16, 9, 1, 1);
+    ctx.fillRect(17, 9, 1, 2);
+  }
   return { canvas, x: centerX - 9, y: 37, w: 18, h: 19 };
 }
 
@@ -506,6 +518,23 @@ function winterLayers(width: number, rand: () => number) {
   return { far: far.canvas, mid: mid.canvas, ground: ground.canvas };
 }
 
+function makeStars(rand: () => number, width: number, moonX: number) {
+  const stars: Star[] = [];
+  while (stars.length < Math.round(width / 10)) {
+    const x = Math.floor(rand() * width);
+    const y = 1 + Math.floor(rand() * 32);
+    if (Math.abs(x - moonX) < 14 && y < 30) continue;
+    stars.push({
+      x,
+      y,
+      phase: rand() * Math.PI * 2,
+      speed: 1 + rand() * 2.5,
+      big: stars.length < 4,
+    });
+  }
+  return stars;
+}
+
 export function buildSeasonArt(season: Season, width: number): SeasonArt {
   const rand = rng(width * 7919 + (season === "autumn" ? 11 : 23));
   const cabinX = Math.round(width * 0.56);
@@ -530,7 +559,7 @@ export function buildSeasonArt(season: Season, width: number): SeasonArt {
       trees,
       cabin: cabin("autumn", cabinX),
       celestial: sun(),
-      stars: [],
+      stars: makeStars(rand, width, -100),
     };
   }
 
@@ -541,25 +570,11 @@ export function buildSeasonArt(season: Season, width: number): SeasonArt {
     pineTree(rand, Math.round(width * 0.84), PINE_BIG),
     pineTree(rand, Math.round(width * 0.93), PINE_SMALL),
   ];
-  const moonX = Math.round(width * 0.76);
-  const stars: Star[] = [];
-  while (stars.length < Math.round(width / 10)) {
-    const x = Math.floor(rand() * width);
-    const y = 1 + Math.floor(rand() * 32);
-    if (Math.abs(x - moonX) < 14 && y < 30) continue;
-    stars.push({
-      x,
-      y,
-      phase: rand() * Math.PI * 2,
-      speed: 1 + rand() * 2.5,
-      big: stars.length < 4,
-    });
-  }
   return {
     ...layers,
     trees,
     cabin: cabin("winter", cabinX),
     celestial: moon(),
-    stars,
+    stars: makeStars(rand, width, Math.round(width * 0.76)),
   };
 }

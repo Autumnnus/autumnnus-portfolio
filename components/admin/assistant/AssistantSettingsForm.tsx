@@ -14,6 +14,7 @@ interface Values {
   visitorDailyLimit: number;
   globalDailyLimit: number;
   retentionDays: number;
+  autoDelete: boolean;
 }
 
 export default function AssistantSettingsForm({ initial }: { initial: Values }) {
@@ -56,13 +57,17 @@ export default function AssistantSettingsForm({ initial }: { initial: Values }) 
   const numberField = (
     key: "visitorDailyLimit" | "globalDailyLimit" | "retentionDays",
     max: number,
+    disabled = false,
   ) => (
-    <label className="flex items-center justify-between gap-4 text-sm">
+    <label
+      className={`flex items-center justify-between gap-4 text-sm ${disabled ? "opacity-50" : ""}`}
+    >
       <span className="text-muted-foreground">{t(key)}</span>
       <input
         type="number"
         min={1}
         max={max}
+        disabled={disabled}
         value={values[key]}
         onChange={(event) =>
           setValues((v) => ({ ...v, [key]: Math.max(1, Number(event.target.value) || 1) }))
@@ -111,7 +116,24 @@ export default function AssistantSettingsForm({ initial }: { initial: Values }) 
       </p>
       {numberField("visitorDailyLimit", 1_000)}
       {numberField("globalDailyLimit", 100_000)}
-      {numberField("retentionDays", 730)}
+      <label className="flex items-start justify-between gap-4">
+        <span>
+          <span className="block text-sm font-medium">{t("autoDelete")}</span>
+          <span className="block text-xs text-muted-foreground">{t("autoDeleteHint")}</span>
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={values.autoDelete}
+          onClick={() => setValues((v) => ({ ...v, autoDelete: !v.autoDelete }))}
+          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${values.autoDelete ? "bg-primary" : "bg-muted-foreground/30"}`}
+        >
+          <span
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${values.autoDelete ? "translate-x-5" : "translate-x-0.5"}`}
+          />
+        </button>
+      </label>
+      {numberField("retentionDays", 730, !values.autoDelete)}
       <button
         type="submit"
         disabled={pending}

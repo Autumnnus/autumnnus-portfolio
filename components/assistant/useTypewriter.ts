@@ -26,7 +26,18 @@ function safeSlice(text: string, count: number) {
  * steady pace that speeds up when the stream runs ahead, with a soft blip.
  * Messages that were never live (restored history) show in full at once.
  */
-export function useTypewriter(text: string, streaming: boolean) {
+export interface TypewriterEvents {
+  /** Letters just appeared (how many this frame). */
+  onType?: (count: number) => void;
+  /** The whole answer is out. */
+  onFinish?: () => void;
+}
+
+export function useTypewriter(
+  text: string,
+  streaming: boolean,
+  events?: TypewriterEvents,
+) {
   const [live, setLive] = useState(
     () =>
       streaming &&
@@ -36,10 +47,12 @@ export function useTypewriter(text: string, streaming: boolean) {
   const textRef = useRef(text);
   const streamingRef = useRef(streaming);
   const shownRef = useRef(0);
+  const eventsRef = useRef(events);
 
   useEffect(() => {
     textRef.current = text;
     streamingRef.current = streaming;
+    eventsRef.current = events;
   });
 
   useEffect(() => {
@@ -54,14 +67,17 @@ export function useTypewriter(text: string, streaming: boolean) {
         // Keep an RPG pace, catching up when the stream runs far ahead.
         const perSecond = Math.min(360, Math.max(50, backlog * 2.5));
         const step = Math.max(1, Math.round((perSecond * (now - last)) / 1000));
-        shownRef.current = Math.min(target, shownRef.current + step);
-        setShown(shownRef.current);
+        const next = Math.min(target, shownRef.current + step);
+        eventsRef.current?.onType?.(next - shownRef.current);
+        shownRef.current = next;
+        setShown(next);
         if (now - lastBlip > 90) {
           playSound("type");
           lastBlip = now;
         }
       } else if (!streamingRef.current) {
         setLive(false);
+        eventsRef.current?.onFinish?.();
         return;
       }
       last = now;
@@ -71,6 +87,6 @@ export function useTypewriter(text: string, streaming: boolean) {
     return () => cancelAnimationFrame(raf);
   }, [live]);
 
-  if (!live) return { text, revealing: false };
-  return { text: safeSlice(text, shown), revealing: shown < text.length };
+  if (!live) return { text, revealing: false, live };
+  return { text: safeSlice(text, shown), revealing: shown < text.length, live };
 }

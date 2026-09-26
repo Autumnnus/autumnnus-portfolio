@@ -1,12 +1,10 @@
 "use client";
 
 import SectionHeading from "@/components/common/SectionHeading";
+import PixelIcon, { PixelIconName } from "@/components/pixel/PixelIcon";
+import Reveal, { useCountUp, useSeen } from "@/components/pixel/Reveal";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
-
-import { Tooltip } from "react-tooltip";
-import "react-tooltip/dist/react-tooltip.css";
 
 interface AboutData {
   aboutTitle?: string;
@@ -14,22 +12,86 @@ interface AboutData {
   quests?: { id: string; completed: boolean; order: number; label: string }[];
 }
 
+interface Stats {
+  projectCount: number;
+  experienceYears: number;
+  visitorCount: number;
+  blogCount: number;
+}
+
+function StatTile({
+  value,
+  label,
+  hint,
+  icon,
+  start,
+  delay,
+  onClick,
+}: {
+  value: number;
+  label: string;
+  hint: string;
+  icon: PixelIconName;
+  start: boolean;
+  delay: number;
+  onClick?: () => void;
+}) {
+  const shown = useCountUp(value, start);
+  const body = (
+    <>
+      <PixelIcon name={icon} className="h-4 w-4 text-ember" />
+      <span className="font-pixel text-3xl leading-none font-bold">
+        {shown}
+      </span>
+      <span className="font-pixel text-xs tracking-wider text-muted-foreground uppercase">
+        {label}
+      </span>
+    </>
+  );
+  const className =
+    "flex h-full w-full flex-col items-start gap-1.5 px-4 py-3.5 text-left pixel-slot";
+
+  return (
+    <Reveal delay={delay} className="p-[3px]">
+      {onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          title={hint}
+          className={cn(
+            className,
+            "bg-slot-active transition-transform duration-100 hover:-translate-y-0.5",
+          )}
+        >
+          {body}
+        </button>
+      ) : (
+        <div title={hint} className={className}>
+          {body}
+        </div>
+      )}
+    </Reveal>
+  );
+}
+
 export default function About({
   data,
   stats,
 }: {
   data?: AboutData | null;
-  stats?: {
-    projectCount: number;
-    experienceYears: number;
-    visitorCount: number;
-    blogCount: number;
-  };
+  stats?: Stats;
 }) {
   const t = useTranslations("About");
+  const [statsRef, statsSeen] = useSeen<HTMLDivElement>();
 
   const title = data?.aboutTitle || t("title");
   const description = data?.aboutDescription || t("description");
+  const paragraphs = description
+    .split("\n")
+    .map((p: string) => p.trim())
+    .filter(Boolean);
+  const quests = [...(data?.quests ?? [])].sort((a, b) => a.order - b.order);
+  const done = quests.filter((quest) => quest.completed).length;
 
   const handleVisitorClick = () => {
     window.scrollTo({
@@ -37,169 +99,144 @@ export default function About({
       behavior: "smooth",
     });
     setTimeout(() => {
-      const event = new CustomEvent("trigger-visitor-badge");
-      window.dispatchEvent(event);
+      window.dispatchEvent(new CustomEvent("trigger-visitor-badge"));
     }, 700);
   };
 
-  const quests = data?.quests ?? [];
-
   return (
-    <section className="py-20 relative px-4" id="about">
-      <SectionHeading subHeading={t("subTitle")} heading={title} />
+    <section className="relative py-16" id="about">
+      <SectionHeading subHeading={t("subTitle")} heading={title} icon="heart" />
 
-      <div className="relative mt-12 max-w-6xl mx-auto">
-        {/* Decorative elements from the image - Fixed positioning */}
-        <div className="absolute -top-6 left-4 z-10 sm:-left-4">
-          <div className="w-12 h-12 bg-foreground border-4 border-foreground shadow-[4px_4px_0_0_var(--primary)] flex items-center justify-center">
-            <div className="w-6 h-4 bg-card rounded-sm relative">
-              <div className="absolute top-1 left-1 w-2 h-0.5 bg-foreground" />
-              <div className="absolute top-2 left-1 w-3 h-0.5 bg-foreground" />
+      <div className="grid gap-10 p-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+        <div className="flex flex-col gap-8">
+          {/* RPG dialogue box */}
+          <Reveal className="relative pt-4">
+            <div className="relative pixel-panel px-6 pb-10 pt-10 sm:px-9">
+              <span className="absolute -top-5 left-6 bg-primary px-3.5 py-1.5 font-pixel text-base font-bold tracking-wider text-primary-foreground pixel-frame">
+                KADIR
+              </span>
+              <h3 className="mb-5 font-pixel text-xl font-bold text-ember sm:text-2xl">
+                {t("journeyTitle")}
+              </h3>
+              <div className="flex flex-col gap-4 text-base leading-relaxed text-foreground/85 sm:text-[1.05rem]">
+                {paragraphs.map((paragraph: string, index: number) => (
+                  <Reveal key={index} delay={120 + index * 110}>
+                    <p className="text-pretty">{paragraph}</p>
+                  </Reveal>
+                ))}
+              </div>
+              <PixelIcon
+                name="caretDown"
+                className="px-blink absolute bottom-4 right-6 h-2 w-3.5 text-primary"
+              />
             </div>
+          </Reveal>
+
+          {/* Stats */}
+          <div ref={statsRef} className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <StatTile
+              value={stats?.experienceYears ?? 0}
+              label={t("statYears")}
+              hint={t("statYearsTooltip")}
+              icon="star"
+              start={statsSeen}
+              delay={0}
+            />
+            <StatTile
+              value={stats?.projectCount ?? 0}
+              label={t("statProjs")}
+              hint={t("statProjsTooltip")}
+              icon="gem"
+              start={statsSeen}
+              delay={80}
+            />
+            <StatTile
+              value={stats?.blogCount ?? 0}
+              label={t("statBlogs")}
+              hint={t("statBlogsTooltip")}
+              icon="sparkles"
+              start={statsSeen}
+              delay={160}
+            />
+            <StatTile
+              value={stats?.visitorCount ?? 0}
+              label={t("statWins")}
+              hint={t("statWinsTooltip")}
+              icon="trophy"
+              start={statsSeen}
+              delay={240}
+              onClick={handleVisitorClick}
+            />
           </div>
         </div>
 
-        {/* Main Dialogue Box - Using themed colors */}
-        <div className="bg-card border-[6px] border-foreground p-6 md:p-12 relative shadow-[10px_10px_0_0_rgba(0,0,0,0.1)] dark:shadow-[10px_10px_0_0_rgba(255,255,255,0.05)]">
-          {/* Corner accents - Simplified for better scaling */}
-          <div className="absolute top-4 right-4 text-primary font-bold text-2xl select-none leading-none">
-            ⌝
-          </div>
-          <div className="absolute bottom-4 left-4 text-primary font-bold text-2xl select-none leading-none">
-            ⌞
-          </div>
-          <div className="absolute bottom-4 right-4 text-primary font-bold text-2xl select-none leading-none">
-            ⌟
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
-            {/* Left Column: Story */}
-            <div className="lg:col-span-8 space-y-8">
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-1 bg-primary" />
-                <h3 className="text-xl md:text-3xl font-bold text-foreground tracking-tight">
-                  [{t("journeyTitle")}]
+        <div className="flex flex-col gap-8">
+          {/* Quest log */}
+          <Reveal delay={150}>
+            <div className="flex flex-col gap-4 pixel-panel p-5">
+              <div className="flex items-center gap-2.5">
+                <PixelIcon name="trophy" className="h-4 w-5 text-gold" />
+                <h3 className="font-pixel text-base font-bold tracking-wider uppercase">
+                  {t("currentQuest")}
                 </h3>
               </div>
-
-              <div className="space-y-6">
-                {description
-                  .split("\n")
-                  .filter((p: string) => p.trim() !== "")
-                  .map((paragraph: string, index: number) => (
-                    <p
-                      key={index}
-                      className="text-foreground/80 text-base md:text-xl leading-relaxed font-medium"
-                    >
-                      {paragraph.trim()}
-                    </p>
-                  ))}
-              </div>
-            </div>
-
-            {/* Right Column: Quest Box */}
-            <div className="lg:col-span-4 space-y-6">
-              <div className="rounded-sm border-2 border-border bg-card p-6 space-y-6 shadow-sm">
-                <h4 className="text-primary font-pixel text-[10px] md:text-xs uppercase tracking-[0.15em] font-bold">
-                  {t("currentQuest")}
-                </h4>
-
-                <ul className="space-y-5">
-                  {quests.length > 0 ? (
-                    quests.map((quest, idx) => (
-                      <li
-                        key={quest.id ?? idx}
-                        className="flex items-start gap-4 group"
-                      >
-                        <div className="mt-1 flex-shrink-0">
-                          {quest.completed ? (
-                            <div className="w-5 h-5 rounded-full bg-foreground flex items-center justify-center">
-                              <Check className="w-3 h-3 text-card stroke-4" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 rounded-full border-2 border-foreground/30" />
-                          )}
-                        </div>
+              <ul className="flex flex-col gap-3.5">
+                {quests.length ? (
+                  quests.map((quest, index) => (
+                    <Reveal key={quest.id ?? index} delay={250 + index * 90}>
+                      <li className="flex items-start gap-3">
                         <span
                           className={cn(
-                            "text-foreground text-sm md:text-base font-semibold",
-                            !quest.completed && "text-foreground/50",
+                            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center pixel-frame-sm",
+                            quest.completed ? "bg-moss" : "bg-slot",
+                          )}
+                        >
+                          {quest.completed && (
+                            <PixelIcon
+                              name="check"
+                              className="h-2.5 w-3.5 text-moss-foreground"
+                            />
+                          )}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-sm font-medium",
+                            quest.completed &&
+                              "text-muted-foreground line-through",
                           )}
                         >
                           {quest.label}
                         </span>
                       </li>
-                    ))
-                  ) : (
-                    <li className="text-foreground/40 text-sm italic">—</li>
-                  )}
-                </ul>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-2 md:gap-3 w-full">
-                <div
-                  className="flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-sm border-2 border-border bg-card px-1 py-4 text-center transition-colors hover:bg-secondary/40 cursor-help md:min-h-[80px]"
-                  data-tooltip-id="about-stats-tooltip"
-                  data-tooltip-content={t("statYearsTooltip")}
-                >
-                  <div className="text-xl md:text-2xl font-bold font-mono text-primary leading-none mb-1">
-                    {stats?.experienceYears || 0}
-                  </div>
-                  <div className="text-[9px] md:text-[11px] font-mono uppercase text-foreground/70 tracking-tighter md:tracking-normal truncate w-full px-1">
-                    {t("statYears")}
-                  </div>
+                    </Reveal>
+                  ))
+                ) : (
+                  <li className="text-sm text-muted-foreground">—</li>
+                )}
+              </ul>
+              {quests.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex flex-1 gap-[2px] bg-px-ink p-[2px]"
+                    aria-hidden="true"
+                  >
+                    {quests.map((quest, index) => (
+                      <span
+                        key={quest.id ?? index}
+                        className={cn(
+                          "h-2.5 flex-1",
+                          index < done ? "bg-moss" : "bg-slot",
+                        )}
+                      />
+                    ))}
+                  </span>
+                  <span className="font-pixel text-sm text-muted-foreground">
+                    {done}/{quests.length}
+                  </span>
                 </div>
-                <div
-                  className="flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-sm border-2 border-border bg-card px-1 py-4 text-center transition-colors hover:bg-secondary/40 cursor-help md:min-h-[80px]"
-                  data-tooltip-id="about-stats-tooltip"
-                  data-tooltip-content={t("statProjsTooltip")}
-                >
-                  <div className="text-xl md:text-2xl font-bold font-mono text-primary leading-none mb-1">
-                    {stats?.projectCount || 0}
-                  </div>
-                  <div className="text-[9px] md:text-[11px] font-mono uppercase text-foreground/70 tracking-tighter md:tracking-normal truncate w-full px-1">
-                    {t("statProjs")}
-                  </div>
-                </div>
-                <div
-                  className="flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-sm border-2 border-border bg-card px-1 py-4 text-center transition-colors hover:bg-secondary/40 cursor-help md:min-h-[80px]"
-                  data-tooltip-id="about-stats-tooltip"
-                  data-tooltip-content={t("statBlogsTooltip")}
-                >
-                  <div className="text-xl md:text-2xl font-bold font-mono text-primary leading-none mb-1">
-                    {stats?.blogCount || 0}
-                  </div>
-                  <div className="text-[9px] md:text-[11px] font-mono uppercase text-foreground/70 tracking-tighter md:tracking-normal truncate w-full px-1">
-                    {t("statBlogs")}
-                  </div>
-                </div>
-                <button
-                  onClick={handleVisitorClick}
-                  className="bg-primary/10 py-4 px-1 border-2 border-primary/40 flex flex-col items-center justify-center min-h-[70px] md:min-h-[80px] rounded-sm overflow-hidden text-center cursor-pointer transition-all hover:bg-primary/20 hover:border-primary active:scale-95 group"
-                  data-tooltip-id="about-stats-tooltip"
-                  data-tooltip-content={t("statWinsTooltip")}
-                >
-                  <div className="text-xl md:text-2xl font-bold font-mono text-primary leading-none mb-1 group-hover:scale-110 transition-transform">
-                    {stats?.visitorCount || 0}
-                  </div>
-                  <div className="text-[9px] md:text-[11px] font-mono uppercase text-primary/70 tracking-tighter md:tracking-normal truncate w-full px-1 flex items-center justify-center gap-1">
-                    {t("statWins")}
-                  </div>
-                </button>
-              </div>
-
-              <Tooltip
-                id="about-stats-tooltip"
-                className="z-50 shadow-xl rounded-md! px-4! py-3! text-xs! font-mono! border-2!"
-                style={{
-                  backgroundColor: "var(--card)",
-                  color: "var(--foreground)",
-                  border: "2px solid var(--primary)",
-                }}
-              />
+              )}
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>

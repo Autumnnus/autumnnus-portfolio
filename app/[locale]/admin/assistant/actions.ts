@@ -14,6 +14,7 @@ import { assistantThread } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { hasGeminiKey } from "@/lib/ai/gemini-keys";
 
 async function assertAdmin() {
   const session = await auth();
@@ -34,6 +35,7 @@ const settingsSchema = z.object({
   visitorDailyLimit: z.number().int().min(1).max(1_000),
   globalDailyLimit: z.number().int().min(1).max(100_000),
   retentionDays: z.number().int().min(1).max(730),
+  autoDelete: z.boolean(),
 });
 
 export async function saveAssistantSettingsAction(values: EditableAssistantSettings) {
@@ -46,7 +48,7 @@ export async function saveAssistantSettingsAction(values: EditableAssistantSetti
 
 export async function runIndexSyncAction(force: boolean) {
   await assertAdmin();
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+  if (!hasGeminiKey()) {
     throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is not configured.");
   }
   const report = await runKnowledgeSyncNow("all", force);

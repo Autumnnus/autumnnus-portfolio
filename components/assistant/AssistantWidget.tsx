@@ -9,7 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AutumnMascot from "./AutumnMascot";
-import ChatPanel, { type PageKind } from "./ChatPanel";
+import ChatPanel, { type PageKind, type PanelView } from "./ChatPanel";
 
 const THREAD_KEY = "autumn.assistant.thread";
 const NUDGE_KEY = "autumn.assistant.nudged";
@@ -56,7 +56,8 @@ export default function AssistantWidget({
   retentionDays,
 }: {
   ownerName: string;
-  retentionDays: number;
+  /** Null when chats are kept indefinitely (auto-delete off). */
+  retentionDays: number | null;
 }) {
   const t = useTranslations("Assistant");
   const locale = useLocale();
@@ -69,6 +70,7 @@ export default function AssistantWidget({
   const [threadId, setThreadId] = useState<string | null>(null);
   const [nudge, setNudge] = useState<string | null>(null);
   const [initialPrompt, setInitialPrompt] = useState<string | null>(null);
+  const [view, setView] = useState<PanelView>("chat");
 
   const pathnameRef = useRef(pathname);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -193,6 +195,15 @@ export default function AssistantWidget({
     [threadId],
   );
 
+  const selectThread = useCallback((id: string) => {
+    try {
+      localStorage.setItem(THREAD_KEY, id);
+    } catch {}
+    setThreadId(id);
+    setView("chat");
+    playSound("open");
+  }, []);
+
   const showLauncher = phase === "closed" || phase === "opening";
   const panelVisible = phase === "open" || phase === "closing";
 
@@ -273,6 +284,9 @@ export default function AssistantWidget({
             onToggleExpanded={() => setExpanded((value) => !value)}
             onClose={closePanel}
             onNewThread={startNewThread}
+            onSelectThread={selectThread}
+            view={view}
+            onViewChange={setView}
             initialPrompt={initialPrompt}
             onInitialPromptConsumed={() => setInitialPrompt(null)}
           />

@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { assistantMessage, assistantThread } from "@/lib/db/schema";
 import { formatDateTime } from "@/lib/utils";
 import { asc, eq } from "drizzle-orm";
-import { ArrowLeft, Flag } from "lucide-react";
+import { ArrowLeft, Flag, Trash2 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -61,6 +61,12 @@ export default async function AdminThreadPage({
           <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
             {thread.flagged && <Flag className="h-5 w-5 text-destructive" aria-label={t("flagged")} />}
             {thread.title || "—"}
+            {thread.deletedAt && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                <Trash2 className="h-3.5 w-3.5" />
+                {t("deletedByUser")} · {formatDateTime(thread.deletedAt, locale)}
+              </span>
+            )}
           </h1>
           <p className="mt-1 font-mono text-xs text-muted-foreground">
             {formatDateTime(thread.createdAt, locale)} · {thread.language.toUpperCase()} ·{" "}

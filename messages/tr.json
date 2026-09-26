@@ -21,19 +21,107 @@
       "hint": {
         "tree": "Psst! Ağacı salla",
         "cabin": "Kapıyı çal!",
-        "sky": "Gökyüzüne dokun!"
+        "sky": "Gökyüzüne dokun!",
+        "decor": {
+          "autumn": "Balkabaklarını yak!",
+          "winter": "Kardan adamı dürt!"
+        },
+        "critter": {
+          "autumn": "Birazdan bir tilki geçecek, yakala!",
+          "winter": "Penguen geçerken yakala!"
+        }
       },
       "tooltip": {
         "tree": "Salla",
         "cabin": "Kapıyı çal",
         "sun": "Güneşi dürt",
-        "moon": "Aya dokun"
+        "moon": "Aya dokun",
+        "decor": {
+          "autumn": "Feneri yak",
+          "winter": "Şapkayı uçur"
+        },
+        "critter": "Yakala!"
       },
-      "secrets": "Sırlar",
       "secretsLabel": "{total} sırdan {found} tanesi bulundu",
       "achievement": {
         "title": "Kâşif",
-        "description": "Sahnedeki bütün sırları buldun!"
+        "description": "Bütün sırları buldun! Görev 2 başladı: kartın altındaki konsola gizli kodları yaz."
+      },
+      "codesLabel": "{total} gizli koddan {found} tanesi bulundu",
+      "code": {
+        "konami": {
+          "title": "Eski Toprak",
+          "description": "Konami kodunu hâlâ hatırlıyorsun."
+        },
+        "fireworks": {
+          "title": "Adın Anıldı",
+          "description": "Gökyüzü senin için patladı."
+        },
+        "ufo": {
+          "title": "Onlar Aramızda",
+          "description": "Bir şey hayvancağızı kaçırdı…"
+        },
+        "weather": {
+          "title": "Hava Durumu",
+          "description": "Bulutları boşalttın: sonbaharda sağanak, kışta tipi."
+        },
+        "cycle": {
+          "title": "Zaman Bükücü",
+          "description": "Günün saatini kendi ellerinle çevirdin."
+        }
+      },
+      "console": {
+        "title": "İpuçları",
+        "closeLabel": "Konsolu kapat",
+        "subtitle": "Her bilmecenin cevabı gizli bir kod. Cevabı bulunca kartın altındaki konsola yaz. Takılırsan İpucu düğmesi bir harf açar.",
+        "inputLabel": "Kod",
+        "placeholder": "kodu yaz…",
+        "submit": "Gir",
+        "accepted": "Kod kabul edildi: {name}!",
+        "again": "Bunu zaten bulmuştun, yine de çalıştırdım: {name}",
+        "close": "Çok yakın! Bir harfi kontrol et.",
+        "miss": "Hiçbir şey olmadı…",
+        "missHint": "Hiçbir şey olmadı… İpuçları'na göz at, oradan harf açabilirsin.",
+        "pad": "Yön tuşları",
+        "padKey": "{key} ekle",
+        "hint": "İpucu",
+        "hintAria": "Bir harf aç",
+        "hidden": "Gizli kod",
+        "riddles": {
+          "konami": "Eski oyuncuların sırrı: iki kez yukarı, iki kez aşağı, sonra iki harf.",
+          "fireworks": "Bu sitenin sahibinin adını yaz, gökyüzü onun için patlasın.",
+          "ufo": "Gökyüzünden gelir, hayvanları çok sever. Üç harf.",
+          "weather": "Gökten düşer; sonbaharda sağanak, kışta tipi olur. Beş harf.",
+          "cycle": "Gündüz ile gecenin bitmeyen dansı. Beş harf."
+        },
+        "answers": {
+          "konami": "↑↑↓↓BA",
+          "fireworks": "kadir",
+          "ufo": "ufo",
+          "weather": "yağış",
+          "cycle": "döngü"
+        },
+        "goToConsole": "Konsola yaz"
+      },
+      "quest": {
+        "step": {
+          "secrets": "Görev 1/2",
+          "codes": "Görev 2/2",
+          "done": "Tamamlandı"
+        },
+        "goal": {
+          "secrets": "Sahnede saklı 5 sırrı bul: ! işaretlerine dokun",
+          "codes": "5 gizli kodu bu konsola yaz",
+          "done": "Efsane kâşif! Kodları istediğin zaman yeniden çalıştırabilirsin."
+        },
+        "locked": "Kod konsolu kilitli · {left} sır kaldı",
+        "hints": "İpuçları",
+        "tip": "Kod bilmiyor musun? İpuçları'nda bilmeceler var.",
+        "unlockedHint": "Konsol açıldı! Kodları buraya yaz",
+        "achievement": {
+          "title": "Hile Ustası",
+          "description": "Bütün sırları ve kodları buldun. Bu sahne artık senin!"
+        }
       }
     }
   },
@@ -109,7 +197,8 @@
       "Archived": "Arşivlendi"
     },
     "draft": "Taslak",
-    "published": "Yayınlandı"
+    "published": "Yayınlandı",
+    "featured": "Öne çıkan"
   },
   "Blog": {
     "category": "Kategori",
@@ -140,7 +229,8 @@
     "next": "Sonraki",
     "draft": "Taslak",
     "published": "Yayınlandı",
-    "related": "İlgili Yazılar"
+    "related": "İlgili Yazılar",
+    "subTitle": "Günlük"
   },
   "Work": {
     "title": "Deneyimler",
@@ -302,6 +392,19 @@
     },
     "server": {
       "blocked": "Bu konuda yardımcı olamam. Bu sitedeki projeler, yazılar ya da deneyim hakkında bir sorun varsa memnuniyetle yardım ederim."
+    },
+    "history": {
+      "open": "Geçmiş sohbetler",
+      "title": "Geçmiş sohbetler",
+      "empty": "Henüz kayıtlı bir sohbetin yok. Bir şey sor, burada birikmeye başlasın.",
+      "untitled": "Adsız sohbet",
+      "messages": "{count} mesaj",
+      "current": "şu an",
+      "delete": "Sohbeti sil",
+      "confirmPrompt": "Silinsin mi?",
+      "confirm": "Sil",
+      "cancel": "Vazgeç",
+      "retention": "{days} gün saklanır"
     }
   },
   "Admin": {
@@ -711,7 +814,9 @@
         "modelDeepHint": "System One bir soruyu çok adımlı ya da sentez gerektiren olarak puanladığında kullanılır.",
         "freeTier": "ücretsiz katman",
         "priceLine": "1M token başına {input} girdi / {output} çıktı",
-        "pricesNote": "Ücretli katman fiyatları (1M token), {date} tarihinde kontrol edildi. Ücretsiz katman key'iyle Google limitlerine kadar ücret ödenmez."
+        "pricesNote": "Ücretli katman fiyatları (1M token), {date} tarihinde kontrol edildi. Ücretsiz katman key'iyle Google limitlerine kadar ücret ödenmez.",
+        "autoDelete": "Sohbetleri otomatik sil",
+        "autoDeleteHint": "Kapalıyken sohbetler saklama süresi dolunca silinmez; yalnızca sen silebilirsin."
       },
       "index": {
         "title": "Bilgi indeksi",
@@ -771,7 +876,9 @@
         "delete": "Sil",
         "deleteConfirm": "Bu sohbet silinsin mi?",
         "entryPath": "Başladığı sayfa",
-        "allChats": "Bu ziyaretçinin tüm sohbetleri"
+        "allChats": "Bu ziyaretçinin tüm sohbetleri",
+        "deletedByUser": "Kullanıcı sildi",
+        "deletedCount": "{count} silindi"
       },
       "visitors": {
         "title": "Kişiler",

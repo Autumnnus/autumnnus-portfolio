@@ -22,7 +22,16 @@ export type SoundName =
   | "twinkle"
   | "open"
   | "close"
-  | "send";
+  | "send"
+  | "boom"
+  | "beam"
+  | "hop"
+  | "boing"
+  | "error"
+  | "storm"
+  | "thunder"
+  | "gust"
+  | "chime";
 
 const STORAGE_KEY = "autumnnus:sound";
 const MASTER_VOLUME = 0.07;
@@ -170,6 +179,33 @@ const RECIPES: Record<SoundName, (t: number) => void> = {
     noise(t, 0.2, { gain: 0.35, from: 700, to: 4200 });
     tone(660, t + 0.05, 0.09, { to: 1320 });
   },
+  boom: (t) => {
+    noise(t, 0.35, { gain: 0.7, from: 500, to: 70 });
+    tone(95, t, 0.3, { type: "triangle", to: 40, gain: 1.2 });
+  },
+  beam: (t) => {
+    tone(300, t, 0.9, { type: "sine", to: 1200, gain: 0.7 });
+    tone(305, t, 0.9, { type: "square", to: 1210, gain: 0.12 });
+  },
+  hop: (t) => tone(400, t, 0.1, { to: 900 }),
+  boing: (t) => tone(220, t, 0.28, { type: "triangle", to: 700, gain: 1.1 }),
+  error: (t) => {
+    tone(180, t, 0.09, { to: 140 });
+    tone(140, t + 0.1, 0.14, { to: 90 });
+  },
+  storm: (t) => {
+    noise(t, 1.4, { gain: 0.45, from: 3200, to: 700 });
+    noise(t + 0.5, 1.2, { gain: 0.3, from: 5000, to: 1500 });
+  },
+  thunder: (t) => {
+    noise(t, 0.9, { gain: 0.8, from: 380, to: 60 });
+    tone(62, t, 0.8, { type: "triangle", to: 34, gain: 1.4 });
+  },
+  gust: (t) => noise(t, 1.1, { gain: 0.35, from: 500, to: 2400 }),
+  chime: (t) =>
+    [392, 523, 659, 784, 659, 523].forEach((f, i) =>
+      tone(f, t + i * 0.09, 0.16, { type: "triangle", gain: 0.8 }),
+    ),
 };
 
 export function playSound(name: SoundName) {

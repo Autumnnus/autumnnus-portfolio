@@ -12,6 +12,7 @@ import {
   SeasonArt,
   TreeSprite,
 } from "./art";
+import { CheatId, SceneExtras, SceneFx } from "./extras";
 
 /**
  * Runtime for the hero landscape: parallax layers, weather particles, birds,
@@ -19,7 +20,7 @@ import {
  * seasons. Positions are floats but everything is drawn on whole pixels, so
  * motion reads as stepped pixel animation. Units are scene pixels/second.
  */
-type ParticleKind = "leaf" | "snow" | "spark" | "smoke";
+type ParticleKind = "leaf" | "snow" | "spark" | "smoke" | "rain" | "splash";
 
 interface Particle {
   kind: ParticleKind;
@@ -52,9 +53,9 @@ interface Meteor {
   age: number;
 }
 
-/** Clickable spots in the scene; finding all three is a small quest. */
-export type HotspotId = "tree" | "cabin" | "sky";
-export const HOTSPOTS: HotspotId[] = ["tree", "cabin", "sky"];
+/** Clickable spots in the scene; finding them all is a small quest. */
+export type HotspotId = "tree" | "cabin" | "sky" | "decor" | "critter";
+export const HOTSPOTS: HotspotId[] = ["tree", "cabin", "sky", "decor", "critter"];
 export type PokeResult = HotspotId | "ground";
 
 export interface SceneRect {
@@ -69,6 +70,7 @@ export interface SceneOptions {
   intro: boolean;
   reducedMotion: boolean;
   onPoke?: (kind: PokeResult) => void;
+  onFx?: (fx: SceneFx) => void;
   onIntroEnd?: () => void;
 }
 
@@ -102,6 +104,8 @@ const MARKER = [
   ".XXX.",
 ];
 const MAX_SNOW = 170;
+const MAX_STORM_SNOW = 520;
+const MAX_RAIN = 260;
 const SHAKE = [1, -1, 1, -1];
 const METEOR_TRAIL = ["#ffffff", "#cfe0ff", "#9fb4e8", "#6f84be", "#4a5d96"];
 
@@ -126,6 +130,7 @@ export class HeroSceneEngine {
   private readonly ctx: CanvasRenderingContext2D;
   private width = 0;
   private art: Record<Season, SeasonArt> | null = null;
+  private extras: SceneExtras | null = null;
   private skies = new Map<string, HTMLCanvasElement>();
   private bufferA: CanvasRenderingContext2D | null = null;
   private bufferB: CanvasRenderingContext2D | null = null;
@@ -147,7 +152,11 @@ export class HeroSceneEngine {
   // Where the visible season's movable pieces were last drawn.
   private layout = { near: 0, mid: 0, midY: 0, treeY: 0, celX: 0, celY: 0 };
   private stormUntil = 0;
-  private spawnDebt = { leaf: 0, snow: 0, smoke: 0 };
+  private spawnDebt = { leaf: 0, snow: 0, smoke: 0, storm: 0 };
+  private nextThunder = 2;
+  private flashUntil = 0;
+  // Winter mountains lit by the day-cycle code, keyed by the night layer.
+  private dayLayers = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>();
   private parallax = { x: 0, y: 0, tx: 0, ty: 0 };
   private scroll = 0;
   private time = 0;
@@ -184,6 +193,8 @@ export class HeroSceneEngine {
       autumn: buildSeasonArt("autumn", width),
       winter: buildSeasonArt("winter", width),
     };
+    if (this.extras) this.extras.resize(width);
+    else this.extras = new SceneExtras(width);
     this.skies.clear();
     this.bufferA = makeBuffer(width);
     this.bufferB = makeBuffer(width);
@@ -271,6 +282,20 @@ export class HeroSceneEngine {
         h: art.cabin.h,
       };
     }
+    if (id === "decor") {
+      return this.extras?.decorRects(this.visibleSeason(), art, L.near)[0] ?? null;
+    }
+    if (id === "critter") {
+      // Where to look for the critter when it isn't passing by right now.
+      return (
+        this.extras?.critterRect(this.visibleSeason()) ?? {
+          x: Math.round(this.width * 0.42),
+          y: GROUND_Y - 6,
+          w: 10,
+          h: 7,
+        }
+      );
+    }
     const cel = art.celestial;
     return { x: L.celX, y: L.celY, w: cel.w, h: cel.h };
   }
@@ -281,7 +306,12 @@ export class HeroSceneEngine {
     const inside = (r: SceneRect | null) =>
       !!r && x >= r.x - 1 && x <= r.x + r.w + 1 && y >= r.y - 1 && y <= r.y + r.h;
     const L = this.layout;
-    const tree = this.art[this.visibleSeason()].trees.find((t) =>
+    const season = this.visibleSeason();
+    if (inside(this.extras?.critterRect(season) ?? null)) return { id: "critter" };
+    if (this.extras?.decorRects(season, this.art[season], L.near).some(inside)) {
+      return { id: "decor" };
+    }
+    const tree = this.art[season].trees.find((t) =>
       inside({ x: t.x + L.near, y: t.y + L.treeY, w: t.w, h: Math.round(t.h * 0.8) }),
     );
     if (tree) return { id: "tree", tree };
@@ -310,6 +340,18 @@ export class HeroSceneEngine {
       this.windowLitUntil = now + 8000;
       this.doorOpenUntil = now + 2600;
       for (let i = 0; i < 6; i++) this.spawnSmoke(season, true);
+    } else if (hit?.id === "decor") {
+      this.extras?.pokeDecor(season, now);
+      const r = this.hotspot("decor");
+      if (r) {
+        for (let i = 0; i < 8; i++) {
+          const from = { x: r.x + Math.random() * r.w, y: r.y + Math.random() * 3 };
+          if (season === "autumn") this.spawnLeaf(from, true);
+          else this.spawnSnow(from, true);
+        }
+      }
+    } else if (hit?.id === "critter") {
+      this.extras?.pokeCritter(now);
     } else if (hit?.id === "sky") {
       this.faceUntil = now + 3200;
       if (season === "winter") this.meteorQueue = 5;
@@ -371,6 +413,13 @@ export class HeroSceneEngine {
     });
   }
 
+  /** Secret codes typed on the keyboard. */
+  cheat(id: CheatId) {
+    if (!this.art || !this.running || !this.extras) return;
+    if (id === "konami") this.storm();
+    else this.extras.cheat(id, this.visibleSeason(), this.time);
+  }
+
   /** Konami code: a leaf storm in autumn, a blizzard in winter. */
   storm() {
     if (!this.art || !this.running) return;
@@ -397,7 +446,12 @@ export class HeroSceneEngine {
 
   private wind() {
     const storm = this.time < this.stormUntil ? 26 : 0;
-    return 2 + Math.sin(this.time * 0.3) * 3 + storm;
+    // The weather code blows in gusts: a light gale in winter, slanting rain in autumn.
+    const weather = this.extras?.weather(this.time) ?? 0;
+    const gust = weather
+      ? weather * (this.visibleSeason() === "winter" ? 34 : 9) * (1 + 0.45 * Math.sin(this.time * 1.7))
+      : 0;
+    return 2 + Math.sin(this.time * 0.3) * 3 + storm + gust;
   }
 
   // ---------- Particles ----------
@@ -450,17 +504,24 @@ export class HeroSceneEngine {
     });
   }
 
-  private spawnSnow(from?: { x: number; y: number }, burst = false) {
-    if (this.particles.winter.length >= MAX_SNOW) return;
-    const big = !burst && Math.random() < 0.1;
-    this.particles.winter.push({
+  private spawnSnow(
+    from?: { x: number; y: number },
+    burst = false,
+    season: Season = "winter",
+    gale = false,
+  ) {
+    if (this.particles[season].length >= (gale ? MAX_STORM_SNOW : MAX_SNOW)) return;
+    const big = !burst && Math.random() < (gale ? 0.22 : 0.1);
+    // In a gale, start upwind so the slanted flakes still cover the width.
+    const lead = gale ? Math.max(0, this.wind() * 0.6 - 2) * 4 : 0;
+    this.particles[season].push({
       kind: "snow",
-      x: from ? from.x : Math.random() * (this.width + 30) - 15,
+      x: from ? from.x : Math.random() * (this.width + 30 + lead) - 15 - lead,
       y: from ? from.y : -2,
       vx: burst
         ? (Math.random() - 0.5) * 20
         : this.wind() * 0.6 - 2 + (Math.random() - 0.5) * 2,
-      vy: burst ? -4 - Math.random() * 10 : (big ? 9 : 4) + Math.random() * 4,
+      vy: burst ? -4 - Math.random() * 10 : (big ? 9 : 4) + Math.random() * 4 + (gale ? 9 : 0),
       maxVy: big ? 12 : 6 + Math.random() * 3,
       gravity: burst ? 14 : 0,
       age: 0,
@@ -469,6 +530,31 @@ export class HeroSceneEngine {
       size: big ? 2 : 1,
       phase: Math.random() * Math.PI * 2,
       sway: 0.4 + Math.random() * 0.8,
+      landY: GROUND_Y + Math.floor(Math.random() * 9),
+      settled: false,
+    });
+  }
+
+  private spawnRain() {
+    if (this.particles.autumn.length >= MAX_RAIN + MAX_LEAVES) return;
+    const vy = 95 + Math.random() * 30;
+    const vx = this.wind() * 2.2;
+    // Start upwind so the slanted drops still cover the whole width.
+    const lead = (vx / vy) * GROUND_Y;
+    this.particles.autumn.push({
+      kind: "rain",
+      x: Math.random() * (this.width + Math.abs(lead)) - Math.max(0, lead),
+      y: -3 - Math.random() * 6,
+      vx,
+      vy,
+      maxVy: vy,
+      gravity: 0,
+      age: 0,
+      life: 0,
+      color: Math.random() < 0.3 ? "#dfe8f4" : "#9fb6d4",
+      size: 1,
+      phase: 0,
+      sway: 0,
       landY: GROUND_Y + Math.floor(Math.random() * 9),
       settled: false,
     });
@@ -506,7 +592,9 @@ export class HeroSceneEngine {
     const visible = this.visibleSeason();
 
     // Ambient spawns belong to the season that is arriving or present.
-    const leafRate = visible === "autumn" ? (storming ? 40 : 3) : 0;
+    const weather = this.extras?.weather(this.time) ?? 0;
+    // Rain knocks a few more leaves loose.
+    const leafRate = visible === "autumn" ? (storming ? 40 : 3 + weather * 5) : 0;
     const snowRate = visible === "winter" ? (storming ? 70 : 9) : 0;
     this.spawnDebt.leaf += leafRate * dt;
     this.spawnDebt.snow += snowRate * dt;
@@ -565,6 +653,36 @@ export class HeroSceneEngine {
       return m.age <= 0.7;
     });
 
+    const urgent =
+      !this.found.has("critter") &&
+      HOTSPOTS.every((id) => id === "critter" || this.found.has(id));
+    this.extras?.update(dt, this.time, visible, urgent, (fx) => this.options.onFx?.(fx));
+    // The weather code: a downpour with thunder in autumn, a snowstorm in winter.
+    if (weather > 0) {
+      this.spawnDebt.storm += (visible === "winter" ? 120 : 150) * weather * dt;
+      while (this.spawnDebt.storm >= 1) {
+        this.spawnDebt.storm--;
+        if (visible === "winter") this.spawnSnow(undefined, false, "winter", true);
+        else this.spawnRain();
+      }
+      this.nextThunder -= dt;
+      if (weather > 0.8 && this.nextThunder <= 0 && this.art) {
+        if (visible === "autumn") {
+          this.flashUntil = now + 140;
+          this.nextThunder = 3.5 + Math.random() * 3;
+          setTimeout(() => this.options.onFx?.("thunder"), 180);
+        } else {
+          // A gust: the pines sway and the wind howls.
+          this.art.winter.trees.forEach((t) => (t.shakeUntil = now + 700));
+          this.nextThunder = 2.5 + Math.random() * 2;
+          this.options.onFx?.("gust");
+        }
+      }
+    } else {
+      this.spawnDebt.storm = 0;
+      this.nextThunder = 1.2;
+    }
+
     for (const season of ["autumn", "winter"] as const) {
       this.particles[season] = this.stepParticles(this.particles[season], dt);
     }
@@ -599,6 +717,15 @@ export class HeroSceneEngine {
             p.life = 5 + Math.random() * 5;
           }
           if (p.x > -10 && p.x < this.width + 10) kept.push(p);
+          break;
+        case "rain":
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          if (p.y >= p.landY) {
+            kept.push({ ...p, kind: "splash", y: p.landY, age: 0, life: 0.16 });
+          } else if (p.x > -20 && p.x < this.width + 20) {
+            kept.push(p);
+          }
           break;
         case "snow":
           if (p.gravity) p.vy = Math.min(p.maxVy, p.vy + p.gravity * dt);
@@ -704,38 +831,66 @@ export class HeroSceneEngine {
     const W = this.width;
     const shift = (factor: number) => Math.round(this.parallax.x * factor);
 
-    ctx.drawImage(this.sky(season, season === "autumn" ? this.scroll : 0), 0, 0);
+    const extras = this.extras;
+    const visible = season === this.visibleSeason();
+    const settled = this.introStart === null;
+    // The cycle code turns autumn to evening and winter night to day; the
+    // weather code is layered on top, so the two never fight.
+    const cycle = extras?.cycle(this.time) ?? 0;
+    const weather = extras?.weather(this.time) ?? 0;
+    const night = season === "autumn" ? Math.max(this.scroll, cycle * 0.82) : this.scroll;
+    const day = season === "winter" ? cycle : 0;
+    ctx.drawImage(this.sky(season, season === "autumn" ? night : day), 0, 0);
 
     if (season === "winter") {
-      this.drawStars(ctx, art);
-      this.drawAurora(ctx);
+      this.drawStars(ctx, art, Math.max(day, weather * 0.8));
+      if (day < 0.95) this.drawAurora(ctx, night, (1 - day) * (1 - weather * 0.7));
+    } else {
+      extras?.drawStarsAtNight(ctx, art, this.time, night);
     }
 
     const cel = art.celestial;
+    const introRise = Math.round((leave + arrive) * 26) + this.introOffset("celestial", now);
     let celY = season === "autumn" ? 20 : 7;
-    if (season === "autumn") celY += Math.round(this.scroll * 14);
-    celY += Math.round((leave + arrive) * 26) + this.introOffset("celestial", now);
-    const celX = Math.round(W * 0.76) - Math.floor(cel.w / 2) + shift(0.8);
+    if (season === "autumn") celY += Math.round(night * 14);
+    // In winter the moon sets behind the mountains while a pale sun rises.
+    celY += Math.round(day * 34) + introRise;
+    let celX = Math.round(W * 0.76) - Math.floor(cel.w / 2) + shift(0.8);
     ctx.drawImage(cel.canvas, celX, celY);
+    if (day > 0) {
+      const sunX = Math.round(W * 0.24) - Math.floor(cel.w / 2) + shift(0.8);
+      const sunY = 6 + Math.round((1 - day) * 34) + introRise;
+      extras?.drawWinterSun(ctx, sunX, sunY);
+      if (day > 0.5) {
+        celX = sunX;
+        celY = sunY;
+      }
+    }
     if (now < this.faceUntil) this.drawFace(ctx, season, celX + 10, celY + 10, now);
+    extras?.drawClouds(ctx, season, shift(1), day);
 
-    if (season === "winter") this.drawMeteor(ctx);
+    if (season === "winter" && day < 0.3) this.drawMeteor(ctx);
     else this.drawBirds(ctx);
+    if (visible) extras?.drawUfo(ctx, this.time);
 
-    ctx.drawImage(
-      art.far,
-      -OVERSCAN + shift(1.5),
-      Math.round(this.parallax.y) + this.introOffset("far", now),
-    );
+    const farY = Math.round(this.parallax.y) + this.introOffset("far", now);
+    ctx.drawImage(art.far, -OVERSCAN + shift(1.5), farY);
+    if (day > 0) {
+      ctx.globalAlpha = day;
+      ctx.drawImage(this.dayLayer(art.far), -OVERSCAN + shift(1.5), farY);
+      ctx.globalAlpha = 1;
+    }
 
     const midY = this.introOffset("mid", now);
     ctx.drawImage(art.mid, -OVERSCAN + shift(3), midY);
     ctx.drawImage(art.cabin.canvas, art.cabin.x + shift(3), art.cabin.y + midY);
-    this.drawWindow(ctx, season, art, shift(3), midY, now);
+    this.drawWindow(ctx, season, art, shift(3), midY, now, night);
     this.drawDoor(ctx, art, shift(3), midY, now);
+    extras?.drawCabinExtras(ctx, season, art, shift(3), midY, this.time);
     this.drawParticles(ctx, season, "smoke");
 
     ctx.drawImage(art.ground, -OVERSCAN + shift(4), this.introOffset("ground", now));
+    if (settled) extras?.drawDecor(ctx, season, art, shift(4), now);
 
     // Trees rise out of the ground during the intro, so clip them to it.
     const treeY = this.introOffset("trees", now);
@@ -749,10 +904,45 @@ export class HeroSceneEngine {
     }
     ctx.restore();
 
-    this.drawParticles(ctx, season, season === "autumn" ? "leaf" : "snow");
+    if (settled && visible) extras?.drawCritter(ctx, season, this.time);
+    this.drawParticles(ctx, season, "leaf");
+    this.drawParticles(ctx, season, "snow");
+    this.drawParticles(ctx, season, "rain");
+    this.drawParticles(ctx, season, "splash");
     this.drawParticles(ctx, season, "spark");
 
-    if (season === this.visibleSeason()) {
+    // Weather darkens autumn under rain clouds and hazes the winter sky.
+    if (weather > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = season === "autumn" ? "multiply" : "screen";
+      ctx.fillStyle =
+        season === "autumn"
+          ? `rgba(120, 124, 150, ${weather * 0.42})`
+          : `rgba(96, 112, 150, ${weather * (0.42 + day * 0.12)})`;
+      ctx.fillRect(0, 0, W, SCENE_H);
+      ctx.restore();
+    }
+
+    // Autumn dusk tints the whole landscape; lights then glow on top of it.
+    if (season === "autumn" && night > 0.3) {
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = `rgba(92, 62, 128, ${((night - 0.3) / 0.7) * 0.6})`;
+      ctx.fillRect(0, 0, W, SCENE_H);
+      ctx.restore();
+    }
+    if (season === "autumn" && (night > 0.3 || weather > 0.3)) {
+      this.drawWindow(ctx, season, art, shift(3), midY, now, Math.max(night, weather));
+      // Fireflies stay home in the rain.
+      if (weather < 0.4) extras?.drawFireflies(ctx, this.time, night);
+    }
+    if (season === "autumn" && visible && now < this.flashUntil) {
+      ctx.fillStyle = "rgba(255, 248, 230, 0.55)";
+      ctx.fillRect(0, 0, W, SCENE_H);
+    }
+    if (visible) extras?.drawFireworks(ctx);
+
+    if (visible) {
       this.layout = {
         near: shift(4),
         mid: shift(3),
@@ -771,7 +961,8 @@ export class HeroSceneEngine {
     const bob = Math.floor(this.time * 2.5) % 2 === 0 ? 0 : -1;
     for (const id of HOTSPOTS) {
       if (this.found.has(id)) continue;
-      const r = this.hotspot(id);
+      const r =
+        id === "critter" ? (this.extras?.critterRect(season) ?? null) : this.hotspot(id);
       if (!r) continue;
       const x =
         id === "sky" ? r.x - 7 : Math.round(r.x + r.w / 2) - 2 - (id === "cabin" ? 3 : 0);
@@ -843,9 +1034,29 @@ export class HeroSceneEngine {
     }
   }
 
-  private drawStars(ctx: CanvasRenderingContext2D, art: SeasonArt) {
+  /** A lighter, hazier copy of a winter layer for daylight. */
+  private dayLayer(layer: HTMLCanvasElement) {
+    let lit = this.dayLayers.get(layer);
+    if (!lit) {
+      lit = document.createElement("canvas");
+      lit.width = layer.width;
+      lit.height = layer.height;
+      const ctx = lit.getContext("2d")!;
+      ctx.drawImage(layer, 0, 0);
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = "rgba(150, 178, 220, 0.62)";
+      ctx.fillRect(0, 0, lit.width, lit.height);
+      this.dayLayers.set(layer, lit);
+    }
+    return lit;
+  }
+
+  /** `hide` in [0, 1] dithers stars away (daylight, storm clouds). */
+  private drawStars(ctx: CanvasRenderingContext2D, art: SeasonArt, hide = 0) {
     const p = PALETTE.winter;
+    if (hide >= 1) return;
     for (const star of art.stars) {
+      if (hide > 0 && bayer(star.x, star.y) < hide) continue;
       const bright = Math.sin(this.time * star.speed + star.phase) > 0.2;
       ctx.fillStyle = bright ? p.star : p.starDim;
       ctx.fillRect(star.x, star.y, 1, 1);
@@ -860,9 +1071,9 @@ export class HeroSceneEngine {
   }
 
   /** Ordered-dither aurora curtains in drifting patches; scrolling strengthens it. */
-  private drawAurora(ctx: CanvasRenderingContext2D) {
+  private drawAurora(ctx: CanvasRenderingContext2D, strength: number, visibility = 1) {
     const colors = PALETTE.winter.aurora;
-    const base = 0.36 + this.scroll * 0.55;
+    const base = (0.36 + strength * 0.55) * visibility;
     const t = this.time;
     for (let x = 0; x < this.width; x++) {
       const patch =
@@ -912,9 +1123,9 @@ export class HeroSceneEngine {
     dx: number,
     dy: number,
     now: number,
+    night: number,
   ) {
-    const lit =
-      season === "winter" || this.scroll > 0.45 || now < this.windowLitUntil;
+    const lit = season === "winter" || night > 0.45 || now < this.windowLitUntil;
     if (!lit) return;
     const flicker = Math.sin(this.time * 9) + Math.sin(this.time * 13.7) > 1.2;
     ctx.fillStyle = flicker ? "#ffd98a" : PALETTE[season].cabin.window;
@@ -955,9 +1166,30 @@ export class HeroSceneEngine {
         continue;
       }
 
+      if (kind === "rain") {
+        // A short streak that leans with the wind.
+        const lean = p.vx / p.vy;
+        ctx.fillStyle = p.color;
+        for (let i = 0; i < 3; i++) ctx.fillRect(Math.round(p.x - lean * i * 2), y - i * 2, 1, 2);
+        continue;
+      }
+
+      if (kind === "splash") {
+        ctx.fillStyle = "#c9d8ea";
+        if (p.age < p.life / 2) {
+          ctx.fillRect(x - 1, y - 1, 1, 1);
+          ctx.fillRect(x + 1, y - 1, 1, 1);
+        } else {
+          ctx.fillRect(x - 1, y, 3, 1);
+        }
+        continue;
+      }
+
       ctx.fillStyle = p.color;
       if (kind === "snow") {
         ctx.fillRect(x, y, p.size, p.size);
+        // Wind-driven flakes leave a short streak behind them.
+        if (p.vx > 14) ctx.fillRect(x - 1, y - (p.vy > 10 ? 1 : 0), 1, 1);
         continue;
       }
 

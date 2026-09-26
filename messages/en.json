@@ -21,19 +21,107 @@
       "hint": {
         "tree": "Psst! Shake the tree",
         "cabin": "Knock on the door!",
-        "sky": "Poke the sky!"
+        "sky": "Poke the sky!",
+        "decor": {
+          "autumn": "Light the pumpkins!",
+          "winter": "Poke the snowman!"
+        },
+        "critter": {
+          "autumn": "A fox will pass by soon — catch it!",
+          "winter": "Catch the penguin as it waddles by!"
+        }
       },
       "tooltip": {
         "tree": "Shake",
         "cabin": "Knock",
         "sun": "Poke the sun",
-        "moon": "Touch the moon"
+        "moon": "Touch the moon",
+        "decor": {
+          "autumn": "Light the lantern",
+          "winter": "Pop the hat"
+        },
+        "critter": "Catch it!"
       },
-      "secrets": "Secrets",
       "secretsLabel": "{found} of {total} secrets found",
       "achievement": {
         "title": "Explorer",
-        "description": "You found every secret in the scene!"
+        "description": "You found every secret! Quest 2 has begun: type the secret codes into the console under the card."
+      },
+      "codesLabel": "{found} of {total} secret codes found",
+      "code": {
+        "konami": {
+          "title": "Old School",
+          "description": "You still remember the Konami code."
+        },
+        "fireworks": {
+          "title": "Name in Lights",
+          "description": "The sky lit up just for you."
+        },
+        "ufo": {
+          "title": "They Walk Among Us",
+          "description": "Something just abducted the little critter…"
+        },
+        "weather": {
+          "title": "Weather Report",
+          "description": "You emptied the clouds: a downpour in autumn, a blizzard in winter."
+        },
+        "cycle": {
+          "title": "Time Bender",
+          "description": "You turned the clock of the day yourself."
+        }
+      },
+      "console": {
+        "title": "Hints",
+        "closeLabel": "Close console",
+        "subtitle": "Each riddle's answer is a secret code. Once you know it, type it into the console under the card. Stuck? The Hint button reveals a letter.",
+        "inputLabel": "Code",
+        "placeholder": "type a code…",
+        "submit": "Enter",
+        "accepted": "Code accepted: {name}!",
+        "again": "You already found this one — ran it again anyway: {name}",
+        "close": "So close! Check one letter.",
+        "miss": "Nothing happened…",
+        "missHint": "Nothing happened… Check the Hints — you can reveal letters there.",
+        "pad": "Arrow keys",
+        "padKey": "Add {key}",
+        "hint": "Hint",
+        "hintAria": "Reveal a letter",
+        "hidden": "Hidden code",
+        "riddles": {
+          "konami": "The old gamers' secret: up twice, down twice, then two letters.",
+          "fireworks": "Type the site owner's name and the sky lights up for him.",
+          "ufo": "Comes from the sky and really loves critters. Three letters.",
+          "weather": "Falls from the sky: a downpour in autumn, a blizzard in winter. Five letters.",
+          "cycle": "The endless dance of day and night. Five letters."
+        },
+        "answers": {
+          "konami": "↑↑↓↓BA",
+          "fireworks": "kadir",
+          "ufo": "ufo",
+          "weather": "storm",
+          "cycle": "cycle"
+        },
+        "goToConsole": "Go to the console"
+      },
+      "quest": {
+        "step": {
+          "secrets": "Quest 1/2",
+          "codes": "Quest 2/2",
+          "done": "Complete"
+        },
+        "goal": {
+          "secrets": "Find the 5 secrets hidden in the scene: tap the ! markers",
+          "codes": "Type the 5 secret codes into this console",
+          "done": "Legendary explorer! Run any code again whenever you like."
+        },
+        "locked": "Code console locked · {left} secrets to go",
+        "hints": "Hints",
+        "tip": "Don't know any codes? The Hints have riddles.",
+        "unlockedHint": "Console unlocked! Type codes down here",
+        "achievement": {
+          "title": "Cheat Master",
+          "description": "You found every secret and every code. This scene is yours now!"
+        }
       }
     }
   },
@@ -109,7 +197,8 @@
       "Archived": "Archived"
     },
     "draft": "Draft",
-    "published": "Published"
+    "published": "Published",
+    "featured": "Featured"
   },
   "Blog": {
     "category": "Category",
@@ -140,7 +229,8 @@
     "next": "Next",
     "draft": "Draft",
     "published": "Published",
-    "related": "Related Posts"
+    "related": "Related Posts",
+    "subTitle": "Journal"
   },
   "Work": {
     "title": "Experience",
@@ -302,6 +392,19 @@
     },
     "server": {
       "blocked": "I can't help with that. If you have a question about the projects, writing or experience on this site, I'm happy to help."
+    },
+    "history": {
+      "open": "Past chats",
+      "title": "Past chats",
+      "empty": "No saved chats yet. Ask something and they'll start piling up here.",
+      "untitled": "Untitled chat",
+      "messages": "{count} messages",
+      "current": "current",
+      "delete": "Delete chat",
+      "confirmPrompt": "Delete?",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "retention": "Kept for {days} days"
     }
   },
   "Admin": {
@@ -709,7 +812,9 @@
         "modelDeepHint": "Used when System One scores a question as multi-step or synthesis-heavy.",
         "freeTier": "free tier",
         "priceLine": "{input} input / {output} output per 1M tokens",
-        "pricesNote": "Paid-tier prices per 1M tokens, checked {date}. With a free-tier key you pay nothing until you hit Google's limits."
+        "pricesNote": "Paid-tier prices per 1M tokens, checked {date}. With a free-tier key you pay nothing until you hit Google's limits.",
+        "autoDelete": "Auto-delete chats",
+        "autoDeleteHint": "When off, chats are never removed when the retention period ends — only you can delete them."
       },
       "index": {
         "title": "Knowledge index",
@@ -769,7 +874,9 @@
         "delete": "Delete",
         "deleteConfirm": "Delete this conversation?",
         "entryPath": "Started on",
-        "allChats": "All chats of this visitor"
+        "allChats": "All chats of this visitor",
+        "deletedByUser": "Deleted by user",
+        "deletedCount": "{count} deleted"
       },
       "visitors": {
         "title": "People",
