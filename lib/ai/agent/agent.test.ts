@@ -7,6 +7,8 @@ import type { RouteDecision } from "../system-one/gate";
 import { runChatTurn } from "../chat/turn";
 import { buildInstructions } from "./instructions";
 import { preparePortfolioStep, type AssistantUIMessage } from "./portfolio-agent";
+import { matchCode } from "@/lib/pixel/cheats";
+import { getSiteGuide } from "./site-guide";
 import { citeKey, citeKeyFromPath } from "./sources";
 
 describe("loop policy (prepareStep)", () => {
@@ -129,4 +131,20 @@ describe("runChatTurn (stream composition)", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     assert.ok(persisted, "onComplete should persist the response");
   });
+});
+
+describe("homepage game guide", () => {
+  for (const locale of ["tr", "en"] as const) {
+    it(`gives every code's answer and spellings the console accepts (${locale})`, () => {
+      const guide = getSiteGuide(locale);
+      assert.equal(guide.secrets.length, 5);
+      assert.equal(guide.codes.length, 5);
+      for (const code of guide.codes) {
+        assert.ok(code.riddle && code.name && code.effect);
+        for (const word of [code.answer, ...code.alsoAccepted]) {
+          assert.deepEqual(matchCode(word), { kind: "match", id: code.id }, `${word} → ${code.id}`);
+        }
+      }
+    });
+  }
 });

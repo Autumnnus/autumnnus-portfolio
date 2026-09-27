@@ -373,6 +373,7 @@
       "getPost": "Reading a post",
       "getCareer": "Checking work history",
       "getProfile": "Checking the profile",
+      "getSiteGuide": "Checking the game guide",
       "contactOwner": "Preparing a message",
       "failed": "This step failed",
       "routeFast": "Fast",

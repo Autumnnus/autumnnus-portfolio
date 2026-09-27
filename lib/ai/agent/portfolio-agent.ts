@@ -62,6 +62,7 @@ function buildToolsContext(options: Pick<
     getPost: localeContext,
     getCareer: localeContext,
     getProfile: localeContext,
+    getSiteGuide: localeContext,
     contactOwner: {
       visitorKey: options.visitorKey,
       threadId: options.threadId,

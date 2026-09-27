@@ -9,6 +9,7 @@ import {
   ChevronDown,
   FileText,
   FolderGit2,
+  Gamepad2,
   Loader2,
   Mail,
   Search,
@@ -35,6 +36,7 @@ const TOOL_ICON = {
   "tool-getPost": FileText,
   "tool-getCareer": Briefcase,
   "tool-getProfile": UserRound,
+  "tool-getSiteGuide": Gamepad2,
   "tool-contactOwner": Mail,
 } as const;
 

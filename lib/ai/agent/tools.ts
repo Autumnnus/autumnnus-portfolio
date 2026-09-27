@@ -12,6 +12,7 @@ import {
   listPostCards,
   listProjectCards,
 } from "./data";
+import { getSiteGuide } from "./site-guide";
 import { citeKeyFromPath } from "./sources";
 
 /**
@@ -250,6 +251,16 @@ export const getProfileTool = tool({
   },
 });
 
+// ─── Homepage game ───────────────────────────────────────────────────────────
+
+export const getSiteGuideTool = tool({
+  description:
+    "Everything about the hidden mini-game in the homepage pixel scene: the 5 secrets to find (where and how), the 5 secret codes (riddles, answers, accepted spellings, effects), the Konami code, the code console, hints, achievements and seasons. Use for any question about the site's game, secrets, easter eggs, cheat codes or puzzles.",
+  inputSchema: z.object({}),
+  contextSchema: localeContext,
+  execute: async (_input, { context }) => getSiteGuide(context.locale),
+});
+
 // ─── contactOwner (side effect → approval required) ─────────────────────────
 
 const escapeHtml = (value: string) =>
@@ -325,6 +336,7 @@ export const assistantTools = {
   getPost: getPostTool,
   getCareer: getCareerTool,
   getProfile: getProfileTool,
+  getSiteGuide: getSiteGuideTool,
   contactOwner: contactOwnerTool,
 };
 
